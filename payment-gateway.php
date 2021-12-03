@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & on-site messaging
- * Version:           0.0.11
+ * Version:           0.0.14
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -23,6 +23,7 @@ if (!class_exists('Divit_Plugin')) {
 
         public static function init()
 		{
+            require_once dirname(__FILE__) . '/divit-plugin-cron.php';
             if (class_exists('WC_Payment_Gateway')) {
 				require_once dirname(__FILE__) . '/wc-divit-payment-gateway.php';
 			}
@@ -31,6 +32,25 @@ if (!class_exists('Divit_Plugin')) {
 				self::$instance = new self;
 			}
 			return self::$instance;
+		}
+
+        public static function activate_plugin() {
+            if (!current_user_can( 'activate_plugins' )) {
+				return;
+			}
+
+            self::init();
+            Divit_Plugin_Cron::create_jobs();
+        }
+
+        public static function deactivate_plugin()
+		{
+			if (!current_user_can( 'activate_plugins' )) {
+				return;
+			}
+
+			self::init();
+			Divit_Plugin_Cron::delete_jobs();
 		}
 
         public function __construct() {
@@ -46,15 +66,24 @@ if (!class_exists('Divit_Plugin')) {
                 add_action( 'wp_enqueue_scripts', array($this, 'init_website_assets'), 10, 0 );
                 add_filter( 'woocommerce_gateway_icon', array( $this, 'filter_woocommerce_gateway_icon' ), 10, 2 );
 
+                // check agreement
+                add_action( 'woocommerce_review_order_before_submit', array($gateway, 'custom_checkout_field'), 10 );
+                add_action( 'woocommerce_checkout_process', array($gateway, 'add_checkout_checkbox_warning' ));
+
                 // woocommerce hooks
                 add_action( 'woocommerce_before_add_to_cart_form', array($gateway, 'redner_single_product_earn_miles_message'), 10, 0 );
                 add_action( 'woocommerce_proceed_to_checkout', array($gateway, 'render_cart_earn_miles_message'), 10, 0 );
                 // add_action( 'woocommerce_review_order_after_order_total', array($gateway, 'render_checkout_earn_miles_message'), 10, 0);
                 add_filter( 'woocommerce_thankyou_order_received_text', array($gateway, 'render_thank_you_earn_miles_message'), 20, 2 );
                 add_action( 'woocommerce_email_after_order_table', array($gateway, 'render_order_received_email_earn_miles_message'), 10, 1 );
+                add_action( 'woocommerce_thankyou', array($gateway, 'order_received_action'), 10, 1 );
 
                 // shortcode
                 add_shortcode( 'divit_earn_miles_paragraph', array( $gateway, 'shortcode_divit_earn_miles_paragraph' ) );
+
+                // cron
+                add_action( 'divit_do_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );
+                add_filter( 'cron_schedules', array('Divit_Plugin_Cron', 'edit_cron_schedules'), 10, 1 );
                 
                 // translation
                 // load_plugin_textdomain('woocommerce-other-payment-gateway', FALSE, basename(dirname(__FILE__)) . '/languages/');
@@ -89,7 +118,7 @@ if (!class_exists('Divit_Plugin')) {
             
             ob_start();
 
-            ?><img src="https://divit.com.hk/wp-content/uploads/2020/10/DivitLogo_Colour_Positive_RGB_72dpi.png" width="69" height="25" alt="Divit" /><?php
+            ?><img src="<?php echo WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url'] ?>/brand/divit-logo-white.png" width="77.5px" height="25px" alt="Divit" /><?php
 
             return ob_get_clean();
         }
