@@ -18,7 +18,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->id           = 'divit';
             $this->method_title = 'Divit payment gateway';
             $this->method_description = 'Pay now, pay later, earn miles';
-            $this->title        = 'Divit payment gateway';
 
             $this->init_form_fields();
             $this->init_settings();
@@ -143,19 +142,44 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '<div><img src="' . $static_url . '/brand/divit-logo-white.png" width="108.5px" height="35px" ?></div>';
         }
 
-        public function render_miles_message($miles, $case) {
+        public function render_miles_flag($miles) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
-            echo '<div class="divit_message" style="display:flex;align-items:center;margin:18px 0;font-size:18px">';
-            echo $case == 'earn' ? 'Pay now and earn ' : '';
-            echo $case == 'earned' ? 'You have earned ' : '';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;" src="' . $static_url . '/miles/miles-icon.png" width="24px" height="24px" />';
-            echo '<b> <span class="divit_message_miles">' . $miles . '</span> miles.</b>';
+            echo '<div class="divit_flag" style="display:inline-block;font-size:14px;font-weight:bold;color: #1c1c1c;">';
+            echo '<div class="divit_flag-inner" style="display:flex;align-items:center;background-color:#FFCC33;padding:4px 14px;border-radius:20px;">';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:16px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-divit-icon.png" />';
+            echo '<b> <span class="divit_miles" style="margin-right:2px;">' . $miles . '</span> =</b>';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:15.33px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-am-icon.png" />';
+            echo '<b> <span class="divit_miles">' . $miles . '</span></b>';
+            echo '</div>';
+            echo '</div>';
+        }
+
+        public function render_miles_message($miles) {
+            if (empty($miles) || $miles <= 0) return;
+            $static_url = $this->get_env()['static_url'];
+            echo '<div class="divit_message" style="display:flex;align-items:center;margin:18px 0;font-size:18px;color:#1c1c1c;">';
+            echo '<span>Pay now and earn </span>';
+            echo '<span style="margin-right:5px;"></span>';
+            echo $this->render_miles_flag($miles);
+            // echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:24px;height:24px;" src="' . $static_url . '/miles/miles-icon.png" />';
+            // echo '<b> <span class="divit_message_miles">' . $miles . '</span> miles.</b>';
+            echo '</div>';
+        }
+
+        public function render_earned_miles_message($miles) {
+            if (empty($miles) || $miles <= 0) return;
+            echo '<div class="divit_message" style="margin:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">';
+            echo '<div>You have just earned</div>';
+            echo '<div style="margin-top:8px;"></div>';
+            echo $this->render_miles_flag($miles);
             echo '</div>';
         }
 
         public function render_claim_miles_button() {
+            echo '<div class="divit_signup_btn_container">';
             echo '<a class="button" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/miles">sign up to claim miles</a>';
+            echo '</div>';
         }
 
         public function shortcode_divit_earn_miles_paragraph() {
@@ -164,10 +188,20 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($product)) return;
             $price = wc_get_price_to_display($product);
             $miles = $this->calc_earn_miles($price);
-            $this->render_miles_message($miles, 'earn');
+            $this->render_miles_message($miles);
         }
 
-        public function redner_single_product_earn_miles_message() {
+        public function render_shop_loop_product_earn_miles_message() {
+            if (!$this->is_earn_miles_enabled()) return;
+            $rate = $this->settings['earn_miles_rate'];
+            $product = get_product_from_the_post();
+            $price = wc_get_price_to_display($product);
+            $miles = $this->calc_earn_miles($price);
+            echo '<div style="margin-top:5px;"></div>';
+            $this->render_miles_flag($miles);
+        }
+
+        public function render_single_product_earn_miles_message() {
             if (!$this->is_earn_miles_enabled()) return;
             $rate = $this->settings['earn_miles_rate'];
             $product = get_product_from_the_post();
@@ -180,7 +214,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 ?>
                 <script>
                     jQuery(function($){
-                        console.log($('.variation_id').val());
                         $( ".single_variation_wrap" ).on( "show_variation", function ( event, variation ) {
                             var miles = variation.display_price / <?php echo $rate ?>;
                             $('.divit_message_miles').text(parseInt(miles, 10));
@@ -195,14 +228,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 </script>
                 <?php
             }
-            $this->render_miles_message($miles, 'earn');
+            $this->render_miles_message($miles);
+        }
+
+        public function render_mini_cart_earn_miles_message() {
+            if (!$this->is_earn_miles_enabled()) return;
+            $price = WC()->cart->total;
+            $miles = $this->calc_earn_miles($price);
+            // $this->render_miles_message($miles);
+            // echo '<div style="margin-top:5px;"></div>';
+            $this->render_miles_flag($miles);
         }
 
         public function render_cart_earn_miles_message() {
             if (!$this->is_earn_miles_enabled()) return;
             $price = WC()->cart->total;
             $miles = $this->calc_earn_miles($price);
-            $this->render_miles_message($miles, 'earn');
+            $this->render_miles_message($miles);
         }
 
         // only can access cart in checkout page
@@ -215,7 +257,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $rate = intval($promo['title'][0]);
                 $miles = $price / $rate;
             }
-            $this->render_miles_message($miles, 'earn');
+            $this->render_miles_message($miles);
+        }
+
+        public function render_place_order_button_text($button_html) {
+            // TODO: only selected divit payment?
+            // $order_button_text = apply_filters( 'woocommerce_order_button_text', __( "Place order", "woocommerce" ) );
+            if (WC()->session->get( 'chosen_payment_method' ) == $this->id) {
+                echo '<button type="submit" class="button alt" style="border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
+                echo '<span style="display:flex;justify-content:center;align-items:center;">';
+                echo '<span style="margin-right:8px;">checkout with</span>';
+                echo '<img style="width:75px;height:27px;margin-bottom:8px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-place-order.png" />';
+                echo '</button>';
+            } else {
+                echo $button_html;
+            }
         }
 
         public function render_thank_you_earn_miles_message($thank_you_title, $order) {
@@ -228,14 +284,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $token = $login_resp['body']['token'];
             $divit_order_resp = $this->get_order($divit_order_id, $token);
             if ($divit_order_resp['status_code'] != 200) return;
-            $divit_order = $divit_order_resp['body']['data'];
-            $miles_earned = $divit_order['milesTransactions'][0]['targetAmount']['amount'];
-            $miles = intval($miles_earned / 100);
 
-            echo $thank_you_title;
-            // $this->render_logo();
-            $this->render_miles_message($miles, 'earned');
-            $this->render_claim_miles_button();
+            $divit_order = $divit_order_resp['body']['data'];
+            if (count($divit_order['milesTransactions']) > 0) {
+                $miles_earned = $divit_order['milesTransactions'][0]['targetAmount']['amount'];
+                $miles = intval($miles_earned / 100);
+                echo $thank_you_title;
+                // $this->render_logo();
+                $this->render_earned_miles_message($miles);
+                $this->render_claim_miles_button();
+            } else {
+                echo $thank_you_title;
+            }
         }
 
         public function render_order_received_email_earn_miles_message($order) {
@@ -249,19 +309,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $divit_order_resp = $this->get_order($divit_order_id, $token);
             if ($divit_order_resp['status_code'] != 200) return;
             $divit_order = $divit_order_resp['body']['data'];
-            $miles_earned = $divit_order['milesTransactions'][0]['targetAmount']['amount'];
-            $miles = intval($miles_earned / 100);
+            if (count($divit_order['milesTransactions']) > 0) {
+                $miles_earned = $divit_order['milesTransactions'][0]['targetAmount']['amount'];
+                $miles = intval($miles_earned / 100);
 
-            // need inline css for email
-            echo '<div style="margin-bottom:25px;">';
-            // $this->render_logo();
-            $this->render_miles_message($miles, 'earned');
-            $this->render_claim_miles_button();
-            echo '</div>';
+                // need inline css for email
+                echo '<div style="margin-bottom:45px;text-align:center;">';
+                // $this->render_logo();
+                $this->render_earned_miles_message($miles);
+                echo '<div style="text-align:center;">';
+                echo '<a style="font-size:16px;font-weight:bold;text-decoration:none;padding:10px 20px;background-color:black;color:white;" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/miles">sign up to claim miles</a>';
+                echo '</div>';
+                echo '</div>';
+            }
         }
 
         public function get_env() {
-            return $this->environments[$this->mode];
+            return $this->environments[$this->settings['mode']];
         }
         
         public function init_form_fields()
@@ -287,7 +351,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     'title' => 'Title',
                     'type' => 'text',
                     'description' => '',
-                    'default' => 'Divit'
+                    'default' => 'divit'
                 ),
                 'description' => array(
                     'title' => 'Description',
@@ -318,6 +382,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
          */
         public function admin_options()
         {
+            $environment = $this->mode;
             $merchant_id = $this->merchant_id;
             $earn_miles_rate = $this->earn_miles_rate;
             $loggedin = !empty($this->merchant_id);
@@ -326,9 +391,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 '<div class="notice notice-success notice-alt"><h4>Setup done</h4></div>' : 
                 '<div class="notice notice-error notice-alt"><h4>Require setup</h4></div>'
             ?>
-            <h3>Divit Payment</h3>
+            <h3>divit Payment</h3>
             <?php echo $loggedin ? 
                 "
+                    <div>Environment: {$environment}</div>
                     <div>Merchant id: {$merchant_id}</div>
                     <div>Earn miles rate: {$earn_miles_rate}:1</div>
                 " : '' 
@@ -362,7 +428,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 self::log("divit login error 1000");
                 self::log($login_resp['status_code']);
                 self::log(json_encode($login_resp['body']));
-                wc_add_notice('divit error: 1000', 'error');
+                wc_add_notice('payment error (1000), please try again.', 'error');
                 return;
             }
             $token = $login_resp['body']['token'];
@@ -439,7 +505,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 self::log("divit create order error 1001");
                 self::log($create_order_resp['status_code']);
                 self::log(json_encode($create_order_resp['body'])); 
-                wc_add_notice('divit error: 1001', 'error');
+                wc_add_notice('payment error (1001), please try again.', 'error');
                 return;
             }
             $create_order_resp_data = $create_order_resp['body']['data'];
@@ -539,6 +605,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 die(); 
             }
 
+            $promotion_code = trim($promotion_code);
+
             $login_resp = $this->login($this->client_id, $this->client_secret);
             if ($login_resp['status_code'] != 200) {
                 WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
@@ -548,7 +616,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $token = $login_resp['body']['token'];
 
             $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $token);
-            if ($resp['status_code'] != 200 || $resp['body']['data']['promoCode'] != $promotion_code) {
+            if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
                 WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
                 wp_send_json_error('invalid promotion code, '. $resp['body']['data']['promoCode']);
                 die();

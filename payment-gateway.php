@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & on-site messaging
- * Version:           0.0.14
+ * Version:           1.0.0
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -71,7 +71,10 @@ if (!class_exists('Divit_Plugin')) {
                 add_action( 'woocommerce_checkout_process', array($gateway, 'add_checkout_checkbox_warning' ));
 
                 // woocommerce hooks
-                add_action( 'woocommerce_before_add_to_cart_form', array($gateway, 'redner_single_product_earn_miles_message'), 10, 0 );
+                add_action( 'woocommerce_after_shop_loop_item_title', array($gateway, 'render_shop_loop_product_earn_miles_message'), 40);
+                add_action( 'woocommerce_before_add_to_cart_form', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );
+                add_action( 'woocommerce_widget_shopping_cart_total', array($gateway, 'render_mini_cart_earn_miles_message'), 20, 0);
+                add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );
                 add_action( 'woocommerce_proceed_to_checkout', array($gateway, 'render_cart_earn_miles_message'), 10, 0 );
                 // add_action( 'woocommerce_review_order_after_order_total', array($gateway, 'render_checkout_earn_miles_message'), 10, 0);
                 add_filter( 'woocommerce_thankyou_order_received_text', array($gateway, 'render_thank_you_earn_miles_message'), 20, 2 );
@@ -112,7 +115,9 @@ if (!class_exists('Divit_Plugin')) {
         }
 
         public function filter_woocommerce_gateway_icon($icon_html, $gateway_id) {
-            if ($gateway_id != 'divit') {
+            $gateway = WC_Divit_Payment_Gateway::getInstance();
+
+            if ($gateway_id != $gateway->id) {
                 return $icon_html;
             }
             
