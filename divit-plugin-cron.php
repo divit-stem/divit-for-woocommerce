@@ -11,14 +11,14 @@ class Divit_Plugin_Cron
 	}
 
   public static function create_jobs() {
-		$timestamp = wp_next_scheduled( 'divit_do_cron_jobs' );
-		if ($timestamp == false) {
-			wp_schedule_event( time(), '15min', 'divit_do_cron_jobs' );
+		if (!wp_next_scheduled( 'divit_cron_jobs' )) {
+			WC_Divit_Payment_Gateway::log("scheduled job");
+			wp_schedule_event( time(), '15min', 'divit_cron_jobs' );
 		}
 	}
 
   public static function delete_jobs() {
-		wp_clear_scheduled_hook( 'divit_do_cron_jobs' );
+		wp_clear_scheduled_hook( 'divit_cron_jobs' );
 	}
 
   public static function fire_jobs() {
@@ -30,5 +30,19 @@ class Divit_Plugin_Cron
 			$fired_by = 'unknown';
 		}
 		WC_Divit_Payment_Gateway::log("Firing cron by {$fired_by}...");
+
+		self::update_merchant_profiles();
+	}
+
+	public static function update_merchant_profiles() {
+		$gateway = WC_Divit_Payment_Gateway::getInstance();
+		$settings = $gateway->getSettings();
+
+		if ($settings['enabled'] != 'yes') {
+			# Don't hit any API when the gateway is not Enabled.
+			return false;
+		}
+
+		$gateway->setup_merchant();
 	}
 }

@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & on-site messaging
- * Version:           1.0.0
+ * Version:           1.0.2
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -53,6 +53,13 @@ if (!class_exists('Divit_Plugin')) {
 			Divit_Plugin_Cron::delete_jobs();
 		}
 
+        public static function uninstall_plugin()
+		{
+			if (!current_user_can( 'activate_plugins' )) {
+				return;
+			}
+		}
+
         public function __construct() {
 
             $gateway = WC_Divit_Payment_Gateway::getInstance();
@@ -85,8 +92,11 @@ if (!class_exists('Divit_Plugin')) {
                 add_shortcode( 'divit_earn_miles_paragraph', array( $gateway, 'shortcode_divit_earn_miles_paragraph' ) );
 
                 // cron
-                add_action( 'divit_do_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );
+                add_action( 'divit_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );
                 add_filter( 'cron_schedules', array('Divit_Plugin_Cron', 'edit_cron_schedules'), 10, 1 );
+
+                // admin page
+                add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'filter_action_links'), 10, 1 );
                 
                 // translation
                 // load_plugin_textdomain('woocommerce-other-payment-gateway', FALSE, basename(dirname(__FILE__)) . '/languages/');
@@ -128,7 +138,22 @@ if (!class_exists('Divit_Plugin')) {
             return ob_get_clean();
         }
 
+        public function filter_action_links($links) {
+            $new = array(
+                sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=divit' ) ),
+                    esc_html__( 'Setting', 'woo-divit' )
+                )
+            );
+
+            return array_merge( $new, $links );
+        }
     }
+
+    register_activation_hook( __FILE__, array('Divit_Plugin', 'activate_plugin') );
+	register_deactivation_hook( __FILE__, array('Divit_Plugin', 'deactivate_plugin') );
+	register_uninstall_hook( __FILE__, array('Divit_Plugin', 'uninstall_plugin') );
 
     add_action( 'plugins_loaded', array('Divit_Plugin', 'init'), 10, 0 );
 }

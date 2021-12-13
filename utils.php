@@ -91,3 +91,7 @@ function http_request($url, $method, $body, $headers) {
 function get_jwt_payload($token) {
     return json_decode(base64_decode(str_replace('_', '/', str_replace('-','+',explode('.', $token)[1]))));
 }
+
+function get_utc() {
+    return gmdate("Y-m-d\TH:i:s\Z");
+}

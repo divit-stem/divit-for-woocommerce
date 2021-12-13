@@ -39,6 +39,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // update admin options
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options'), 10, 0);
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'setup_merchant'), 11, 0);
+            add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( 'Divit_Plugin_Cron', 'fire_jobs'), 12, 0);
 
             // validation
             // TODO: remove for other merchants
@@ -60,6 +61,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
+        public function getSettings() {
+			return $this->settings;
+		}
+
         public function process_admin_options() {
 			parent::process_admin_options();
 
@@ -75,6 +80,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
             if (!array_key_exists('campaigns', $this->settings)) {
                 $this->settings['campaigns'] = array();
+            }
+            if (!array_key_exists('updated_date', $this->settings)) {
+                $this->settings['updated_date'] = get_utc();
             }
 			return update_option($this->get_option_key(), $this->settings, 'yes');
 		}
@@ -113,6 +121,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!empty($active_campaigns)) {
                 $this->settings['earn_miles_rate'] = intval($active_campaigns[0]['title'][0]);
             } 
+            $this->settings['updated_date'] = get_utc();
+            $this->log("finished setup merchant");
             return update_option($this->get_option_key(), $this->settings, 'yes'); 
 		}
 
@@ -146,7 +156,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
             echo '<div class="divit_flag" style="display:inline-block;font-size:14px;font-weight:bold;color: #1c1c1c;">';
-            echo '<div class="divit_flag-inner" style="display:flex;align-items:center;background-color:#FFCC33;padding:4px 14px;border-radius:20px;">';
+            echo '<div class="divit_flag-inner" style="display:flex;flex-wrap: wrap;align-items:center;background-color:#FFCC33;padding:4px 14px;border-radius:20px;">';
             echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:16px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-divit-icon.png" />';
             echo '<b> <span class="divit_miles" style="margin-right:2px;">' . $miles . '</span> =</b>';
             echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:15.33px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-am-icon.png" />';
@@ -158,7 +168,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_miles_message($miles) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
-            echo '<div class="divit_message" style="display:flex;align-items:center;margin:18px 0;font-size:18px;color:#1c1c1c;">';
+            echo '<div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">';
             echo '<span>Pay now and earn </span>';
             echo '<span style="margin-right:5px;"></span>';
             echo $this->render_miles_flag($miles);
@@ -386,6 +396,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $merchant_id = $this->merchant_id;
             $earn_miles_rate = $this->earn_miles_rate;
             $loggedin = !empty($this->merchant_id);
+            $updated_date = $this->settings['updated_date'];
     ?>
             <?php echo $loggedin ? 
                 '<div class="notice notice-success notice-alt"><h4>Setup done</h4></div>' : 
@@ -397,6 +408,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     <div>Environment: {$environment}</div>
                     <div>Merchant id: {$merchant_id}</div>
                     <div>Earn miles rate: {$earn_miles_rate}:1</div>
+                    <div>Last updated: {$updated_date}</div>
                 " : '' 
             ?>
             <!-- <p><?php echo json_encode($this->settings) ?></p> -->
