@@ -5,7 +5,7 @@ class Divit_Plugin_Cron
   public static function edit_cron_schedules($schedules) {
 		$schedules['15min'] = array(
 			'interval' => 15 * 60,
-			'display' => __( 'Every 15 minutes', 'woo_divit' )
+			'display' => __( 'Every 15 minutes', 'woo-divit' )
 		);
 		return $schedules;
 	}

@@ -51,6 +51,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // register callback for `webhook_events`
             add_action( 'woocommerce_api_callback_divit_payment', array($this, 'callback_handler') );
+
+            if (!$this->is_valid_for_use()) {
+                $this->enabled = 'no';
+            }
         }
 
         public static function getInstance()
@@ -61,9 +65,25 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
+        public function is_valid_for_use() {
+            return in_array($this->get_currency(), array('HKD'), true);
+        }
+
+        // override payment gateway function
+        public function is_available() {
+            return $this->enabled == 'yes';
+        }
+
         public function getSettings() {
 			return $this->settings;
 		}
+
+        public function get_currency() {
+            // woocommerce default currency
+            // return get_option('woocommerce_currency');
+            // multiple currency
+            return get_woocommerce_currency();
+        }
 
         public function process_admin_options() {
 			parent::process_admin_options();
@@ -135,6 +155,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function is_earn_miles_enabled() {
+            if ($this->enabled == 'no') {
+                return false;
+            }
             $rate = $this->earn_miles_rate;
             return is_int($rate) && $rate > 0;
         }
@@ -169,7 +192,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
             echo '<div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">';
-            echo '<span>Pay now and earn </span>';
+            echo '<span>' . __('Pay now and earn ', 'woo-divit') . '</span>';
             echo '<span style="margin-right:5px;"></span>';
             echo $this->render_miles_flag($miles);
             // echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:24px;height:24px;" src="' . $static_url . '/miles/miles-icon.png" />';
@@ -180,7 +203,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_earned_miles_message($miles) {
             if (empty($miles) || $miles <= 0) return;
             echo '<div class="divit_message" style="margin:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">';
-            echo '<div>You have just earned</div>';
+            echo '<div>' . _e('You have just earned', 'woo-divit') . '</div>';
             echo '<div style="margin-top:8px;"></div>';
             echo $this->render_miles_flag($miles);
             echo '</div>';
@@ -188,7 +211,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_claim_miles_button() {
             echo '<div class="divit_signup_btn_container">';
-            echo '<a class="button" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/miles">sign up to claim miles</a>';
+            echo '<a class="button" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/miles">';
+            echo __('sign up to claim miles', 'woo-divit');
+            echo '</a>';
             echo '</div>';
         }
 
@@ -271,14 +296,38 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function render_place_order_button_text($button_html) {
-            // TODO: only selected divit payment?
+            $divit_logo_img = '<img style="width:75px;height:27px;margin-bottom:8px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-place-order.png" />';
+            $button = '';
+            $button .= '<button type="submit" class="button alt" style="border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
+            $button .= '<span style="display:flex;justify-content:center;align-items:center;">';
+            $button .= sprintf(__('%1$scheckout with%2$s %3$s', 'woo-divit'), '<span style="margin-right:8px;">', '</span>', $divit_logo_img);
+            $button .= '</button>';
+            ?>
+            <script>
+                jQuery(function ($) {
+                    function checkPaymentMethod() {
+                        $('.place-order button[type="submit"]').remove();
+                        var paymentMethod = $('form[name="checkout"] input[name="payment_method"]:checked');
+                        if(paymentMethod.val() == "<?php echo $this->id; ?>") {
+                            $('.place-order').append('<?php echo $button ?>');
+                        } else{
+                            $('.place-order').append('<?php echo $button_html ?>');
+                        }
+                    } 
+                    $('input[name="payment_method"]').change(function(){
+                        checkPaymentMethod();
+                    });
+                    $('body').on('updated_checkout', function() {
+                        checkPaymentMethod();
+                    })
+                    checkPaymentMethod();
+                })
+            </script>
+            <?php
+
             // $order_button_text = apply_filters( 'woocommerce_order_button_text', __( "Place order", "woocommerce" ) );
             if (WC()->session->get( 'chosen_payment_method' ) == $this->id) {
-                echo '<button type="submit" class="button alt" style="border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
-                echo '<span style="display:flex;justify-content:center;align-items:center;">';
-                echo '<span style="margin-right:8px;">checkout with</span>';
-                echo '<img style="width:75px;height:27px;margin-bottom:8px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-place-order.png" />';
-                echo '</button>';
+                echo $button;
             } else {
                 echo $button_html;
             }
@@ -342,7 +391,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $this->form_fields = array(
                 'core-configuration-title' => array(
-                    'title'				=> __( 'Core Configuration', 'woo_divit' ),
+                    'title'				=> __( 'Core Configuration', 'woo-divit' ),
                     'type'				=> 'title'
                 ),
                 'enabled' => array(
@@ -430,7 +479,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order = new WC_Order($order_id);
 
             // debug
-            // $allmeta = $order->get_meta_data();
+            // $allmeta = get_option('woocommerce_currency');
+            // $allmeta = get_woocommerce_currency();
             // wc_add_notice(json_encode($allmeta), 'error');
             // return;
 
@@ -564,17 +614,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 woocommerce_form_field( 'divit_promotion_code', array(
                     'type'          => 'text',
                     'class'         => array('transaction_type form-row-wide'),
-                    'label'         => 'Promotion code',
+                    'label'         => __('Promotion code', 'woo-divit'),
                     'description'   => '',
                 ), $promotion_code);
                 ?>
                 <div id="divit_promotion_code_submit_success" style="color:green;">
-                    <?php echo $valid_promo == 'true' ? 'applied code' : '' ?>
+                    <?php echo $valid_promo == 'true' ? __('applied code', 'woo-divit') : '' ?>
                 </div>
                 <div id="divit_promotion_code_submit_error" style="color:red;">
-                    <?php echo $valid_promo == 'false' ? 'invalid code' : '' ?>
+                    <?php echo $valid_promo == 'false' ? __('invalid code', 'woo-divit') : '' ?>
                 </div>
-                <div id="divit_promotion_code_submit" class="button" style="margin-top: 10px;">Apply</div>
+                <div id="divit_promotion_code_submit" class="button" style="margin-top: 10px;">
+                    <?php _e('Apply', 'woo-divit') ?>
+                </div>
                 <script>
                     jQuery(function($) {
                         var $code = $('[name=divit_promotion_code]')

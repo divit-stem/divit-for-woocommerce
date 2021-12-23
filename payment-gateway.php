@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & on-site messaging
- * Version:           1.0.2
+ * Version:           1.0.4
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -81,8 +81,8 @@ if (!class_exists('Divit_Plugin')) {
                 add_action( 'woocommerce_after_shop_loop_item_title', array($gateway, 'render_shop_loop_product_earn_miles_message'), 40);
                 add_action( 'woocommerce_before_add_to_cart_form', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );
                 add_action( 'woocommerce_widget_shopping_cart_total', array($gateway, 'render_mini_cart_earn_miles_message'), 20, 0);
-                add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );
                 add_action( 'woocommerce_proceed_to_checkout', array($gateway, 'render_cart_earn_miles_message'), 10, 0 );
+                add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );
                 // add_action( 'woocommerce_review_order_after_order_total', array($gateway, 'render_checkout_earn_miles_message'), 10, 0);
                 add_filter( 'woocommerce_thankyou_order_received_text', array($gateway, 'render_thank_you_earn_miles_message'), 20, 2 );
                 add_action( 'woocommerce_email_after_order_table', array($gateway, 'render_order_received_email_earn_miles_message'), 10, 1 );
@@ -99,7 +99,7 @@ if (!class_exists('Divit_Plugin')) {
                 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'filter_action_links'), 10, 1 );
                 
                 // translation
-                // load_plugin_textdomain('woocommerce-other-payment-gateway', FALSE, basename(dirname(__FILE__)) . '/languages/');
+                load_plugin_textdomain('woo-divit', FALSE, basename(dirname(__FILE__)) . '/languages/');
             }
         }
 
