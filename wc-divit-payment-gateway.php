@@ -192,12 +192,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_miles_flag($miles) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
-            echo '<div class="divit_flag" style="display:inline-block;font-size:14px;font-weight:bold;color: #1c1c1c;">';
-            echo '<div class="divit_flag-inner" style="display:flex;flex-wrap: wrap;align-items:center;background-color:#FFCC33;padding:4px 14px;border-radius:20px;">';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:16px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-divit-icon.png" />';
-            echo '<b> <span class="divit_miles" style="margin-right:2px;">' . $miles . '</span> =</b>';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:15.33px;height:18.6px;" src="' . $static_url . '/miles/miles-flag-am-icon.png" />';
-            echo '<b> <span class="divit_miles">' . $miles . '</span></b>';
+            echo '<div class="divit_flag" style="display:inline-block;font-size:20px;line-height:28px;font-weight:bold;color: #1c1c1c;">';
+            echo '<div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;background-color:#FFCC33;padding:4px 8px;">';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:28px;height:28px;max-height:28px;" src="' . $static_url . '/miles/miles-flag-divit-icon-black-bordered.png" />';
+            echo '<b> <span class="divit_miles" style="margin:0 2px;">' . $miles . '</span> <span style="margin:0 4px;">=</span></b>';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:21.4px;height:26px;max-height:26px;" src="' . $static_url . '/miles/miles-flag-am-icon.png" />';
+            echo '<b <span class="divit_miles" style="margin:0 2px;">' . $miles . '</span></b>';
             echo '</div>';
             echo '</div>';
         }
@@ -206,7 +206,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
             echo '<div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">';
-            echo '<span>' . __('Pay now and earn ', 'woo-divit') . '</span>';
+            echo '<span>' . __('Pay now and instantly earn ', 'woo-divit') . '</span>';
             echo '<span style="margin-right:5px;"></span>';
             echo $this->render_miles_flag($miles);
             // echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:24px;height:24px;" src="' . $static_url . '/miles/miles-icon.png" />';
@@ -315,11 +315,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function render_place_order_button_text($button_html) {
-            $divit_logo_img = '<img style="width:75px;height:27px;margin-bottom:8px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-place-order.png" />';
+            $divit_logo_img = '<img style="width:80px;height:31.5px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-black.png" />';
             $button = '';
-            $button .= '<button type="submit" class="button alt" style="border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
-            $button .= '<span style="display:flex;justify-content:center;align-items:center;">';
-            $button .= sprintf(__('%1$scheckout with%2$s %3$s', 'woo-divit'), '<span style="margin-right:8px;">', '</span>', $divit_logo_img);
+            $button .= '<button type="submit" class="button alt" style="background-color:#FFCC33;border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
+            $button .= '<span style="color:#1c1c1c;display:flex;justify-content:center;align-items:center;">';
+            $button .= sprintf(__('%1$scheckout with%2$s %3$s', 'woo-divit'), '<span style="margin-right:-4px;">', '</span>', $divit_logo_img);
             $button .= '</button>';
             ?>
             <script>
