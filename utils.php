@@ -37,6 +37,19 @@ function get_order_by_order_number($order_number) {
   return $order_id;
 }
 
+function RoundDown($val, $precision) {
+    $mult = pow(10, $precision); 
+    return floor($val * $mult) / $mult;
+}
+
+function get_miles_by_reward_statement($reward_statement, $amount) {
+    // currently only support InstalmentAmount, RoundDown(), Round()
+    $InstalmentAmount = $amount;
+    $statment = str_replace('InstalmentAmount', '$InstalmentAmount', $reward_statement);
+    eval('$result = ' . $statment . ';');
+    return $result;
+}
+
 // validate `webhook_event` callback
 // t={ts}.s1={base64_hex_binary(ts.body)}
 function validate_webhook($signature, $secret, $body) {
