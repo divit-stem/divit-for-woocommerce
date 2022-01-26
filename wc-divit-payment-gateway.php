@@ -903,23 +903,5 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, array());
             WC()->session->set(self::DIVIT_VALID_PROMO_CODE, '');
         }
-
-        //  age declaration
-        public function custom_checkout_field() {
-            woocommerce_form_field( 'age_declaration_checkbox', array( 
-                'type'          => 'checkbox',
-                'class'         => array('form-row'),
-                'label_class'   => array('woocommerce-form__label woocommerce-form__label-for-checkbox checkbox'),
-                'input_class'   => array('woocommerce-form__input woocommerce-form__input-checkbox input-checkbox'),
-                'required'      => true,
-                'label'         => 'I declare I am over 18 years old.',
-             ));
-        }
-
-        public function add_checkout_checkbox_warning() {
-            if ( ! (int) isset( $_POST['age_declaration_checkbox'] ) ) {
-                wc_add_notice( __( 'Please confirm that you are over 18 years old.' ), 'error' );
-            }
-        }
     }
 }
