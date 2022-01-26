@@ -19,8 +19,8 @@ return array(
     "web_url" => "https://sandbox-consumer.divit.dev",
     "static_url" => "https://static.divit.dev",
   ),
-	"live" => array(
-    "name" => "live",
+	"production" => array(
+    "name" => "production",
 		"api_url" =>  "https://api.divit.com.hk",
     "web_url" => "https://app.divit.com.hk",
     "static_url" => "https://static.divit.com.hk",
