@@ -79,6 +79,12 @@ function http_request($url, $method, $body, $headers) {
             $body = json_encode($body);
         }
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    } elseif ($method == 'PATCH') {
+        curl_setopt ($ch, CURLOPT_CUSTOMREQUEST, "PATCH");  
+        if (!is_string($body)) {
+            $body = json_encode($body);
+        }
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     }
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
     curl_setopt($ch, CURLOPT_TIMEOUT, 70);

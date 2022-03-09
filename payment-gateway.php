@@ -92,6 +92,10 @@ if (!class_exists('Divit_Plugin')) {
                 add_filter( 'cron_schedules', array('Divit_Plugin_Cron', 'edit_cron_schedules'), 10, 1 );
 
                 // admin page
+                add_filter( 'woocommerce_product_data_tabs', array($gateway, 'divit_product_data_tabs') );
+                add_filter( 'woocommerce_product_data_panels', array($gateway, 'divit_product_data_tabs_content') );
+                add_action( 'woocommerce_process_product_meta', array($gateway, 'divit_product_data_option_fields'), 10, 2 );
+                add_action( 'woocommerce_process_product_meta', array($gateway, 'divit_product_data_option_fields'), 10, 2  );
                 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'filter_action_links'), 10, 1 );
                 
                 // translation
