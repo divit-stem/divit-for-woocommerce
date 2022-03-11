@@ -39,15 +39,27 @@ function get_order_by_order_number($order_number) {
 
 function RoundDown($val, $precision) {
     $mult = pow(10, $precision); 
-    return floor($val * $mult) / $mult;
+    return floor($val / $mult) * $mult;
+}
+
+function RoundUp($val, $precision) {
+    $mult = pow(10, $precision); 
+    return ceil($val / $mult) * $mult;
+}
+
+function RoundNormal($val, $precision) {
+    $mult = pow(10, $precision); 
+    return round($val / $mult) * $mult;
 }
 
 function get_miles_by_reward_statement($reward_statement, $amount) {
-    // currently only support InstalmentAmount, RoundDown(), Round()
-    $InstalmentAmount = $amount;
-    $statment = str_replace('InstalmentAmount', '$InstalmentAmount', $reward_statement);
-    eval('$result = ' . $statment . ';');
-    return $result;
+    // currently only support InstalmentAmount, RoundUp(), RoundDown(), Round()
+    $InstalmentAmount = $amount * 100;
+    $statement = $reward_statement;
+    $statement = str_replace('Round(', 'RoundNormal(', $statement);
+    $statement = str_replace('InstalmentAmount', '$InstalmentAmount', $statement);
+    eval('$result = ' . $statement . ';');
+    return $result / 100;
 }
 
 // validate `webhook_event` callback
