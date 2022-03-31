@@ -235,23 +235,33 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function get_cart_total($cart) {
             $total = 0;
             foreach ( $cart->get_cart() as $cart_item ) {
-                $product = wc_get_product($cart_item['product_id']);
-                $price = wc_get_price_to_display($product);
-                $quantity = $cart_item['quantity'];
-                $total += $price * $quantity;
+                $total += $cart_item['line_subtotal'];
+            }
+            foreach ($cart->applied_coupons as $coupon) {
+                $c = new WC_Coupon($coupon);
+                $total -= $c->get_amount();
             }
             return $total;
         }
 
         public function get_cart_miles($cart) {
-            $total = 0;
-            foreach ( $cart->get_cart() as $cart_item ) {
-                $product = wc_get_product($cart_item['product_id']);
-                $miles = $this->get_product_miles($product);
-                $quantity = $cart_item['quantity'];
-                $total += $miles * $quantity;
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+                $total = $this->get_cart_total($cart);
+                return $this->calc_earn_miles($total);
+            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                // ignore discount, only calcuate total miles,
+                // to support product discount, calcuate the actual total
+                $total = 0;
+                foreach ( $cart->get_cart() as $cart_item ) {
+                    $product = wc_get_product($cart_item['product_id']);
+                    $miles = $this->get_product_miles($product);
+                    $subtotal = $cart_item['line_subtotal'];
+                    $quantity = $subtotal / $product->get_price();
+                    $total += $miles * $quantity;
+                }
+                return $total;
             }
-            return $total;
+            return 0;
         }
 
         public function render_logo() {
@@ -353,7 +363,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($this->settings['osm-mini-cart-page'] != 'yes') return;
             $cart = WC()->cart;
             $miles = $this->get_cart_miles($cart);
-            $this->render_miles_flag($miles);
+            $this->render_miles_message($miles);
         }
 
         public function render_cart_earn_miles_message() {
@@ -719,8 +729,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
             $token = $login_resp['body']['token'];
 
-            $order_total = $order->get_total() * 100;
-            $order_currency = $order->get_currency();
             $merchant_ref = $order->get_id();
             $line_items = array();
             foreach ( $order->get_items() as $item_key => $item_values ) {
@@ -737,6 +745,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         "productTitle" => $product->get_name(),
                         "unitPrice" => floatval($product->get_price()),
                         "qty" => $item['quantity'],
+                        "subtotal" => floatval($item['subtotal']),
                     )
                 );
                 if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
@@ -748,6 +757,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 }
                 $line_items[] = $line_item;
             }
+
+            if (method_exists($order, 'get_coupons')) {
+                $coupons = $order->get_coupons();
+            } else {
+                $coupons = $order->get_items('coupon'); // fallback for pre WC 3.7
+            }
+            $order_discount = 0;
+            if ($coupons) {
+                foreach ($coupons as $coupon) {
+                    $order_discount += (float) $coupon->get_discount();
+                }
+            }
+            // order subtotal = cart total
+            $order_subtotal = $order->get_subtotal();
+            $order_total_for_reward = ($order_subtotal - $order_discount) * 100;
+            $order_total = $order->get_total() * 100;
+            $order_currency = $order->get_currency();
 
             $create_order_customer_data = array(
                 'firstName' => $order->get_billing_first_name(),
@@ -780,6 +806,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
 
             $create_order_data = array(
+                "totalForReward" => array(
+                    "amount" => $order_total_for_reward,
+                    "currency" => $order_currency, 
+                ),
                 "totalAmount" => array(
                     "amount" => $order_total,
                     "currency" => $order_currency,
