@@ -133,7 +133,7 @@ if (!class_exists('Divit_Plugin')) {
             
             ob_start();
 
-            ?><img src="<?php echo WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url'] ?>/brand/divit-logo-white.png" width="77.5px" height="25px" alt="Divit" /><?php
+            ?><img src="<?php echo WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url'] ?>/brand/fps-by-divit.png" width="97.2px" height="25px" alt="Divit" /><?php
 
             return ob_get_clean();
         }

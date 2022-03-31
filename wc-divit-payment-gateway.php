@@ -272,12 +272,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_miles_flag($miles) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
-            echo '<div class="divit_flag" style="display:inline-block;font-size:20px;line-height:28px;font-weight:bold;color: #1c1c1c;">';
-            echo '<div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;background-color:#FFCC33;padding:4px 8px;">';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:28px;height:28px;max-height:28px;" src="' . $static_url . '/miles/miles-flag-divit-icon-black-bordered.png" />';
-            echo '<b> <span class="divit_miles" style="margin:0 2px;">' . $miles . '</span> <span style="margin:0 4px;">=</span></b>';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:21.4px;height:26px;max-height:26px;" src="' . $static_url . '/miles/miles-flag-am-icon.png" />';
-            echo '<b <span class="divit_miles" style="margin:0 2px;">' . $miles . '</span></b>';
+            echo '<div class="divit_flag" style="display:inline-block;font-size:18px;line-height:28px;font-weight:bold;color: #1c1c1c;">';
+            echo '<div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="' . $static_url . '/miles/miles-icon.png" />';
+            echo '<b> <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span> <span style="margin:0 4px;">=</span></b>';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="' . $static_url . '/miles/miles-flag-am-colored-icon.png" />';
+            echo '<b <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span></b>';
             echo '</div>';
             echo '</div>';
         }
@@ -286,7 +286,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
             echo '<div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">';
-            echo '<span>' . __('Pay now and instantly earn ', 'woo-divit') . '</span>';
+            echo '<span>' . __('earn miles', 'woo-divit') . '</span>';
             echo '<span style="margin-right:5px;"></span>';
             echo $this->render_miles_flag($miles);
             // echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:24px;height:24px;" src="' . $static_url . '/miles/miles-icon.png" />';
@@ -392,11 +392,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function render_place_order_button_text($button_html) {
-            $divit_logo_img = '<img style="width:80px;height:31.5px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-black.png" />';
+            $divit_logo_img = '<img style="width:80px;height:28.53px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
             $button = '';
-            $button .= '<button type="submit" class="button alt" style="background-color:#FFCC33;border-radius:30px;" name="woocommerce_checkout_place_order" id="place_order">';
+            $button .= '<button type="submit" class="button alt" style="background-color:white;border-radius:30px;border:1px solid #1C1C1C;" name="woocommerce_checkout_place_order" id="place_order">';
             $button .= '<span style="color:#1c1c1c;display:flex;justify-content:center;align-items:center;">';
-            $button .= sprintf(__('%1$scheckout with%2$s %3$s', 'woo-divit'), '<span style="margin-right:-4px;">', '</span>', $divit_logo_img);
+            $button .= sprintf(__(' %3$s %1$scheckout%2$s', 'woo-divit'), '<span style="font-size:16px;margin-top:8px;margin-left:8px;">', '</span>', $divit_logo_img);
             $button .= '</button>';
             ?>
             <script>
@@ -900,6 +900,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <?php $this->render_checkout_earn_miles_message() ?>
                 <?php
                     if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER):
+                        echo '<div style="margin-top:30px;"></div>';
                         woocommerce_form_field( 'divit_promotion_code', array(
                             'type'          => 'text',
                             'class'         => array('transaction_type form-row-wide'),
