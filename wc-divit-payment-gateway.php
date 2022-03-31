@@ -631,19 +631,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         ),
                         'default' => self::CAMPAIGN_MODE_ORDER,
                     ),
+                    'selected_campaign_id' => array(
+                        'title' => 'Order campaign',
+                        'type' => 'select',
+                        'options' => $this->campaigns_to_options($this->settings['campaigns']),
+                        'default' => '',
+                        // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
+                        'description' => 'works in order campaign mode only',
+                    )
                 ));
-
-                if ($this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER) {
-                    $form_fields = array_merge($form_fields, array(
-                        'selected_campaign_id' => array(
-                            'title' => 'Order campaign',
-                            'type' => 'select',
-                            'options' => $this->campaigns_to_options($this->settings['campaigns']),
-                            'default' => '',
-                            'description' => 'works in order campaign mode only',
-                        )
-                    ));
-                }
             }
 
             $this->form_fields = $form_fields;
