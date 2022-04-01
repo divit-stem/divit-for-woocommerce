@@ -250,14 +250,54 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 return $this->calc_earn_miles($total);
             } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
                 // ignore discount, only calcuate total miles,
-                // to support product discount, calcuate the actual total
+                // to support product discount, calcuate the subtotal for each type of product
                 $total = 0;
                 foreach ( $cart->get_cart() as $cart_item ) {
-                    $product = wc_get_product($cart_item['product_id']);
-                    $miles = $this->get_product_miles($product);
                     $subtotal = $cart_item['line_subtotal'];
-                    $quantity = $subtotal / $product->get_price();
-                    $total += $miles * $quantity;
+                    $product = wc_get_product($cart_item['product_id']);
+                    $campaign = $this->get_product_campaign_by_id($product->get_id());
+                    if (!empty($campaign)) {
+                        $total += $this->calc_earn_miles($subtotal, $campaign);
+                    }
+                }
+                return $total;
+            }
+            return 0;
+        }
+
+        public function get_order_discount($order) {
+            if (method_exists($order, 'get_coupons')) {
+                $coupons = $order->get_coupons();
+            } else {
+                $coupons = $order->get_items('coupon'); // fallback for pre WC 3.7
+            }
+            $order_discount = 0;
+            if ($coupons) {
+                foreach ($coupons as $coupon) {
+                    $order_discount += (float) $coupon->get_discount();
+                }
+            } 
+            return $order_discount;
+        }
+
+        public function get_order_miles($order) {
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+                $order_subtotal = $order->get_subtotal();
+                $order_discount = $this->get_order_discount($order);
+                $total = $order_subtotal - $order_discount;
+                return $this->calc_earn_miles($total);
+            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                // ignore discount, only calcuate total miles,
+                // to support product discount, calcuate the subtotal for each type of product
+                $total = 0;
+                foreach ( $order->get_items() as $item_key => $item_values ) {
+                    $subtotal = $item_values['line_subtotal'];
+                    $item = $item_values->get_data();
+                    $product = wc_get_product($item['product_id']);
+                    $campaign = $this->get_product_campaign_by_id($product->get_id());
+                    if (!empty($campaign)) {
+                        $total += $this->calc_earn_miles($subtotal, $campaign);
+                    }
                 }
                 return $total;
             }
@@ -726,6 +766,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $token = $login_resp['body']['token'];
 
             $merchant_ref = $order->get_id();
+
             $line_items = array();
             foreach ( $order->get_items() as $item_key => $item_values ) {
                 $item = $item_values->get_data();
@@ -747,26 +788,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
                     $campaign = $this->get_product_campaign_by_id($product->get_id());
                     if (!empty($campaign)) {
-                        $line_item['itemData']['campaignID'] = $campaign['campaignID'];
+                        $line_item['itemData']['promoCode'] = $campaign['promoCode'];
                         $line_item['itemData']['campaignMode'] = 'addition';
                     }
                 }
                 $line_items[] = $line_item;
             }
 
-            if (method_exists($order, 'get_coupons')) {
-                $coupons = $order->get_coupons();
-            } else {
-                $coupons = $order->get_items('coupon'); // fallback for pre WC 3.7
-            }
-            $order_discount = 0;
-            if ($coupons) {
-                foreach ($coupons as $coupon) {
-                    $order_discount += (float) $coupon->get_discount();
-                }
-            }
             // order subtotal = cart total
+            $order_miles = $this->get_order_miles($order);
             $order_subtotal = $order->get_subtotal();
+            $order_discount = $this->get_order_discount($order);
             $order_total_for_reward = ($order_subtotal - $order_discount) * 100;
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
@@ -784,27 +816,45 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'language' => 'en-US'
             );
 
-            // promotion code for added by customer
+            // promotion code that campaign used
+            $order_promo_code = $this->selected_campaign['promoCode'];
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                $order_promo_code = '';
+            }
+
+            // promotion code that customer used in order campaign mode only
             $promotion_code = '';
             $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
             if (!empty($promo)) {
                 $promotion_code = $promo['promoCode'];
             }
-            $order->update_meta_data('divit_promotion_code', $promotion_code);
-            $order->save();
-
-            $order_promo_code = $this->selected_campaign['promoCode'];
-            if (!empty($promotion_code)) {
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER && !empty($promotion_code)) {
                 $order_promo_code = $promotion_code;
             }
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                $order_promo_code = '';
+
+            // save promotion code for reference
+            $log_promotion_code = array();
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+                $log_promotion_code['order'] = $order_promo_code;
+            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                foreach ( $order->get_items() as $item_key => $item_values ) {
+                    $item = $item_values->get_data();
+                    $product = wc_get_product($item['product_id']);
+                    $campaign = $this->get_product_campaign_by_id($product->get_id());
+                    $log_promotion_code[$item['product_id']] = $campaign['promoCode'] ?? "";
+                }
             }
+            $order->update_meta_data('divit_promotion_code', json_encode($log_promotion_code));
+
+            // save number of miles reward to customer
+            $order->update_meta_data('divit_miles_for_reward', $order_miles);
+            $order->save();
 
             $create_order_data = array(
+                "milesForReward" => $order_miles,
                 "totalForReward" => array(
                     "amount" => $order_total_for_reward,
-                    "currency" => $order_currency, 
+                    "currency" => $order_currency,
                 ),
                 "totalAmount" => array(
                     "amount" => $order_total,
