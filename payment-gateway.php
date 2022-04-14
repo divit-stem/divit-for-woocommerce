@@ -40,7 +40,7 @@ if (!class_exists('Divit_Plugin')) {
 			}
 
             self::init();
-            Divit_Plugin_Cron::create_jobs();
+            // Divit_Plugin_Cron::create_jobs();
         }
 
         public static function deactivate_plugin()
@@ -50,7 +50,7 @@ if (!class_exists('Divit_Plugin')) {
 			}
 
 			self::init();
-			Divit_Plugin_Cron::delete_jobs();
+			// Divit_Plugin_Cron::delete_jobs();
 		}
 
         public static function uninstall_plugin()
@@ -88,8 +88,8 @@ if (!class_exists('Divit_Plugin')) {
                 add_shortcode( 'divit_earn_miles_paragraph', array( $gateway, 'shortcode_divit_earn_miles_paragraph' ) );
 
                 // cron
-                add_action( 'divit_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );
-                add_filter( 'cron_schedules', array('Divit_Plugin_Cron', 'edit_cron_schedules'), 10, 1 );
+                // add_action( 'divit_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );
+                // add_filter( 'cron_schedules', array('Divit_Plugin_Cron', 'edit_cron_schedules'), 10, 1 );
 
                 // admin page
                 add_filter( 'woocommerce_product_data_tabs', array($gateway, 'divit_product_data_tabs') );
