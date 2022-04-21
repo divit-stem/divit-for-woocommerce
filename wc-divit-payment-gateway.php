@@ -29,15 +29,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_settings();
 
             // setting
-            $this->enabled           = $this->settings['enabled'];
-            $this->mode              = $this->settings['mode'];
-            $this->title             = $this->settings['title'];
-            $this->description       = $this->settings['description'];
-            $this->client_id = $this->settings['client_id'];
-            $this->client_secret = $this->settings['client_secret'];
+            $this->enabled = $this->settings['enabled'];
+            $this->mode = $this->settings['mode'];
+            $this->title = $this->settings['title'];
+            $this->description = $this->settings['description'];
+            $this->api_key = $this->settings['api_key'];
 
             // merchant setup
-            $this->token = $this->settings['token'];
             $this->merchant_id = $this->settings['merchant_id'];
             $this->campaigns = $this->settings['campaigns'];
             $this->selected_campaign = $this->find_campaign($this->settings['selected_campaign_id']);
@@ -100,7 +98,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function set_default_settings() {
             // account
-            $this->set_default_setting('token', '');
             $this->set_default_setting('merchant_id', '');
             $this->set_default_setting('campaigns', array());
             $this->set_default_setting('selected_campaign_id', '');
@@ -125,32 +122,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return update_option($this->get_option_key(), $this->settings, 'yes');
 		}
 
-        public function reset_settings() {
-            $this->settings['token'] = '';
-            $this->settings['merchant_id'] = '';
-            $this->settings['campaigns'] = array();
-            $this->settings['selected_campaign_id'] = '';
-            $this->settings['campaign_mode'] = '';
-            return update_option($this->get_option_key(), $this->settings, 'yes'); 
-        }
-
         public function setup_merchant() {
-            // set login profile
-            $login_resp = $this->login($this->settings['client_id'], $this->settings['client_secret']);
-            if ($login_resp['status_code'] != 200) {
-                self::log("login fail when setup, " . json_encode($this->settings));
-                return $this->reset_settings();
+            $api_key = $this->settings['api_key'];
+
+            // get merchant id
+            $merchant_resp = $this->get_merchant($api_key);
+            if ($merchant_resp['status_code'] != 200) {
+                self::log("get merchant fail when setup, " . json_encode($this->settings));
+                return;
             }
-            $token = $login_resp['body']['token'];
-            $this->settings['token'] = $token;
-            $merchant_id = get_jwt_payload($token)->pid;
+            $merchant_id = $merchant_resp['body']['data'][0]['merchantID'];
             $this->settings['merchant_id'] = $merchant_id;
 
             // set campaigns and earn miles rate
-            $campaigns_resp = $this->get_campaigns($merchant_id, $token);
+            $campaigns_resp = $this->get_campaigns($merchant_id, $api_key);
             if ($campaigns_resp['status_code'] != 200) {
                 self::log("get campaigns fail when setup, " . json_encode($campaigns_resp['body']));
-                return $this->reset_settings();
+                return;
             }
             $campaigns = $campaigns_resp['body']['data'];
             $active_campaigns = array_values(array_filter($campaigns, function ($campaign) {
@@ -159,10 +147,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->settings['campaigns'] = $active_campaigns;
 
             // set selected campaign, find in campaign list
-            // prefill the campaign if empty
-            if (empty($this->settings['selected_campaign_id']) && !empty($active_campaigns)) {
-                $this->settings['selected_campaign_id'] = $active_campaigns[0]['campaignID'];
-            }
             $campaign = $this->find_campaign($this->settings['selected_campaign_id']);
             if (empty($campaign)) {
                 $this->settings['selected_campaign_id'] = '';
@@ -486,10 +470,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // get miles from server
             $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
-            $login_resp = $this->login($this->client_id, $this->client_secret);
-            if ($login_resp['status_code'] != 200) return;
-            $token = $login_resp['body']['token'];
-            $divit_order_resp = $this->get_order($divit_order_id, $token);
+            $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
             if ($divit_order_resp['status_code'] != 200) return;
 
             $divit_order = $divit_order_resp['body']['data'];
@@ -509,10 +490,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // get miles from server
             $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
-            $login_resp = $this->login($this->client_id, $this->client_secret);
-            if ($login_resp['status_code'] != 200) return;
-            $token = $login_resp['body']['token'];
-            $divit_order_resp = $this->get_order($divit_order_id, $token);
+            $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
             if ($divit_order_resp['status_code'] != 200) return;
 
             $divit_order = $divit_order_resp['body']['data'];
@@ -530,7 +508,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function campaigns_to_options($campaigns) {
-            return array_reduce(
+            $options = array_reduce(
                 $campaigns, 
                 function ($arr, $v) { 
                     $arr[$v['campaignID']] = $v['title'];
@@ -538,6 +516,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 },
                 array()
             );
+            return array_merge(array('' => 'none'), $options);
         }
 
         public function divit_product_data_tabs( $tabs ) {
@@ -650,17 +629,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'default' => 'pay now, pay later, earn miles',
                         'description' => '',
                     ),
-                    'client_id' => array(
-                        'title' => 'Client id',
-                        'type' => 'text',
-                        'default' => '',
-                        'description' => 'client id for login divit',
-                    ),
-                    'client_secret' => array(
-                        'title' => 'Client secret',
+                    'api_key' => array(
+                        'title' => 'Api key',
                         'type' => 'password',
                         'default' => '',
-                        'description' => 'client secret for login divit',
+                        'description' => 'api key for divit merchant',
                     ),
                     'campaign_mode' => array(
                         'title' => 'Campaign mode',
@@ -677,7 +650,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'options' => $this->campaigns_to_options($this->settings['campaigns']),
                         'default' => '',
                         // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
-                        'description' => 'works in order campaign mode only',
+                        'description' => 'only available in order campaign mode',
                     )
                 ));
             }
@@ -753,17 +726,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // $allmeta = get_woocommerce_currency();
             // wc_add_notice(json_encode($allmeta), 'error');
             // return;
-
-            // login partner
-            $login_resp = $this->login($this->client_id, $this->client_secret);
-            if ($login_resp['status_code'] != 200) {
-                self::log("divit login error 1000");
-                self::log($login_resp['status_code']);
-                self::log(json_encode($login_resp['body']));
-                wc_add_notice('payment error (1000), please try again.', 'error');
-                return;
-            }
-            $token = $login_resp['body']['token'];
 
             $merchant_ref = $order->get_id();
 
@@ -887,7 +849,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // wc_add_notice(json_encode($create_order), 'error');
             // return;
 
-            $create_order_resp = $this->create_order($create_order, $token);
+            $create_order_resp = $this->create_order($create_order, $this->api_key);
             if ($create_order_resp['status_code'] != 200) {
                 if ($create_order_resp['status_code'] == 400) {
                     $err = $create_order_resp['body'];
@@ -1012,15 +974,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $promotion_code = trim($promotion_code);
 
-            $login_resp = $this->login($this->client_id, $this->client_secret);
-            if ($login_resp['status_code'] != 200) {
-                WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
-                wp_send_json_error('merchant error');
-                die();
-            }
-            $token = $login_resp['body']['token'];
-
-            $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $token);
+            $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $this->api_key);
             if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
                 WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
                 wp_send_json_error('invalid promotion code, '. $resp['body']['data']['promoCode']);
@@ -1066,33 +1020,39 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return http_request($url, 'POST', $body, $headers);
         }
 
-        public function create_order($create_order, $token) {
-            $url = $this->get_env()['api_url'] . '/paynow/orders/fast';
-            $header = array('content-type: application/json', 'authorization: Bearer ' . $token);
-            return http_request($url, 'POST', $create_order, $header);
-        }
-
-        public function get_order($order_id, $token) {
-            $url = $this->get_env()['api_url'] . '/paynow/orders/' . $order_id;
-            $header = array('content-type: application/json', 'authorization: Bearer ' . $token);
+        public function get_merchant($api_key) {
+            $url = $this->get_env()['api_url'] . '/partners';
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
             return http_request($url, 'GET', array(), $header);
         }
 
-        public function get_campaigns($merchant_id, $token) {
+        public function create_order($create_order, $api_key) {
+            $url = $this->get_env()['api_url'] . '/paynow/orders/fast';
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
+            return http_request($url, 'POST', $create_order, $header);
+        }
+
+        public function get_order($order_id, $api_key) {
+            $url = $this->get_env()['api_url'] . '/paynow/orders/' . $order_id;
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
+            return http_request($url, 'GET', array(), $header);
+        }
+
+        public function get_campaigns($merchant_id, $api_key) {
             $url = $this->get_env()['api_url'] . '/campaign/merchants/' . $merchant_id;
-            $header = array('content-type: application/json', 'authorization: Bearer ' . $token);
+            $header = array('content-type: application/json', 'API-Key:' . $api_key);
             return http_request($url, 'GET',  array(), $header);
         }
 
-        public function get_promotion_code($merchant_id, $promotion_code, $token) {
+        public function get_promotion_code($merchant_id, $promotion_code, $api_key) {
             $url = $this->get_env()['api_url'] . '/campaign/merchants/' . $merchant_id . '/promo/' . $promotion_code;
-            $header = array('content-type: application/json', 'authorization: Bearer ' . $token);
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
             return http_request($url, 'GET',  array(), $header);
         }
 
-        public function apply_promotion_code($order_id, $promotion_code, $token) {
+        public function apply_promotion_code($order_id, $promotion_code, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/fast/orders/' . $order_id . '/promo';
-            $header = array('content-type: application/json', 'authorization: Bearer ' . $token);
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
             $body = array('promoCode' => $promotion_code);
             return http_request($url, 'PATCH', $body, $header);
         }
@@ -1111,7 +1071,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // validate signature
             $signature = array_key_exists('X-Divit-Signature', $headers) ? $headers['X-Divit-Signature'] : '';
             $signature = array_key_exists('x-divit-signature', $headers) ? $headers['x-divit-signature'] : $signature;
-            $valid = validate_webhook($signature, $this->client_secret, $resp);
+            $valid = validate_webhook($signature, $this->api_key, $resp);
             if (!$valid) {
                 $message = "callback: signature valid error, merchant reference {$merchant_ref}";
                 self::log($message);
