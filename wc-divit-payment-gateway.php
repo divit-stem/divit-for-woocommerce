@@ -318,7 +318,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '<div class="divit_flag" style="display:inline-block;font-size:18px;line-height:28px;font-weight:bold;color: #1c1c1c;">';
             echo '<div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">';
             echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="' . $static_url . '/miles/miles-icon.png" />';
-            echo '<b> <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span> <span style="margin:0 4px;">=</span></b>';
+            echo '<b> <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span> <span style="margin-left:0;margin-right:6px;">=</span></b>';
             echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="' . $static_url . '/miles/miles-flag-am-colored-icon.png" />';
             echo '<b <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span></b>';
             echo '</div>';
@@ -330,7 +330,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $static_url = $this->get_env()['static_url'];
             echo '<div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">';
             echo '<span>' . __('earn miles', 'woo-divit') . '</span>';
-            echo '<span style="margin-right:5px;"></span>';
+            echo '<span style="width:10px;"></span>';
             echo $this->render_miles_flag($miles);
             // echo '<img style="display:inline-block;vertical-align:middle;margin:0 4px;width:24px;height:24px;" src="' . $static_url . '/miles/miles-icon.png" />';
             // echo '<b> <span class="divit_message_miles">' . $miles . '</span> miles.</b>';
@@ -916,19 +916,34 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 echo $this->description;
                 return;
             }
+            $currency_symbol = get_woocommerce_currency_symbol();
+            $cart_total = $this->get_cart_total(WC()->cart);
+            $shipping_total = WC()->cart->get_shipping_total();
+            $formatted_order_total = $currency_symbol . ($cart_total + $shipping_total);
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
             $valid_promo = WC()->session->get(self::DIVIT_VALID_PROMO_CODE, '');
             // $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
     ?>
-            <p class="payment_method_<?php echo $this->id ?>_desc">
-                <?php $this->render_checkout_earn_miles_message() ?>
+            <div class="payment_method_<?php echo $this->id ?>_desc">
+                <div class="divit_checkout_paynow">
+                    <div class="divit_checkout_paynow_header" style="display:flex;justify-content:space-between;align-items:center;font-size:18px;color:#1c1c1c;">
+                        <div class="divit_checkout_paynow_title">
+                            <?php _e('pay now', 'woo-divit'); ?>
+                        </div>
+                        <div class="divit_checkout_paynow_total">
+                            <?php echo $formatted_order_total ?>
+                        </div>
+                    </div>
+                    <?php $this->render_checkout_earn_miles_message() ?>
+                </div>
                 <?php
                     if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER):
                         echo '<div style="margin-top:30px;"></div>';
                         woocommerce_form_field( 'divit_promotion_code', array(
                             'type'          => 'text',
                             'class'         => array('transaction_type form-row-wide'),
-                            'label'         => __('Promotion code', 'woo-divit'),
+                            'label'         => __('promotional code', 'woo-divit'),
+                            'placeholder'    => __('enter promotional code', 'woo-divit'),
                             'description'   => '',
                         ), $promotion_code);
                 ?>
@@ -967,7 +982,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     })
                 </script>
                 <?php endif ?>
-            </p>
+            </div>
     <?php
         }
 
