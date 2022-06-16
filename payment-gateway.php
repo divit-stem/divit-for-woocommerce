@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & on-site messaging
- * Version:           1.2.2
+ * Version:           1.2.3
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
