@@ -38,7 +38,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // merchant setup
             $this->merchant_id = $this->settings['merchant_id'];
-            $this->campaigns = $this->settings['campaigns'];
+            $this->campaigns = $this->settings['campaigns'] ?? array();
             $this->selected_campaign = $this->find_campaign($this->settings['selected_campaign_id']);
             $this->campaign_mode = $this->settings['campaign_mode'];
             
@@ -49,14 +49,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // validation
             // TODO: remove for other merchants
-            add_action('woocommerce_checkout_process', array( $this, 'custom_validate_billing_phone') );
+            // add_action('woocommerce_checkout_process', array( $this, 'custom_validate_billing_phone') );
 
             // AJAX
             add_action("wp_ajax_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
             add_action("wp_ajax_nopriv_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
+            add_action("wp_ajax_divit_get_user_profile", array($this, "divit_get_user_profile") );
+            add_action("wp_ajax_nopriv_divit_get_user_profile", array($this, "divit_get_user_profile") );
 
             // register callback for `webhook_events`
-            add_action( 'woocommerce_api_callback_divit_payment', array($this, 'callback_handler') );
+            add_action( 'woocommerce_api_callback_divit_payment', array($this, 'callback_divit_payment_handler') );
+            add_action( 'woocommerce_api_divit_auth_login', array($this, 'divit_auth_login_handler') );
+            add_action( 'woocommerce_api_divit_auth_logout', array($this, 'divit_auth_logout_handler') );
 
             if (!$this->is_valid_for_use()) {
                 $this->enabled = 'no';
@@ -114,6 +118,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('osm-checkout-page', 'yes');
             $this->set_default_setting('osm-order-receive-page', 'yes');
             $this->set_default_setting('osm-order-email', 'yes');
+
+            // sso
+            $this->set_default_setting('sso-enabled', 'no');
+            $this->set_default_setting('sso-login-button-menu', 'primary');
         }
 
         public function process_admin_options() {
@@ -437,7 +445,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_place_order_button_text($button_html) {
             $divit_logo_img = '<img style="width:80px;height:28.53px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
             $button = '';
-            $button .= '<button type="submit" class="button alt" style="background-color:white;border-radius:30px;border:1px solid #1C1C1C;" name="woocommerce_checkout_place_order" id="place_order">';
+            $button .= '<button type="submit" class="button alt divit_place_order_button" name="woocommerce_checkout_place_order" id="place_order">';
             $button .= '<span style="color:#1c1c1c;display:flex;justify-content:center;align-items:center;">';
             $button .= sprintf(__(' %3$s %1$scheckout%2$s', 'woo-divit'), '<span style="font-size:16px;margin-top:8px;margin-left:8px;">', '</span>', $divit_logo_img);
             $button .= '</button>';
@@ -528,7 +536,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function campaigns_to_options($campaigns) {
             $options = array_reduce(
-                $campaigns, 
+                $campaigns ?? array(),
                 function ($arr, $v) { 
                     $arr[$v['campaignID']] = $v['title'];
                     return $arr; 
@@ -622,6 +630,30 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 ));
             }
 
+            if (isset($_GET['panel']) && $_GET['panel'] == 'single-sign-on') {
+                $menu_location_options = array_reduce(array_keys(get_nav_menu_locations()), function ($arr, $v) { 
+                        $arr[$v] = $v;
+                        return $arr; 
+                    },
+                    array()
+                );
+
+                $form_fields = array_merge($form_fields, array(
+                    'sso-enabled' => array(
+                        'title' => __('Enable', 'woo-divit'),
+                        'type' => 'checkbox',
+                        'label' => __('Enable divit single sign on', 'woo-divit'),
+                        'default' => 'no',
+                    ),
+                    'sso-login-button-menu' => array(
+                        'title' => __('Login Button in menu location', 'woo-divit'),
+                        'type' => 'select',
+                        'options' => $menu_location_options,
+                        'default' => 'primary',
+                    ),
+                ));
+            }
+
             if (!isset($_GET['panel']) || (isset($_GET['panel']) && $_GET['panel'] == 'payment')) {
                 $form_fields = array_merge($form_fields, array(
                     'enabled' => array(
@@ -693,20 +725,34 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $updated_date = $this->settings['updated_date'];
             $loggedin = !empty($this->merchant_id);
     ?>
-            <?php echo $loggedin ? 
-                '<div class="notice notice-success notice-alt"><h4>Setup account done</h4></div>' : 
-                '<div class="notice notice-error notice-alt"><h4>Require setup account</h4></div>'
-            ?>
+            <?php if (!$loggedin) echo '<div class="notice notice-error notice-alt"><h4>Require setup account</h4></div>' ?>
 
             <?php if ($loggedin) { ?>
-                <h3 class="wc-settings-sub-title">Divit Account</h3>
-                <div><b>Environment: </b><?php echo $environment ?></div>
-                <div><b>Merchant id: </b><?php echo $merchant_id ?></div>
-                <div><b>Campaign mode: </b><?php echo $campaign_mode ?></div>
+                <h3 class="wc-settings-sub-title">Divit Merchant Account</h3>
+                <table class="widefat striped" cellspacing="0">
+                    <tr>
+                        <th>Enviroment</th>
+                        <td><?php echo $environment; ?></td>
+                    </tr>
+                    <tr>
+                        <th>Merchant id</th>
+                        <td><?php echo $merchant_id ?></td>
+                    </tr>
+                    <tr>
+                        <th>Campaign mode</th>
+                        <td><?php echo $campaign_mode ?></td>
+                    </tr>
                 <?php if ($campaign_mode == self::CAMPAIGN_MODE_ORDER) { ?>
-                    <div><b>Order campaign: </b><?php echo !empty($selected_campaign) ? $selected_campaign['title'] : 'none' ?></div>
+                    <tr>
+                        <th>Order campaign</th>
+                        <td><?php echo !empty($selected_campaign) ? $selected_campaign['title'] : 'none' ?></td>
+                    </tr>
                 <?php } ?>
-                <div><b>Last updated: </b><?php echo $updated_date ?></div>
+                    <tr>
+                        <th>Last updated</th>
+                        <td><?php echo $updated_date ?></td>
+                    </tr>
+                </table>
             <?php } ?>
 
             <h3></h3>
@@ -716,13 +762,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     href="?page=wc-settings&tab=checkout&section=divit&panel=payment" 
                     class="nav-tab <?php echo $panel == 'payment' ? 'nav-tab-active' : '' ?>"
                 >
-                    Divit Payment
+                    Payment
                 </a>
                 <a 
                     href="?page=wc-settings&tab=checkout&section=divit&panel=on-site-messaging" 
                     class="nav-tab <?php echo $panel == 'on-site-messaging' ? 'nav-tab-active' : '' ?>"
                 >
                     On-site messaging
+                </a>
+                <a 
+                    href="?page=wc-settings&tab=checkout&section=divit&panel=single-sign-on" 
+                    class="nav-tab <?php echo $panel == 'single-sign-on' ? 'nav-tab-active' : '' ?>"
+                >
+                    Single sign on
                 </a>
             </h2>
 
@@ -784,16 +836,26 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
 
+            // address
+            $has_details_addr = get_post_meta($order_id, 'billing_address_3');
+            $address = array(
+                'floor' => $has_details_addr ? $order->get_billing_address_1() : '',
+                'building' => $has_details_addr ? get_post_meta($order_id, 'billing_address_2') : $order->get_billing_address_1(),
+                'street' => $has_details_addr ? get_post_meta($order_id, 'billing_address_3') : $order->get_billing_address_2(),
+                'district' => $order->get_billing_city(),
+                'region' => $order->get_billing_state(),
+            );
+
             $create_order_customer_data = array(
                 'firstName' => $order->get_billing_first_name(),
                 'lastName' => $order->get_billing_last_name(),
                 'email' => $order->get_billing_email(),
                 'tel' => '+852' . $order->get_billing_phone(),
-                'floor' => '',
-                'building' => $order->get_billing_address_2(),
-                'street' => $order->get_billing_address_1(),
-                'district' => $order->get_billing_city(),
-                'region' => $order->get_billing_state(),
+                'floor' => $address['floor'],
+                'building' => $address['building'],
+                'street' => $address['street'],
+                'district' => $address['district'],
+                'region' => $address['region'],
                 'language' => 'en-US'
             );
 
@@ -851,9 +913,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "promoCode" => $order_promo_code,
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
-                // testing
-                // "webhookEvents" => 'https://72a0-218-253-146-226.jp.ngrok.io' . '?wc-api=CALLBACK_DIVIT_PAYMENT',
                 "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                // "webhookEvents" => 'https://devwoo.free.beeceptor.com',
             );
 
             $create_order = array(
@@ -885,24 +946,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $create_order_token = $create_order_resp_data['token'];
             self::log('created order ' . json_encode($create_order) . ', ' . json_encode($create_order_resp['body']));
 
-            // TODO: cancel previous order
+            // save divit order id for cancel, reference
             $order->update_meta_data('divit_order_id', $create_order_id);
             $order->save();
-
-            // promotion code for customer add
-            // $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
-            // $promotion_code = '';
-            // if (!empty($promo)) {
-            //     $promotion_code = $promo['promoCode'];
-            //     $apply_promotion_code_resp = $this->apply_promotion_code($create_order_id, $promotion_code, $create_order_token);
-            //     if ($apply_promotion_code_resp['status_code'] != 200) {
-            //         self::log('apply promo code error: ' . $promotion_code . ', ', json_decode($apply_promotion_code_resp['body']));
-            //         wc_add_notice('cannot apply promotion code, please contact customer services', 'error');
-            //         return;
-            //     }
-            // }
-            // $order->update_meta_data('divit_promotion_code', $promotion_code);
-            // $order->save();
 
             return array(
                 'result' => 'success',
@@ -938,7 +984,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 </div>
                 <?php
                     if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER):
-                        echo '<div style="margin-top:30px;"></div>';
+                        echo '<div class="divit_promotion_code_field_margin"></div>';
                         woocommerce_form_field( 'divit_promotion_code', array(
                             'type'          => 'text',
                             'class'         => array('transaction_type form-row-wide'),
@@ -1088,7 +1134,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return http_request($url, 'PATCH', $body, $header);
         }
 
-        public function callback_handler() {
+        public function get_user_profile($access_token, $scope, $api_key) {
+            $url = $this->get_env()['api_url'] . '/auth/customer';
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
+            $body = array('accessToken' => $access_token, 'scope' => $scope);
+            return http_request($url, 'GET', $body, $header);
+        }
+
+        public function revoke_user($refresh_token, $api_key) {
+            $url = $this->get_env()['api_url'] . '/auth/token/revoke';
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
+            $body = array('refreshToken' => $refresh_token);
+            return http_request($url, 'POST', $body, $header);
+        }
+
+        public function callback_divit_payment_handler() {
             $resp = file_get_contents('php://input');
             $json = json_decode($resp, true);
             $headers = getallheaders();
@@ -1109,6 +1169,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 wp_send_json($message);
                 exit;
             }
+
+            // cancelled order
+            if ($json['event']['eventId'] == 4000) {
+                $order_id = $merchant_ref;
+                $order = wc_get_order($merchant_ref);
+                $is_same_order = get_post_meta($order_id, 'divit_order_id')[0] == $json['eventData']['orderID'];
+                if ($is_same_order && !$order->is_paid()) {
+                    $order->add_order_note(__('Payment is cancelled by customer', 'woo-divit'));
+                    $order->update_status('failed');
+                    $message = "callback: order is cancelled, merchant reference {$merchant_ref}";
+                    self::log($message);
+                    wp_send_json($message);
+                    exit; 
+                }
+            } 
 
             // only handle completed order
             if ($json['event']['eventId'] != 2001) {
@@ -1157,6 +1232,118 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
             WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, array());
             WC()->session->set(self::DIVIT_VALID_PROMO_CODE, '');
+        }
+
+        /**
+         * divit auth
+         */
+
+        const DIVIT_AUTH_COOKIE_KEY = 'divit-auth';
+        const DIVIT_AUTH_KEY_PREFIX = 'divit_auth_';
+
+        public function get_divit_user() {
+            if (isset($_COOKIE[self::DIVIT_AUTH_COOKIE_KEY])) {
+                $id = $_COOKIE[self::DIVIT_AUTH_COOKIE_KEY];
+                if (!empty($id)) {
+                    return get_option(self::DIVIT_AUTH_KEY_PREFIX . $id, NULL);
+                }
+            }
+            return null;
+        }
+
+        public function divit_auth_login_handler() {
+            // validation
+            if (!isset_all_keys(array('customerID', 'accessToken', 'refreshToken', 'scope', 'expiresIn'), $_GET)) {
+                $this->divit_auth_logout();
+                wc_add_notice(_('login to divit fail'), 'error');
+                wp_redirect(get_redirect_url());
+                exit;
+            }
+
+            // save data in db
+            $customer_id = $_GET['customerID'];
+            $access_token = $_GET['accessToken'];
+            $refresh_token = $_GET['refreshToken'];
+            $scope = $_GET['scope'];
+            $expire = $_GET['expiresIn'];
+
+            // create user session key for divit auth
+            $id = wp_generate_uuid4();
+            $expire_sec = time() + ($expire - 3600 * 24 * 1);
+            setcookie(self::DIVIT_AUTH_COOKIE_KEY, $id, $expire_sec, COOKIEPATH, COOKIE_DOMAIN);
+            
+            update_option(self::DIVIT_AUTH_KEY_PREFIX . $id, array(
+                "customer_id" => $customer_id,
+                "access_token" => $access_token, 
+                "refresh_token" => $refresh_token,
+                "scope" => $scope,
+                "expire" => $expire,
+            ));
+
+            wc_add_notice(_('login to divit successfully'));
+            wp_redirect(get_redirect_url());
+            exit;
+        }
+
+        public function divit_auth_logout_handler() {
+            $this->divit_auth_logout();
+            wp_redirect(get_redirect_url());
+            exit;
+        }
+
+        public function divit_auth_logout() {
+            $user = $this->get_divit_user();
+            if ($user) {
+                $this->revoke_user($user['refresh_token'], $this->api_key);
+            }
+            setcookie(self::DIVIT_AUTH_COOKIE_KEY, '', time() - 1000, COOKIEPATH, COOKIE_DOMAIN);
+        }
+
+        public function divit_render_nav_login_item( $items, $args ) {
+            if ($this->settings['sso-enabled'] === 'yes' && $this->settings['sso-login-button-menu'] === $args->theme_location) {
+                $login_item = '';
+                $login_item .= '<li class="menu-item divit-login-item">';
+                $login_item .= '<a href="http://localhost:3000/sso?scope=full&redirectUrl=' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN' . '&redirect=' . get_current_url() . '">divit login</a>';
+                $login_item .= '</li>';
+
+                $user = $this->get_divit_user();
+                if (empty($user)) {
+                    $items .= $login_item;
+                } else {
+                    $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
+                    if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                        $this->divit_auth_logout();
+                        $items .= $login_item;
+                        return $items;
+                    } else {
+                        $profile = $profile_resp['body']['data'];
+                        $items .= '<li class="menu-item divit-login-item divit-login-item--loggined">';
+                        $items .= '<div clssa="divit-user-profile">';
+                        $items .= '<div class="divit-user-name">'. __("Hi") . ' ' . $profile['firstName'] . ' ' . $profile['lastName'] . '</div>';
+                        $items .= '<div class="divit-user-miles">'. intval($profile['milesBalance']['amount'] / 100) . '</div>';
+                        $items .= '<a href="' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url() . '">logout</a>';
+                        $items .= '</li>';
+                    }
+                }
+            }
+            return $items;
+        }
+
+        // ajax get user profile
+        public function divit_get_user_profile() {
+            $user = $this->get_divit_user();
+            if ($user) {
+                $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key); 
+                if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                    wp_send_json_error('invalid user');
+                    die();
+                }
+                $profile = $profile_resp['body']['data'];
+                wp_send_json_success($profile);
+                die();
+            }
+            wp_send_json_error('invalid user');
+            die();
         }
     }
 }

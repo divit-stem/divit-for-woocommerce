@@ -16,6 +16,8 @@
 
 require_once('utils.php');
 
+define('DIVIT_PLUGIN_VERSION', '1.2.3');
+
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
 
@@ -64,13 +66,12 @@ if (!class_exists('Divit_Plugin')) {
 
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
-            $active_plugins = apply_filters('active_plugins', get_option('active_plugins'));
             if ($this->custom_payment_is_woocommerce_active()) {
                 // register payment gateway
                 add_filter('woocommerce_payment_gateways', array($this, 'add_payment_gateway'));
                 
                 // add scripts
-                add_action( 'wp_enqueue_scripts', array($this, 'init_website_assets'), 10, 0 );
+                add_action('wp_enqueue_scripts', array( $this, 'divit_enqueue_script'));
                 add_filter( 'woocommerce_gateway_icon', array( $this, 'filter_woocommerce_gateway_icon' ), 10, 2 );
 
                 // woocommerce hooks
@@ -97,6 +98,9 @@ if (!class_exists('Divit_Plugin')) {
                 add_action( 'woocommerce_process_product_meta', array($gateway, 'divit_product_data_option_fields'), 10, 2 );
                 add_action( 'woocommerce_process_product_meta', array($gateway, 'divit_product_data_option_fields'), 10, 2  );
                 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'filter_action_links'), 10, 1 );
+
+                // nav items
+                add_filter( 'wp_nav_menu_items', array($gateway, 'divit_render_nav_login_item'), 10, 2);
                 
                 // translation
                 load_plugin_textdomain('woo-divit', FALSE, basename(dirname(__FILE__)) . '/languages/');
@@ -109,8 +113,9 @@ if (!class_exists('Divit_Plugin')) {
             return $gateways;
         }
 
-        public function init_website_assets() {
-            wp_enqueue_style( 'divit_css', plugins_url( 'css/divit.css', __FILE__ ), array(), time() );
+        public function divit_enqueue_script() {
+            wp_enqueue_style('divit-gateway-style', plugins_url('assets/css/divit-gateway.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
+            wp_enqueue_script('divit-gateway', plugins_url('assets/js/divit-gateway.js', __FILE__) , array( 'jquery') , DIVIT_PLUGIN_VERSION, true);
         }
 
         public function custom_payment_is_woocommerce_active()

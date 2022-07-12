@@ -1,0 +1,27 @@
+/* checkout */
+
+.divit_promotion_code_field_margin {
+	margin-top: 30px;
+}
+
+.divit_checkout_paynow {
+	border: 1px solid #DEDEDE;
+	background: white;
+	padding: 24px 24px 10px;
+	border-radius: 8px;
+}
+
+.divit_checkout_paynow_header {
+	font-size: 16px !important;
+	font-weight: bold;
+}
+
+.divit_checkout_paynow .divit_message {
+	font-size: 16px !important;
+}
+
+.divit_place_order_button {
+	background-color:white;
+	border-radius:30px;
+	border:1px solid #1C1C1C;
+}
