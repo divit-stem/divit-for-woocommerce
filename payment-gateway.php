@@ -86,7 +86,8 @@ if (!class_exists('Divit_Plugin')) {
                 add_action( 'woocommerce_thankyou', array($gateway, 'order_received_action'), 10, 1 );
 
                 // shortcode
-                add_shortcode( 'divit_earn_miles_paragraph', array( $gateway, 'shortcode_divit_earn_miles_paragraph' ) );
+                add_shortcode( 'divit_earn_miles_tag', array( $gateway, 'shortcode_divit_earn_miles_tag' ) );
+                add_shortcode( 'divit_login_button', array( $gateway, 'shortcode_divit_login_button' ) );
 
                 // cron
                 // add_action( 'divit_cron_jobs', array('Divit_Plugin_Cron', 'fire_jobs'), 10, 0 );

@@ -47,10 +47,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'setup_merchant'), 11, 0);
             // add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( 'Divit_Plugin_Cron', 'fire_jobs'), 12, 0);
 
-            // validation
-            // TODO: remove for other merchants
-            // add_action('woocommerce_checkout_process', array( $this, 'custom_validate_billing_phone') );
-
             // AJAX
             add_action("wp_ajax_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
             add_action("wp_ajax_nopriv_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
@@ -181,13 +177,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return update_option($this->get_option_key(), $this->settings, 'yes'); 
 		}
 
-        // only allow hong kong phone number
-        public function custom_validate_billing_phone() {
-            $is_correct = preg_match('/^[0-9]{8}$/', $_POST['billing_phone']);
-            if ( $_POST['billing_phone'] && !$is_correct) {
-                wc_add_notice( __( 'Please enter valid hong kong phone number' ), 'error' );
-            }
-        }
 
         public function is_earn_miles_enabled() {
             if ($this->enabled == 'no') {
@@ -362,7 +351,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '</div>';
         }
 
-        public function shortcode_divit_earn_miles_paragraph() {
+        public function shortcode_divit_earn_miles_tag() {
             if (!$this->is_earn_miles_enabled()) return;
             $product = get_product_from_the_post();
             if (empty($product)) return;
@@ -635,7 +624,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         $arr[$v] = $v;
                         return $arr; 
                     },
-                    array()
+                    array('' => 'none'),
                 );
 
                 $form_fields = array_merge($form_fields, array(
@@ -836,26 +825,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
 
-            // address
-            $has_details_addr = get_post_meta($order_id, 'billing_address_3');
-            $address = array(
-                'floor' => $has_details_addr ? $order->get_billing_address_1() : '',
-                'building' => $has_details_addr ? get_post_meta($order_id, 'billing_address_2') : $order->get_billing_address_1(),
-                'street' => $has_details_addr ? get_post_meta($order_id, 'billing_address_3') : $order->get_billing_address_2(),
-                'district' => $order->get_billing_city(),
-                'region' => $order->get_billing_state(),
-            );
-
             $create_order_customer_data = array(
                 'firstName' => $order->get_billing_first_name(),
                 'lastName' => $order->get_billing_last_name(),
                 'email' => $order->get_billing_email(),
                 'tel' => '+852' . $order->get_billing_phone(),
-                'floor' => $address['floor'],
-                'building' => $address['building'],
-                'street' => $address['street'],
-                'district' => $address['district'],
-                'region' => $address['region'],
+                'floor' => '',
+                'building' => $order->get_billing_address_1(),
+                'street' => $order->get_billing_address_2(),
+                'district' => $order->get_billing_city(),
+                'region' => $order->get_billing_state(),
                 'language' => 'en-US'
             );
 
@@ -1280,13 +1259,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "expire" => $expire,
             ));
 
-            wc_add_notice(_('login to divit successfully'));
+            wc_add_notice(__('login to divit successfully', 'woo-divit'));
             wp_redirect(get_redirect_url());
             exit;
         }
 
         public function divit_auth_logout_handler() {
             $this->divit_auth_logout();
+            wc_add_notice(__('logout divit successfully.', 'woo-divit'));
             wp_redirect(get_redirect_url());
             exit;
         }
@@ -1299,31 +1279,127 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             setcookie(self::DIVIT_AUTH_COOKIE_KEY, '', time() - 1000, COOKIEPATH, COOKIE_DOMAIN);
         }
 
-        public function divit_render_nav_login_item( $items, $args ) {
-            if ($this->settings['sso-enabled'] === 'yes' && $this->settings['sso-login-button-menu'] === $args->theme_location) {
-                $login_item = '';
-                $login_item .= '<li class="menu-item divit-login-item">';
-                $login_item .= '<a href="http://localhost:3000/sso?scope=full&redirectUrl=' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN' . '&redirect=' . get_current_url() . '">divit login</a>';
-                $login_item .= '</li>';
+        public function get_login_button_html() {
+            $static_url = $this->get_env()['static_url'];
 
+            $html = '';
+            $html .= '<div class="divit-login">';
+            $html .= '  <div class="divit-login-button">';
+            $html .= '      <div class="divit-login-button-content divit-login-text">';
+            $html .= '          ' . __('login', 'woo-divit');
+            $html .= '      </div>';
+            $html .= '      <div class="divit-arrow-down"></div>';
+            $html .= '  </div>';
+            $html .= '  <div class="divit-login-popup">';
+            $html .= '      <a class="divit-login-text" href="http://localhost:3000/sso?scope=full&redirectUrl=' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN' . '&redirect=' . get_current_url() . '">';
+            $html .= '          <div class="divit-login-button">';
+            $html .= '              ' . __('login', 'woo-divit');
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '      <div style="height:19px;"></div>';
+            $html .= '      <div class="divit-login-signup-text">don&rsquo;t have a divit account yet? <a href="' . $this->get_env()['web_url'] . '">sign up</a></div>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <div class="divit-separator"></div>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
+            $html .= '          <div class="divit-space-between">';
+            $html .= '              <div class="divit-link-text">convert my Asia Miles</div>';
+            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />'; 
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
+            $html .= '          <div class="divit-space-between">';
+            $html .= '              <div class="divit-link-text">view my divit account</div>';
+            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />'; 
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '  </div>';
+            $html .= '</div>';
+            return $html;
+        }
+
+        public function get_user_profile_html($profile) {
+            $static_url = $this->get_env()['static_url'];
+            $firstname = $profile['firstName'];
+            $miles = number_format(intval($profile['milesBalance']['amount'] / 100));
+
+            $html = '';
+            $html .= '<div class="divit-login">';
+            $html .= '  <div class="divit-login-button divit-loggedin">';
+            $html .= '      <div class="divit-login-button-content divit-user-profile">';
+            $html .= '          <div class="divit-user-name">'. __("Hi") . ', ' . $firstname . '</div>';
+            $html .= '          <div class="divit-items-center">';
+            $html .= '              <img src="' . $static_url . '/miles/miles-flag-divit-icon-black-bordered.png" style="margin-right:4px;" width="12px" height="12px" />';
+            $html .= '              <div class="divit-user-miles">'. $miles . '</div>';
+            $html .= '          </div>';
+            $html .= '      </div>';
+            $html .= '      <div class="divit-arrow-down"></div>';
+            $html .= '  </div>';
+            $html .= '  <div class="divit-login-popup">';
+            $html .= '      <a class="divit-logout-text" href="' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url() . '">';
+            $html .= '          <div class="divit-logout-button">';
+            $html .= '              '. __('log out', 'woo-divit');
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <div class="divit-separator"></div>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
+            $html .= '          <div class="divit-space-between">';
+            $html .= '              <div class="divit-link-text">convert my Asia Miles</div>';
+            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
+            $html .= '          <div class="divit-space-between">';
+            $html .= '              <div class="divit-link-text">view my divit account</div>';
+            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '  </div>';
+            $html .= '</div>';
+            return $html;
+        }
+
+        public function shortcode_divit_login_button() {
+            if ($this->settings['sso-enabled'] !== 'yes') return ''; 
+            $login_button_html = $this->get_login_button_html();
+            $user = $this->get_divit_user();
+            if (empty($user)) {
+                return $login_button_html;
+            }
+            $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
+            if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                $this->divit_auth_logout();
+                return $login_button_html;
+            } else {
+                $profile = $profile_resp['body']['data'];
+                $user_profile_html = $this->get_user_profile_html($profile);
+                return $user_profile_html;
+            }
+        }
+
+        public function divit_render_nav_login_item( $items, $args ) {
+            if ($this->settings['sso-enabled'] !== 'yes') return $items;
+            if ( $this->settings['sso-login-button-menu'] === $args->theme_location) {
+                $login_button_html = $this->get_login_button_html();
                 $user = $this->get_divit_user();
                 if (empty($user)) {
-                    $items .= $login_item;
+                    $items .= $login_button_html;
+                    return $items;
+                }
+                $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
+                if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                    $this->divit_auth_logout();
+                    $items .= $login_button_html;
+                    return $items;
                 } else {
-                    $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
-                    if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
-                        $this->divit_auth_logout();
-                        $items .= $login_item;
-                        return $items;
-                    } else {
-                        $profile = $profile_resp['body']['data'];
-                        $items .= '<li class="menu-item divit-login-item divit-login-item--loggined">';
-                        $items .= '<div clssa="divit-user-profile">';
-                        $items .= '<div class="divit-user-name">'. __("Hi") . ' ' . $profile['firstName'] . ' ' . $profile['lastName'] . '</div>';
-                        $items .= '<div class="divit-user-miles">'. intval($profile['milesBalance']['amount'] / 100) . '</div>';
-                        $items .= '<a href="' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url() . '">logout</a>';
-                        $items .= '</li>';
-                    }
+                    $profile = $profile_resp['body']['data'];
+                    $user_profile_html = $this->get_user_profile_html($profile);
+                    $items .= $user_profile_html;
+                    return $items;
                 }
             }
             return $items;

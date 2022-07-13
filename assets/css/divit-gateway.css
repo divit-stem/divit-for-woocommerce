@@ -1,3 +1,16 @@
+/* common */
+
+.divit-items-center {
+	display: flex;
+	align-items: center;
+}
+
+.divit-space-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
 /* checkout */
 
 .divit_promotion_code_field_margin {
@@ -13,15 +26,151 @@
 
 .divit_checkout_paynow_header {
 	font-size: 16px !important;
-	font-weight: bold;
 }
 
 .divit_checkout_paynow .divit_message {
 	font-size: 16px !important;
 }
 
-.divit_place_order_button {
+#place_order.divit_place_order_button {
 	background-color:white;
 	border-radius:30px;
 	border:1px solid #1C1C1C;
+}
+
+/* single sign on */
+
+.divit-login {
+	display: inline-block;
+	position: relative;
+}
+
+.divit-login a {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.divit-login-button, .divit-logout-button {
+	min-width: 100px;
+	height: 38px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 14px;
+	color: #1c1c1c;
+	background-color: #FFCC33;
+	padding: 10px 16px;
+	box-sizing: border-box;
+	border-radius: 100px;
+	cursor: pointer;
+}
+
+.divit-logout-button {
+	background-color: white;
+	border: 1px solid #F0F0F0;
+}
+
+.divit-login-button-content {
+	flex: 1;
+}
+
+.divit-login-text {
+	padding: 0 !important;
+	text-decoration: none;
+	text-align: center;
+	color: #1c1c1c;
+}
+
+.divit-user-profile {
+	display: flex;
+	flex-direction: column;
+}
+
+.divit-user-name {
+	font-size: 10px;
+	line-height: 1.2em;
+}
+
+.divit-user-miles {
+	font-size: 12px;
+	line-height: 1.2em;
+}
+
+.divit-arrow-down {
+  border: solid black;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 3px;
+	margin-left: 10px;
+	margin-bottom: 3px;
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+}
+
+.divit-login-popup {
+	display: none;
+	width: 267px;
+	position: absolute;
+	top: 50px;
+	right: 0;
+	padding: 24px;
+	box-sizing: border-box;
+	background-color: white;
+	box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+	border: 1px solid #F0F0F0;
+	border-radius: 8px;
+	text-align: center;
+	z-index: 999999;
+}
+
+.divit-login-popup > * {
+	font-size: 14px;
+}
+
+.divit-login-popup .divit-login-button, .divit-login-popup .divit-logout-button {
+	display: inline-flex;
+}
+
+.divit-login-popup:after, .divit-login-popup:before {
+	bottom: 100%;
+	right: 10%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.divit-login-popup:after {
+	border-color: rgba(255, 255, 255, 0);
+	border-bottom-color: white;
+	border-width: 10px;
+	margin-left: -10px;
+}
+
+.divit-login-popup:before {
+	border-color: rgba(240, 240, 240, 0);
+	border-bottom-color: #F0F0F0;
+	border-width: 11px;
+	margin-left: -11px;
+}
+
+.divit-login-signup-text {
+	font-size: 12px;
+}
+
+.divit-login-signup-text a {
+	text-decoration: underline;
+}
+
+
+.divit-link {
+	cursor: pointer;
+}
+
+.divit-separator {
+	width: 100%;
+	height: 1px;
+	background-color: #F0F0F0;
 }
