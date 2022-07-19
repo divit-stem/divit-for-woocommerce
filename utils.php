@@ -136,9 +136,11 @@ function isset_all_keys($keys, $arr) {
 }
 
 function get_current_url() {
-    $url = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-    $url .= $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];  
-    return $url;
+    // $url = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+    // $url .= $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];  
+    // return $url;
+    global $wp;
+    return home_url( $wp->request );
 }
 
 function get_redirect_url() {

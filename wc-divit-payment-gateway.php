@@ -11,6 +11,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         const DIVIT_PROMOTION_CODE_INPUT = 'divit_promo_code_input';
         const DIVIT_PROMOTION_CAMPAIGN = 'divit_promotion_campaign';
         const DIVIT_VALID_PROMO_CODE = 'divit_valid_promo_code';
+        const DIVIT_CHECKOUT_METHOD = 'divit_checkout_method';
+        const DIVIT_CHECKOUT_META = 'divit_checkout_meta';
 
         const CAMPAIGN_MODE_ORDER = 'order';
         const CAMPAIGN_MODE_PRODUCT = 'product';
@@ -50,6 +52,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // AJAX
             add_action("wp_ajax_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
             add_action("wp_ajax_nopriv_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
+            add_action("wp_ajax_divit_get_checkout_data", array($this, "divit_get_checkout_data") );
+            add_action("wp_ajax_nopriv_divit_get_checkout_data", array($this, "divit_get_checkout_data") );
+            add_action("wp_ajax_divit_set_checkout_method", array($this, "divit_set_checkout_method") );
+            add_action("wp_ajax_nopriv_set_checkout_method", array($this, "divit_set_checkout_method") );
             add_action("wp_ajax_divit_get_user_profile", array($this, "divit_get_user_profile") );
             add_action("wp_ajax_nopriv_divit_get_user_profile", array($this, "divit_get_user_profile") );
 
@@ -217,6 +223,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return intval(get_miles_by_reward_statement($reward_statement, $price));
         }
 
+        public function get_miles_rate() {
+            return 100 / $this->calc_earn_miles(100);
+        }
+
         public function get_product_miles($product) {
             if (empty($product)) return 0;
             $campaign = $this->get_product_campaign_by_id($product->get_id());
@@ -337,16 +347,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_earned_miles_message($miles) {
             if (empty($miles) || $miles <= 0) return;
             echo '<div class="divit_message" style="margin:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">';
-            echo '<div>' . _e('You have just earned', 'woo-divit') . '</div>';
+            echo '<div>' . __('You have just earned', 'woo-divit') . '</div>';
             echo '<div style="margin-top:8px;"></div>';
             echo $this->render_miles_flag($miles);
             echo '</div>';
         }
 
         public function render_claim_miles_button() {
+            $is_logged_in = !empty($this->get_divit_user());
             echo '<div class="divit_signup_btn_container">';
             echo '<a class="button" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/miles">';
-            echo __('sign up to claim miles', 'woo-divit');
+            echo $is_logged_in ? __('sign up to claim miles', 'woo-divit') : __('view your miles', 'woo-divit');
             echo '</a>';
             echo '</div>';
         }
@@ -374,28 +385,41 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $product = get_product_from_the_post();
             if (empty($product)) return;
             $miles = $this->get_product_miles($product);
-            // TODO: product variants
-            if (false && $product->is_type('variable')) {
+            // product variants
+            if ($product->is_type('variable')) {
+                $rate = $this->get_miles_rate();
                 $min_price = $product->get_variation_price('min', true);
                 $max_price = $product->get_variation_price('max', true);
-                ?>
+            ?>
                 <script>
                     jQuery(function($){
-                        $( ".single_variation_wrap" ).on( "show_variation", function ( event, variation ) {
-                            var miles = variation.display_price / <?php echo $rate ?>;
-                            $('.divit_message_miles').text(parseInt(miles, 10));
+                        var minMiles = '<?php echo $min_price / $rate ?>';
+                        var maxMiles = '<?php echo $max_price / $rate ?>';
+                        function setMiles(miles) { 
+                            $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10)); 
+                        }
+                        function resetMiles() { 
+                            setMiles(minMiles); 
+                        }
+                        $(document).on('found_variation', function(event, variation) {
+                            setMiles(variation.display_price / <?php echo $rate ?>);
                         })
-                        // $( '.reset_variations' ).on('click', function() {
-                        //     var minMiles = '<?php echo $min_price / $rate ?>';
-                        //     var maxMiles = '<?php echo $max_price / $rate ?>';
-                        //     var miles = `${parseInt(minMiles, 10)} - ${parseInt(maxMiles, 10)}`
-                        //     $('#divit_message_miles').text(miles);
-                        // })
+                        $('.variations select').change(function() {
+                            $(this).val() === '' && resetMiles(); 
+                        })
+                        $( '.reset_variations' ).on('click', function() {
+                            resetMiles();
+                        })
                     })
                 </script>
-                <?php
+            <?php
             }
-            $this->render_miles_message($miles);
+            ob_start();
+            $this->render_miles_flag($miles);
+            $html = ob_get_clean();
+            echo '<div class="divit_earn_miles_message">';
+            echo sprintf(__('purchase this product to earn %s', 'woo-divit'), $html);
+            echo '</div>';
         }
 
         public function render_mini_cart_earn_miles_message() {
@@ -415,9 +439,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         // only can access cart in checkout page
-        public function render_checkout_earn_miles_message() {
+        public function render_checkout_earn_miles() {
             if (!$this->is_earn_miles_enabled()) return;
-            if ($this->settings['osm-checkout-page'] != 'yes') return;
             $cart = WC()->cart;
             $miles = $this->get_cart_miles($cart);
             // apply promo code only in order campaign mode
@@ -428,7 +451,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $miles = intval(get_miles_by_reward_statement($promo['rewardStatement'], $price));
                 }
             }
-            $this->render_miles_message($miles);
+            $this->render_miles_flag($miles);
         }
 
         public function render_place_order_button_text($button_html) {
@@ -929,9 +952,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order->update_meta_data('divit_order_id', $create_order_id);
             $order->save();
 
+            // divit checkout method
+            $checkout_method = WC()->session->get(self::DIVIT_CHECKOUT_METHOD, 'paynow');
+            $checkout_meta = WC()->session->get(self::DIVIT_CHECKOUT_META, array());
+            $checkout_params = http_build_query(array(
+                'checkoutMethod' => $checkout_method,
+                'checkoutMiles' => $checkout_meta['miles'] ?? 0,
+            ));
+
             return array(
                 'result' => 'success',
-                'redirect' => $redirect_uri . '&token=' . $create_order_token,
+                'redirect' => $redirect_uri . '&token=' . $create_order_token . '&' . $checkout_params,
             );
         }
         
@@ -941,72 +972,147 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 echo $this->description;
                 return;
             }
+            $is_logged_in = !empty($this->get_divit_user());
             $currency_symbol = get_woocommerce_currency_symbol();
             $cart_total = $this->get_cart_total(WC()->cart);
             $shipping_total = WC()->cart->get_shipping_total();
-            $formatted_order_total = $currency_symbol . ($cart_total + $shipping_total);
+            $formatted_order_total = $currency_symbol . number_format($cart_total + $shipping_total);
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
-            $valid_promo = WC()->session->get(self::DIVIT_VALID_PROMO_CODE, '');
+            $is_valid_promo = WC()->session->get(self::DIVIT_VALID_PROMO_CODE, '') == 'true';
+            $is_empty_promo = $promotion_code == '';
             // $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
+
+            ob_start();
+            $this->render_checkout_earn_miles();
+            $checkout_html = ob_get_clean();
     ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
-                <div class="divit_checkout_paynow">
-                    <div class="divit_checkout_paynow_header" style="display:flex;justify-content:space-between;align-items:center;font-size:18px;color:#1c1c1c;">
-                        <div class="divit_checkout_paynow_title">
-                            <?php _e('pay now', 'woo-divit'); ?>
+                <?php echo $this->get_divit_login_url(); ?>
+                <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER): ?>
+                    <div class="divit_earn_miles_message">
+                        <?php echo $is_valid_promo ? '<b>' . __('promo code applied: ') . '</b>' :  ''; ?>
+                        <?php echo sprintf(__('you will earn %s when the order is complete', 'woo-divit'), $checkout_html); ?>
+                    </div>
+                    <div class="divit_promotion_code_container">
+                        <form id="divit_promotion_code_form" class="divit_promotion_code_input_container">
+                            <div class="divit_promotion_code_input">
+                                <?php
+                                    if ($is_valid_promo) {
+                                        echo sprintf(
+                                            __('promo code %s applied! you will earn 1 mile every %s spent', 'woo-divit'), 
+                                            '<b>' . $promotion_code . '</b>',
+                                            '$' . $this->get_miles_rate(),
+                                        );
+                                    } else {
+                                        woocommerce_form_field( 'divit_promotion_code', array(
+                                            'type'          => 'text',
+                                            'class'         => array('transaction_type form-row-wide'),
+                                            'label'         => __('divit promotional code', 'woo-divit'),
+                                            'placeholder'    => __('divit promotional code (optional) ', 'woo-divit'),
+                                            'description'   => '',
+                                        ), $promotion_code);
+                                    }
+                                ?>
+                            </div>
+                            <button id="divit_promotion_code_submit" type="submit" class="button" data-submit-type="<?php echo $is_valid_promo ? 'remove' : 'submit' ?>">
+                                <?php echo $is_valid_promo ? __('remove', 'woo-divit') : __('apply', 'woo-divit') ?>
+                            </button>
+                        </form>
+                        <div class="divit_promotion_code_message_failed">
+                            <?php echo !$is_valid_promo && !$is_empty_promo  ? 'invalid code' : ''; ?>
                         </div>
+                    </div>
+                    <script>
+                        jQuery(function($) {
+                            var $code = $('[name=divit_promotion_code]')
+                            function submitPromotionCode() {
+                                var type = $(this).data('submit-type');
+                                var promotion_code = type === 'remove' ? '' : $('[name="divit_promotion_code"]').val();
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '<?php echo admin_url("admin-ajax.php");?>',
+                                    data: {
+                                        action: 'divit_apply_promotion_code',
+                                        promotion_code: promotion_code,
+                                    },
+                                    success: function(textStatus){
+                                        $(document.body).trigger("update_checkout");
+                                        // update checkout will call this method again, so server render status
+                                    },
+                                    error: function(MLHttpRequest, textStatus, errorThrown){
+                                        $(document.body).trigger("update_checkout");
+                                    }
+                                })
+                                return false;
+                            }
+                            $('divit_promotion_code_form').submit(submitPromotionCode)
+                            $('#divit_promotion_code_submit').click(submitPromotionCode)
+                        })
+                    </script>
+                <?php endif ?>
+                <div class="divit_checkout_block divit_checkout_paynow <?php echo $is_logged_in ? '' : 'checked'; ?> ">
+                    <div class="divit_radio divit_radio_paynow <?php echo $is_logged_in ? '' : 'checked'; ?> " data-radio-id="paynow"></div>
+                    <div style="width:22px;"></div>
+                    <div class="divit_checkout_block_content">
+                        <div class="divit_checkout_block_title">
+                            <?php echo __('pay now', 'woo-divit'); ?>
+                        </div>
+                        <div class="divit_checkout_block_subtitle">
+                            <?php echo __('earn miles with FPS payments'); ?>
+                        </div>
+                    </div>
+                    <div class="divit_checkout_block_right">
                         <div class="divit_checkout_paynow_total">
                             <?php echo $formatted_order_total ?>
                         </div>
                     </div>
-                    <?php $this->render_checkout_earn_miles_message() ?>
                 </div>
-                <?php
-                    if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER):
-                        echo '<div class="divit_promotion_code_field_margin"></div>';
-                        woocommerce_form_field( 'divit_promotion_code', array(
-                            'type'          => 'text',
-                            'class'         => array('transaction_type form-row-wide'),
-                            'label'         => __('promotional code', 'woo-divit'),
-                            'placeholder'    => __('enter promotional code', 'woo-divit'),
-                            'description'   => '',
-                        ), $promotion_code);
-                ?>
-                <div id="divit_promotion_code_submit_success" style="color:green;">
-                    <?php echo $valid_promo == 'true' ? __('applied code', 'woo-divit') : '' ?>
+                <div style="height:24px"></div>
+                <div class="divit_checkout_block divit_checkout_spend <?php echo $is_logged_in ? 'checked' : ''; ?>">
+                    <div class="divit_radio divit_radio_spend <?php echo $is_logged_in ? 'checked' : ''; ?>" data-radio-id="spend"></div>
+                    <div style="width:22px;"></div>
+                    <div class="divit_checkout_block_content">
+                        <div class="divit_checkout_block_title">
+                            <?php echo __('spend miles', 'woo-divit'); ?>
+                        </div>
+                        <div class="divit_checkout_block_subtitle">
+                            <?php if($is_logged_in): ?>
+                                <?php echo __('spend your divit miles to save!'); ?>
+                            <?php else: ?>
+                                <?php echo __('want to spend miles to save?'); ?> <a href="<?php echo $this->get_divit_login_url(); ?>">log in</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php if($is_logged_in): ?>
+                    <div class="divit_checkout_spend_loading divit-items-center">
+                        <img  src="<?php echo $this->get_env()['static_url']; ?>/icons/spinner.svg" width="40px" height="40px" />
+                    </div>
+                    <div class="divit_checkout_block_right divit_checkout_spend_container">
+                        <form id="divit_checkout_miles_form">
+                            <div class="divit_checkout_miles_input_container divit-items-center">
+                                <div class="divit_checkout_miles_input_box divit-flex-1">
+                                    <img src="<?php echo $this->get_env()['static_url']; ?>/miles/miles-icon.png" width="16px" height="16px" />
+                                    <input id="divit_checkout_miles_input" type="number" />
+                                </div>
+                                <div class="divit_checkout_miles_input_plus">+</div>
+                                <div class="divit_checkout_miles_input_box divit-flex-1">
+                                    <div class="divit_checkout_cash_input_symbol">$</div>
+                                    <input id="divit_checkout_cash_input" type="number" />
+                                </div>
+                            </div>
+                            <div style="height:16px"></div>
+                            <div class="divit_checkout_miles_slider_container">
+                                <input id="divit_checkout_miles_slider" type="range" />
+                            </div>
+                            <div style="height:16px"></div>
+                            <div class="divit_checkout_miles_desc">
+                                <img src="<?php echo $this->get_env()['static_url']; ?>/miles/miles-icon.png" width="16px" height="16px" style="margin-right:5px;filter: grayscale(1);" />
+                                <span id="divit_checkout_miles_base"></span>
+                            </div>
+                        </form>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <div id="divit_promotion_code_submit_error" style="color:red;">
-                    <?php echo $valid_promo == 'false' ? __('invalid code', 'woo-divit') : '' ?>
-                </div>
-                <div id="divit_promotion_code_submit" class="button" style="margin-top: 10px;">
-                    <?php _e('Apply', 'woo-divit') ?>
-                </div>
-                <script>
-                    jQuery(function($) {
-                        var $code = $('[name=divit_promotion_code]')
-                        var $success = $('#divit_promotion_code_submit_success')
-                        var $error = $('#divit_promotion_code_submit_error')
-                        $('#divit_promotion_code_submit').click(function() {
-                            var promotion_code = $('[name="divit_promotion_code"]').val();
-                            $.ajax({
-                                type: 'POST',
-                                url: '<?php echo admin_url("admin-ajax.php");?>',
-                                data: {
-                                    action: 'divit_apply_promotion_code',
-                                    promotion_code: promotion_code,
-                                },
-                                success: function(textStatus){
-                                    $(document.body).trigger("update_checkout");
-                                    // update checkout will call this method again, so server render status
-                                },
-                                error: function(MLHttpRequest, textStatus, errorThrown){
-                                    $(document.body).trigger("update_checkout");
-                                }
-                            })
-                        })
-                    })
-                </script>
-                <?php endif ?>
             </div>
     <?php
         }
@@ -1030,15 +1136,46 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $this->api_key);
             if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
-                WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
+                WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
                 WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
-                wp_send_json_error('invalid promotion code, '. $resp['body']['data']['promoCode']);
+                wp_send_json_error('invalid promotion code, ' . $promotion_code);
                 die();
             }
             WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
             WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, $resp['body']['data']);
             WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'true');
             wp_send_json_success('applied');
+            die();
+        }
+
+        public function divit_get_checkout_data() {
+            $miles_rate_resp = $this->get_HKD_DVM_rate($this->api_key);
+            if ($miles_rate_resp['status_code'] != 200) { 
+                wp_send_json_error('invalid checkout');
+                die();
+            }
+            $miles_rate = $miles_rate_resp['body']['data'];
+            $cart_total = $this->get_cart_total(WC()->cart);
+            $shipping_total = WC()->cart->get_shipping_total();
+            $order_total = $cart_total + $shipping_total;
+            $user = $this->get_divit_user();
+            $profile = null;
+            if (!empty($user)) {
+                $profile = $this->get_divit_user_profile($user);
+            }
+            wp_send_json_success(array(
+                'buyRate' => $miles_rate['buy'],
+                'sellRate' => $miles_rate['sell'],
+                'orderTotal' => $order_total,
+                'isLoggedIn' => !empty($user),
+                'profile' => $profile,
+            ));
+            die();
+        }
+
+        public function divit_set_checkout_method() {
+            WC()->session->set(self::DIVIT_CHECKOUT_METHOD, $_POST['checkout_method']);
+            WC()->session->set(self::DIVIT_CHECKOUT_META, $_POST['checkout_meta']);
             die();
         }
 
@@ -1096,6 +1233,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_campaigns($merchant_id, $api_key) {
             $url = $this->get_env()['api_url'] . '/campaign/merchants/' . $merchant_id;
+            $header = array('content-type: application/json', 'API-Key:' . $api_key);
+            return http_request($url, 'GET', array(), $header);
+        }
+
+        public function get_HKD_DVM_rate($api_key) {
+            $url = $this->get_env()['api_url'] . '/miles/rates/merchants/HKD/DVM';
             $header = array('content-type: application/json', 'API-Key:' . $api_key);
             return http_request($url, 'GET', array(), $header);
         }
@@ -1211,6 +1354,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
             WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, array());
             WC()->session->set(self::DIVIT_VALID_PROMO_CODE, '');
+            WC()->session->set(self::DIVIT_CHECKOUT_METHOD, '');
+            WC()->session->set(self::DIVIT_CHECKOUT_META, array());
         }
 
         /**
@@ -1228,6 +1373,32 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 }
             }
             return null;
+        }
+
+        public function get_divit_user_profile($user) {
+            $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key); 
+            if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                return null;
+
+            }
+            return $profile_resp['body']['data'];
+        }
+
+        public function get_divit_login_url() {
+            $url = $this->get_env()['web_url'];
+            $scope = 'full';
+            $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
+            $redirect = get_current_url();
+
+            return $url . '/sso?' . http_build_query(array(
+                'scope' => $scope,
+                'redirectUrl' => $redirect_url,
+                'redirect' => $redirect,
+            )); 
+        }
+
+        public function get_divit_logout_url() {
+            return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url();
         }
 
         public function divit_auth_login_handler() {
@@ -1291,7 +1462,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
             $html .= '  <div class="divit-login-popup">';
-            $html .= '      <a class="divit-login-text" href="http://localhost:3000/sso?scope=full&redirectUrl=' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN' . '&redirect=' . get_current_url() . '">';
+            $html .= '      <a class="divit-login-text" href="' . $this->get_divit_login_url() . '">';
             $html .= '          <div class="divit-login-button">';
             $html .= '              ' . __('login', 'woo-divit');
             $html .= '          </div>';
@@ -1328,8 +1499,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '<div class="divit-login">';
             $html .= '  <div class="divit-login-button divit-loggedin">';
             $html .= '      <div class="divit-login-button-content divit-user-profile">';
-            $html .= '          <div class="divit-user-name">'. __("Hi") . ', ' . $firstname . '</div>';
-            $html .= '          <div class="divit-items-center">';
+            $html .= '          <div class="divit-user-name">'. __("hi") . ' ' . $firstname . ',</div>';
+            $html .= '          <div style="height:2px;"></div>';
+            $html .= '          <div class="divit-flex">';
             $html .= '              <img src="' . $static_url . '/miles/miles-flag-divit-icon-black-bordered.png" style="margin-right:4px;" width="12px" height="12px" />';
             $html .= '              <div class="divit-user-miles">'. $miles . '</div>';
             $html .= '          </div>';
@@ -1337,7 +1509,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
             $html .= '  <div class="divit-login-popup">';
-            $html .= '      <a class="divit-logout-text" href="' . get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url() . '">';
+            $html .= '      <div class="divit-text">' . __('my total miles balance') . '</div>';
+            $html .= '      <div style="height:4px;"></div>';
+            $html .= '      <div class="divit-items-center divit-user-miles-content">';
+            $html .= '          <img src="' . $static_url . '/miles/miles-icon.png" style="margin-right:4px;" width="24px" height="24px" />';
+            $html .= '          <div class="divit-miles">' . $miles . '</div>';
+            $html .= '      </div>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-logout-text" href="' . $this->get_divit_logout_url() . '">';
             $html .= '          <div class="divit-logout-button">';
             $html .= '              '. __('log out', 'woo-divit');
             $html .= '          </div>';
@@ -1370,15 +1549,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($user)) {
                 return $login_button_html;
             }
-            $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
-            if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+            $profile = $this->get_divit_user_profile($user);
+            if (empty($profile)) {
                 $this->divit_auth_logout();
                 return $login_button_html;
-            } else {
-                $profile = $profile_resp['body']['data'];
-                $user_profile_html = $this->get_user_profile_html($profile);
-                return $user_profile_html;
             }
+            $user_profile_html = $this->get_user_profile_html($profile);
+            return $user_profile_html;
         }
 
         public function divit_render_nav_login_item( $items, $args ) {
@@ -1390,17 +1567,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $items .= $login_button_html;
                     return $items;
                 }
-                $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key);
-                if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                $profile = $this->get_divit_user_profile($user);
+                if (empty($profile)) {
                     $this->divit_auth_logout();
                     $items .= $login_button_html;
                     return $items;
-                } else {
-                    $profile = $profile_resp['body']['data'];
-                    $user_profile_html = $this->get_user_profile_html($profile);
-                    $items .= $user_profile_html;
-                    return $items;
                 }
+                $user_profile_html = $this->get_user_profile_html($profile);
+                $items .= $user_profile_html;
+                return $items;
             }
             return $items;
         }
@@ -1409,12 +1584,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function divit_get_user_profile() {
             $user = $this->get_divit_user();
             if ($user) {
-                $profile_resp = $this->get_user_profile($user['access_token'], $user['scope'], $this->api_key); 
-                if ($profile_resp['status_code'] != 200 || empty($profile_resp['body']['data'])) {
+                $profile = $this->get_divit_user_profile($user);
+                if (empty($profile)) {
                     wp_send_json_error('invalid user');
                     die();
                 }
-                $profile = $profile_resp['body']['data'];
                 wp_send_json_success($profile);
                 die();
             }

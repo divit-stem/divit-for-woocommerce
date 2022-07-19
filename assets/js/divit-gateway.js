@@ -1,8 +1,171 @@
 jQuery(function ($) {
-  $loginedInButton = $(".divit-login-button");
-  $popup = $(".divit-login-popup");
+  // utils
 
+  function num(value) {
+    return Math.round(value);
+  }
+
+  // login button
+
+  var $loginedInButton = $(".divit-login-button");
+  var $popup = $(".divit-login-popup").removeClass("active").hide();
+
+  // click button toggle popup
   $loginedInButton.click(function () {
-    $popup.toggle();
+    if ($popup.hasClass("active")) {
+      $popup.removeClass("active").hide();
+    } else {
+      $popup.addClass("active").show();
+    }
   });
+
+  // click outside of popup close popup
+  $(document).on("click", function (e) {
+    if (
+      !($(e.target).closest($popup).length > 0) &&
+      !($(e.target).closest($loginedInButton).length > 0)
+    ) {
+      if ($popup.hasClass("active")) {
+        $popup.removeClass("active").hide();
+      }
+    }
+  });
+
+  // checkout
+
+  function initPayByMilesOption(d) {
+    var orderTotal = d.orderTotal;
+    var buyRate = d.buyRate;
+    var isLoggedIn = d.isLoggedIn;
+    var userMilesBalance = isLoggedIn ? d.profile.milesBalance.amount / 100 : 0;
+    var maxMilesToBurn = Math.min(orderTotal / buyRate, userMilesBalance);
+
+    var $milesSlider = $("#divit_checkout_miles_slider");
+    var $milesInput = $("#divit_checkout_miles_input");
+    var $cashInput = $("#divit_checkout_cash_input");
+
+    function updateServer() {
+      var method = $("[class*=divit_radio_].checked").data("radio-id");
+
+      $.ajax({
+        method: "POST",
+        url: wcdivit.ajaxUrl,
+        data: {
+          action: "divit_set_checkout_method",
+          checkout_method: method,
+          checkout_meta: {
+            miles: $milesInput.val(),
+            cash: $cashInput.val(),
+          },
+        },
+      });
+    }
+
+    function updateMilesSlider(miles, cash) {
+      if (cash > 0) {
+        var fiat = orderTotal - cash;
+        miles = fiat / buyRate;
+      }
+      $milesSlider.val(num(miles)).change();
+    }
+
+    function updateMiles(miles) {
+      var fiat = miles * buyRate;
+      var cash = orderTotal - fiat;
+      $milesInput.val(num(miles));
+      $cashInput.val(num(cash));
+    }
+
+    function updateCash(cash) {
+      var fiat = orderTotal - cash;
+      var miles = fiat / buyRate;
+      $milesInput.val(num(miles));
+      $cashInput.val(num(cash));
+    }
+
+    // choose different divit method
+    $(".divit_radio").on("click", function () {
+      var method = $(this).data("radio-id");
+      $("[class*=divit_checkout_]").removeClass("checked");
+      $("[class*=divit_radio_]").removeClass("checked");
+      $(".divit_checkout_" + method).addClass("checked");
+      $(".divit_radio_" + method).addClass("checked");
+      updateServer();
+    });
+
+    // miles desc
+    $("#divit_checkout_miles_base").text(parseInt(1 / buyRate, 10) + " = $1");
+
+    // miles input change
+    $milesInput.on("input", function () {});
+
+    $milesInput.on("change", function () {
+      var miles = Math.max(0, Math.min(userMilesBalance, Number(this.value)));
+      updateMiles(miles);
+      updateMilesSlider(miles);
+      updateServer();
+    });
+
+    // cash input change
+    $cashInput.on("input", function () {});
+
+    $cashInput.on("change", function () {
+      var fiat = orderTotal - userMilesBalance * buyRate;
+      var cash = Math.max(fiat, Math.min(orderTotal, Number(this.value)));
+      updateCash(cash);
+      updateMilesSlider(undefined, cash);
+      updateServer();
+    });
+
+    // miles slider
+    $milesSlider
+      .rangeslider({
+        polyfill: false,
+        rangeClass: "divit_rangeslider rangeslider",
+        onInit: function () {},
+        onSlide: function (position, value) {},
+        onSlideEnd: function (position, value) {
+          updateServer();
+        },
+      })
+      .on("input", function () {
+        updateMiles(this.value);
+      });
+
+    updateMiles(0);
+    updateMilesSlider(0);
+    $milesSlider.attr({ max: maxMilesToBurn });
+    $milesSlider.rangeslider("update", true);
+
+    // show content
+    $(".divit_checkout_spend_loading").hide();
+    $(".divit_checkout_spend_container").show();
+  }
+
+  function init() {
+    $.ajax({
+      method: "POST",
+      url: wcdivit.ajaxUrl,
+      data: {
+        action: "divit_get_checkout_data",
+      },
+      success: function (data) {
+        if (data.success) {
+          initPayByMilesOption(data.data);
+        }
+      },
+      error: function () {
+        console.error("error");
+      },
+    });
+  }
+
+  // only render when payment method applied
+  if ($(".payment_method_divit_desc").length > 0) {
+    if ($(document.body).hasClass("woocommerce-checkout")) {
+      $(document.body).on("updated_checkout", init);
+    } else {
+      init();
+    }
+  }
 });

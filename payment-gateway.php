@@ -76,7 +76,7 @@ if (!class_exists('Divit_Plugin')) {
 
                 // woocommerce hooks
                 add_action( 'woocommerce_after_shop_loop_item_title', array($gateway, 'render_shop_loop_product_earn_miles_message'), 40);
-                add_action( 'woocommerce_before_add_to_cart_form', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );
+                add_action( 'woocommerce_before_add_to_cart_button', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );
                 add_action( 'woocommerce_widget_shopping_cart_total', array($gateway, 'render_mini_cart_earn_miles_message'), 20, 0);
                 add_action( 'woocommerce_proceed_to_checkout', array($gateway, 'render_cart_earn_miles_message'), 10, 0 );
                 add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );
@@ -115,8 +115,15 @@ if (!class_exists('Divit_Plugin')) {
         }
 
         public function divit_enqueue_script() {
-            wp_enqueue_style('divit-gateway-style', plugins_url('assets/css/divit-gateway.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
-            wp_enqueue_script('divit-gateway', plugins_url('assets/js/divit-gateway.js', __FILE__) , array( 'jquery') , DIVIT_PLUGIN_VERSION, true);
+            wp_enqueue_style('rangeslider-style', plugins_url('assets/css/divit-gateway.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
+            wp_enqueue_style('divit-gateway-style', plugins_url('assets/css/rangeslider.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
+
+            wp_enqueue_script('rangeslider', plugins_url('assets/js/rangeslider.min.js', __FILE__) , array( 'jquery') , DIVIT_PLUGIN_VERSION, true);
+            wp_enqueue_script('divit-gateway', plugins_url('assets/js/divit-gateway.js', __FILE__) , array( 'jquery', 'rangeslider') , DIVIT_PLUGIN_VERSION, true);
+
+            wp_localize_script('divit-gateway', 'wcdivit', array(
+                'ajaxUrl' => admin_url("admin-ajax.php"),
+            ));
         }
 
         public function custom_payment_is_woocommerce_active()

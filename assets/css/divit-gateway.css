@@ -1,7 +1,17 @@
 /* common */
 
+.divit-flex-1 {
+	flex: 1;
+}
+
+.divit-flex {
+	display: flex;
+	align-items: center;
+}
+
 .divit-items-center {
 	display: flex;
+	justify-content: center;
 	align-items: center;
 }
 
@@ -13,34 +23,263 @@
 
 /* checkout */
 
-.divit_promotion_code_field_margin {
-	margin-top: 30px;
+.divit_radio {
+	width: 20px;
+	height: 20px;
+	outline: 1px solid #1C1C1C;
+	border-radius: 50%;
+	cursor: pointer;
+	pointer-events: auto;
 }
 
-.divit_checkout_paynow {
-	border: 1px solid #DEDEDE;
+.divit_radio.checked {
+	border: 3px solid white;
+	background-color: #1C1C1C;
+}
+
+.divit_checkout_block {
+	display:flex;
+	align-items:center;
+	outline: 1px solid #DEDEDE;
 	background: white;
-	padding: 24px 24px 10px;
+	padding: 24px;
+	box-sizing: border-box;
 	border-radius: 8px;
+	color:#1c1c1c;
+	pointer-events: none;
+	opacity: 0.6;
 }
 
-.divit_checkout_paynow_header {
+.divit_checkout_block.checked {
+	outline: 2px solid #1C1C1C;
+	pointer-events: auto;
+	opacity: 1;
+}
+
+/* Chrome, Safari, Edge, Opera */
+.divit_checkout_block input::-webkit-outer-spin-button,
+.divit_checkout_block input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.divit_checkout_block input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.divit_checkout_block_content {
+	flex: 1;
+}
+
+.divit_checkout_spend {
+	flex-wrap: wrap;
+}
+
+.divit_checkout_spend_container {
+	display: none;
+}
+
+#divit_checkout_miles_form {
+	width: 300px; 
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+@media only screen and (max-width: 768px) {
+	#divit_checkout_miles_form {	
+		width: 100%;
+		margin-top: 16px;
+	}
+}
+
+.divit_checkout_miles_input_container {
+}
+
+.divit_checkout_miles_input_plus {
+	font-size: 24px;
+	margin: 0 16px;
+}
+
+.divit_checkout_miles_input_box {
+	position: relative;
+	max-width: 168px;
+}
+
+.divit_checkout_miles_input_box img {
+	position: absolute;
+	top: 16px;
+	left: 24px;
+}
+
+.divit_checkout_miles_input_box .divit_checkout_cash_input_symbol {
+	position: absolute;
+	top: 10px;
+	left: 24px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.divit_checkout_miles_input_box input {
+	width: 100%;
+	height: 46px;
+	font-size: 16px;
+	font-weight: bold;
+	text-align: right;
+	padding-left: 45px !important;
+	padding-right: 24px !important;
+	border: 1px solid  #DEDEDE !important;
+	border-radius: 4px;
+	background-color: white !important;
+	box-shadow: none;
+}
+
+.divit_checkout_block_title {
+	font-size: 20px !important;
+	font-weight: bold;
+	line-height: 1.1em;
+}
+
+
+.divit_checkout_block_subtitle {
 	font-size: 16px !important;
+	line-height: 1.1em;
+	margin-top: 13px;
+}
+
+.divit_checkout_paynow_total {
+	font-size: 24px;
+	margin-left: 10px;
+	text-align: right;
 }
 
 .divit_checkout_paynow .divit_message {
 	font-size: 16px !important;
 }
 
-#place_order.divit_place_order_button {
-	background-color:white;
-	border-radius:30px;
-	border:1px solid #1C1C1C;
+.divit_earn_miles_message {
+	width: 100%;
+	font-size: 16px;
+	color: #1c1c1c;
+	padding: 10px 23px;
+	border-left: 3px solid #FFCC33;
+	background-color: #FFFAEA;
 }
+
+.divit_earn_miles_message .divit_flag {
+	display: inline-block;
+	margin: 0 5px;
+}
+
+.divit_earn_miles_message .divit_flag img {
+	width: 15px !important;
+	height: auto !important;
+	margin: 0 !important;
+	margin-right: 5px !important;
+}
+
+.divit_earn_miles_message .divit_flag .divit_miles {
+	font-size: 16px;
+	margin: 0 !important;
+}
+
+.divit_promotion_code_container {
+	margin: 24px 0;
+}
+
+.divit_promotion_code_input_container {
+	display: flex;
+	align-items: center;
+	padding-bottom: 16px;
+	border-bottom: 1px solid #F0F0F0;
+}
+
+.divit_promotion_code_input {
+	flex: 1;
+	color: #1c1c1c;
+}
+
+#divit_promotion_code_field label[for="divit_promotion_code"] {
+	display: none !important;
+}
+
+input#divit_promotion_code {
+	padding-left: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+input#divit_promotion_code:focus {
+	border: 0;
+	outline: 0;
+}
+
+#divit_promotion_code_submit {
+	width: 100px;
+	height: 48px;
+	margin: 0;
+	margin-left: 10px;
+	background-color: black;
+	color: white;
+	text-align: center;
+	border-radius: 40px;
+}
+
+.divit_promotion_code_message_failed {
+	margin-top: 5px;
+	color: red;
+}
+
+#place_order.divit_place_order_button {
+	background-color: white;
+	border-radius: 30px;
+	border: 1px solid #1C1C1C;
+}
+
+.divit_rangeslider.rangeslider {
+	max-width: 390px;
+	background: #DEDEDE;
+	box-shadow: none;
+}
+
+.divit_rangeslider .rangeslider__handle {
+	width: 30px;
+	height: 30px;
+	background: #FFCC33;
+	border: 3px solid white;
+}
+
+.divit_rangeslider .rangeslider__handle:after {
+	background: 0;
+}
+
+.divit_rangeslider.rangeslider--horizontal .rangeslider__handle {
+	top: -6px;
+}
+
+.divit_rangeslider.rangeslider--horizontal {
+	height: 16px;
+}
+
+.divit_rangeslider .rangeslider__fill {
+	background: #FFCC33;
+	box-shadow: none;
+}
+
+.divit_checkout_miles_desc {
+	display: flex;
+	align-items: center;
+	font-size: 15px;
+	color: #818181;
+}
+
 
 /* single sign on */
 
 .divit-login {
+	min-width: 110px;
 	display: inline-block;
 	position: relative;
 }
@@ -84,6 +323,7 @@
 .divit-user-profile {
 	display: flex;
 	flex-direction: column;
+	align-items: flex-start;
 }
 
 .divit-user-name {
@@ -93,6 +333,7 @@
 
 .divit-user-miles {
 	font-size: 12px;
+	font-weight: bold;
 	line-height: 1.2em;
 }
 
@@ -164,6 +405,9 @@
 	text-decoration: underline;
 }
 
+.divit-user-miles-content {
+	font-size: 24px;
+}
 
 .divit-link {
 	cursor: pointer;
