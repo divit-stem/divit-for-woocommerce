@@ -1,8 +1,22 @@
 jQuery(function ($) {
   // utils
 
+  var REGION_MAP = {
+    "new territories": "NEW TERRITORIES",
+    "hong kong island": "HONG KONG",
+    kowloon: "KOWLOON",
+  };
+
+  function getRegion(region) {
+    return REGION_MAP[region] || "";
+  }
+
   function num(value) {
     return Math.round(value);
+  }
+
+  function joinAddress(arr, sep) {
+    return arr.filter((a) => !!a && !!a.trim()).join(sep);
   }
 
   // login button
@@ -32,6 +46,62 @@ jQuery(function ($) {
   });
 
   // checkout
+
+  var autoFillDone = false;
+  function autoFillAddresses(d) {
+    // if (!wcdivit.autoFillAddressEnabled) return;
+    if (autoFillDone) return;
+
+    var profile = d.profile;
+
+    var $billingAddress1 = $("#billing_address_1");
+    var $billingAddress2 = $("#billing_address_2");
+    var $billingCity = $("#billing_city");
+    var $billingState = $("#billing_state");
+
+    var isEmptyBillingForm =
+      $billingAddress1.val() === "" &&
+      $billingAddress2.val() === "" &&
+      $billingCity.val() === "";
+    if (isEmptyBillingForm) {
+      $billingAddress1.val(profile.floor);
+      $billingAddress2.val(
+        joinAddress([profile.building, profile.street], ", ")
+      );
+      $billingCity.val(profile.district);
+      $billingState.val(getRegion(profile.region)).change();
+    }
+
+    var $shippingCheckbox = $("#ship-to-different-address-checkbox");
+    var $shippingAddress1 = $("#shipping_address_1");
+    var $shippingAddress2 = $("#shipping_address_2");
+    var $shippingCity = $("#shipping_city");
+    var $shippingState = $("#shipping_state");
+
+    var deliveryAddresses = (profile.addresses || []).filter(
+      (a) => a.addressType === "delivery"
+    );
+    var isEmptyShippingForm =
+      $shippingAddress1.val() === "" &&
+      $shippingAddress2.val() === "" &&
+      $shippingCity.val() === "";
+    if (
+      isEmptyBillingForm &&
+      isEmptyShippingForm &&
+      deliveryAddresses.length > 0
+    ) {
+      var address = profile.addresses[0];
+      if (!$shippingCheckbox.prop("checked")) {
+        $shippingCheckbox.click();
+      }
+      $shippingAddress1.val(address.address1);
+      $shippingAddress2.val(address.address2);
+      $shippingCity.val(address.district);
+      $shippingState.val(getRegion(address.region)).change();
+    }
+
+    autoFillDone = true;
+  }
 
   function initPayByMilesOption(d) {
     var orderTotal = d.orderTotal;
@@ -152,6 +222,7 @@ jQuery(function ($) {
       success: function (data) {
         if (data.success) {
           initPayByMilesOption(data.data);
+          autoFillAddresses(data.data);
         }
       },
       error: function () {

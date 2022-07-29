@@ -987,7 +987,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $checkout_html = ob_get_clean();
     ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
-                <?php echo $this->get_divit_login_url(); ?>
                 <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER): ?>
                     <div class="divit_earn_miles_message">
                         <?php echo $is_valid_promo ? '<b>' . __('promo code applied: ') . '</b>' :  ''; ?>
