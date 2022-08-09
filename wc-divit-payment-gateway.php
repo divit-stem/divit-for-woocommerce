@@ -55,7 +55,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             add_action("wp_ajax_divit_get_checkout_data", array($this, "divit_get_checkout_data") );
             add_action("wp_ajax_nopriv_divit_get_checkout_data", array($this, "divit_get_checkout_data") );
             add_action("wp_ajax_divit_set_checkout_method", array($this, "divit_set_checkout_method") );
-            add_action("wp_ajax_nopriv_set_checkout_method", array($this, "divit_set_checkout_method") );
+            add_action("wp_ajax_nopriv_divit_set_checkout_method", array($this, "divit_set_checkout_method") );
             add_action("wp_ajax_divit_get_user_profile", array($this, "divit_get_user_profile") );
             add_action("wp_ajax_nopriv_divit_get_user_profile", array($this, "divit_get_user_profile") );
 
@@ -1049,8 +1049,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         })
                     </script>
                 <?php endif ?>
-                <div class="divit_checkout_block divit_checkout_paynow <?php echo $is_logged_in ? '' : 'checked'; ?> ">
-                    <div class="divit_radio divit_radio_paynow <?php echo $is_logged_in ? '' : 'checked'; ?> " data-radio-id="paynow"></div>
+                <div class="divit_checkout_block divit_checkout_paynow checked">
+                    <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>
                     <div style="width:22px;"></div>
                     <div class="divit_checkout_block_content">
                         <div class="divit_checkout_block_title">
@@ -1067,8 +1067,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     </div>
                 </div>
                 <div style="height:24px"></div>
-                <div class="divit_checkout_block divit_checkout_spend <?php echo $is_logged_in ? 'checked' : ''; ?>">
-                    <div class="divit_radio divit_radio_spend <?php echo $is_logged_in ? 'checked' : ''; ?>" data-radio-id="spend"></div>
+                <div class="divit_checkout_block divit_checkout_spend">
+                    <div class="divit_radio divit_radio_spend" data-radio-id="spend"></div>
                     <div style="width:22px;"></div>
                     <div class="divit_checkout_block_content">
                         <div class="divit_checkout_block_title">
@@ -1168,6 +1168,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'orderTotal' => $order_total,
                 'isLoggedIn' => !empty($user),
                 'profile' => $profile,
+                'checkoutOption' => array(
+                    'method' => WC()->session->get(self::DIVIT_CHECKOUT_METHOD, 'paynow'),
+                    'meta' => WC()->session->get(self::DIVIT_CHECKOUT_META),
+                )
             ));
             die();
         }
@@ -1175,6 +1179,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function divit_set_checkout_method() {
             WC()->session->set(self::DIVIT_CHECKOUT_METHOD, $_POST['checkout_method']);
             WC()->session->set(self::DIVIT_CHECKOUT_META, $_POST['checkout_meta']);
+            wp_send_json_success();
             die();
         }
 

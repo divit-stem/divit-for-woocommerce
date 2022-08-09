@@ -212,6 +212,10 @@ jQuery(function ($) {
     $(".divit_checkout_spend_container").show();
   }
 
+  function handleErrorInit() {
+    $(".divit_checkout_spend").hide();
+  }
+
   function init() {
     $.ajax({
       method: "POST",
@@ -223,10 +227,13 @@ jQuery(function ($) {
         if (data.success) {
           initPayByMilesOption(data.data);
           autoFillAddresses(data.data);
+        } else {
+          handleErrorInit();
+          console.log("init error", data.data);
         }
       },
-      error: function () {
-        console.error("error");
+      error: function (err) {
+        console.log("init error", err);
       },
     });
   }
