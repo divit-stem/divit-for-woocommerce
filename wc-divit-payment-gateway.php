@@ -24,7 +24,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->environments = include 'environments.php';
             
             $this->id           = 'divit';
-            $this->method_title = 'Divit payment gateway';
+            $this->method_title = 'divit payment gateway';
             $this->method_description = 'pay now, pay later, earn miles';
 
             $this->init_settings();
@@ -58,6 +58,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             add_action("wp_ajax_nopriv_divit_set_checkout_method", array($this, "divit_set_checkout_method") );
             add_action("wp_ajax_divit_get_user_profile", array($this, "divit_get_user_profile") );
             add_action("wp_ajax_nopriv_divit_get_user_profile", array($this, "divit_get_user_profile") );
+            add_action("wp_ajax_divit_express_checkout", array($this, "divit_express_checkout") );
+            add_action("wp_ajax_nopriv_divit_express_checkout", array($this, "divit_express_checkout") );
 
             // register callback for `webhook_events`
             add_action( 'woocommerce_api_callback_divit_payment', array($this, 'callback_divit_payment_handler') );
@@ -420,6 +422,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '<div class="divit_earn_miles_message">';
             echo sprintf(__('purchase this product to earn %s', 'woo-divit'), $html);
             echo '</div>';
+        }
+
+        public function render_single_product_express_checkout_button() {
+            $divit_logo_img = '<img style="width:80px;height:28.53px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
+            $button = '';
+            $button .= '<button class="button alt divit_place_express_order_button" id="place_express_order">';
+            $button .= '<span style="color:#1c1c1c;display:flex;justify-content:center;align-items:center;">';
+            $button .= sprintf(__(' %3$s %1$sexpress checkout%2$s', 'woo-divit'), '<span style="font-size:16px;margin-top:8px;margin-left:8px;">', '</span>', $divit_logo_img);
+            $button .= '</button>'; 
+            echo $button;
+            echo '<div class="divit_express_checkout_tips"></div>';
         }
 
         public function render_mini_cart_earn_miles_message() {
@@ -965,6 +978,178 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'redirect' => $redirect_uri . '&token=' . $create_order_token . '&' . $checkout_params,
             );
         }
+
+        public function divit_express_checkout()
+        {
+            $products = $_POST['products'];
+
+            if (empty($products)) {
+                wp_send_json_error('no products');
+                die();
+            }
+
+            // $cart = new WC_Cart();
+            $cart = WC()->cart;
+            $shipping = WC()->shipping();
+            $data_store = WC_Data_Store::load( 'product' );
+
+            // init
+            $shipping->reset_shipping();
+            $cart->empty_cart(false);
+
+            // add products to cart
+            foreach ( $products as $product ) {
+                $p = wc_get_product((int)$product['id']);
+                if (! $p->is_type( 'variable' ) ) {
+                    $cart->add_to_cart((int)$product['id'], (int)$product['quantity']);
+                } else {
+                    $variations = array();
+                    foreach ( $product['variations'] as $key => $value ) {
+                        $variations[ $value['name'] ] = $value['value'];
+                    }
+                    $variation_id = $data_store->find_matching_product_variation($p, $variations);
+                    $cart->add_to_cart((int)$product['id'], (int)$product['quantity'], $variation_id, $variations); 
+                }
+            }
+
+            $cart->calculate_shipping();
+            $cart->calculate_totals();
+
+            $checkout = WC()->checkout();
+            $order_id = $checkout->create_order(array());
+            $order = wc_get_order($order_id);
+
+            // $order = wc_create_order();
+            // $order->add_product(wc_get_product((int)$product['id']), (int)$product['quantity']);
+
+            // $shipping = new WC_Order_Item_Shipping();
+            // $shipping->set_method_id('advanced_free_shipping');
+            // $shipping->set_instance_id('advanced_free_shipping');
+            // $shipping->save();
+            // $order->add_item($shipping);
+
+            // $order->set_payment_method('divit');
+            // $order->set_payment_method_title('divit express checkout');
+
+            // $order->calculate_shipping();
+            // $order->calculate_totals();
+            // $order->save();
+
+            $merchant_ref = $order->get_id();
+
+            $line_items = array();
+            foreach ( $order->get_items() as $item_key => $item_values ) {
+                $item = $item_values->get_data();
+                $product = wc_get_product($item['product_id']);
+                $line_item = array(
+                    "itemType" => 'retail',
+                    "itemData" => array(
+                        "pics" => array(
+                            "big" => "",
+                            "small" => "",
+                        ),
+                        "productID" => strval($product->get_id()),
+                        "productTitle" => $product->get_name(),
+                        "unitPrice" => floatval($product->get_price()),
+                        "qty" => $item['quantity'],
+                        "subtotal" => floatval($item['subtotal']),
+                    )
+                );
+                if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                    $campaign = $this->get_product_campaign_by_id($product->get_id());
+                    if (!empty($campaign)) {
+                        $line_item['itemData']['promoCode'] = $campaign['promoCode'];
+                        $line_item['itemData']['campaignMode'] = 'addition';
+                    }
+                }
+                $line_items[] = $line_item;
+            }
+
+            // order subtotal = cart total
+            $order_miles = $this->get_order_miles($order);
+            $order_subtotal = $order->get_subtotal();
+            $order_discount = $this->get_order_discount($order);
+            $order_total_for_reward = ($order_subtotal - $order_discount) * 100;
+            $order_total = $order->get_total() * 100;
+            $order_currency = $order->get_currency();
+
+            // promotion code that campaign used
+            $order_promo_code = $this->selected_campaign['promoCode'];
+            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                $order_promo_code = '';
+            }
+
+            // save number of miles reward to customer
+            $order->update_meta_data('divit_miles_for_reward', $order_miles);
+            $order->save();
+
+            $create_order_data = array(
+                "milesForReward" => $order_miles,
+                "totalForReward" => array(
+                    "amount" => $order_total_for_reward,
+                    "currency" => $order_currency,
+                ),
+                "totalAmount" => array(
+                    "amount" => $order_total,
+                    "currency" => $order_currency,
+                ),
+                "nonrefundableAmount" => array(
+                    "amount" => $order_total,
+                    "currency" => $order_currency,
+                ),
+                "refundableAmount" => array(
+                    "amount" => 0,
+                    "currency" => $order_currency,
+                ),
+                "merchantRef" => $merchant_ref,
+                "orderType" => "retail",
+                "orderItems" => $line_items,
+                "promoCode" => $order_promo_code,
+                "webhookSuccess" => $this->get_return_url($order),
+                "webhookFailure" => $order->get_checkout_payment_url(),
+                "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                // "webhookEvents" => 'https://devwoo.free.beeceptor.com',
+            );
+
+            $create_order_resp = $this->create_express_order($create_order_data, $this->api_key);
+            if ($create_order_resp['status_code'] != 200) {
+                if ($create_order_resp['status_code'] == 400) {
+                    $err = $create_order_resp['body'];
+                    wp_send_json_error($err);
+                    die();
+                }
+                self::log("divit create order error 1001");
+                self::log($create_order_resp['status_code']);
+                self::log(json_encode($create_order_resp['body'])); 
+                wp_send_json_error($err);
+                die();
+            }
+            $create_order_resp_data = $create_order_resp['body']['data'];
+            $create_order_id = $create_order_resp_data['orderID'];
+            $redirect_uri = $create_order_resp_data['redirectURI'];
+            self::log('created order ' . json_encode($create_order_data) . ', ' . json_encode($create_order_resp['body']));
+
+            // // save divit order id for cancel, reference
+            $order->update_meta_data('divit_order_id', $create_order_id);
+            $order->save();
+
+            // divit checkout method
+            $checkout_params = http_build_query(array(
+                'checkoutMethod' => 'express',
+            ));
+
+            if (str_contains($redirect_uri, '?')) {
+                $redirect_uri = str_replace('?', '/fast?', $redirect_uri);
+            } else {
+                $redirect_uri = $redirect_uri . '/fast';
+            }
+
+            wp_send_json_success(array(
+                'redirectURL' => $redirect_uri . '&' . $checkout_params,
+            ));
+
+            die();
+        }
         
         public function payment_fields()
         {
@@ -1229,6 +1414,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return http_request($url, 'POST', $create_order, $header);
         }
 
+        public function create_express_order($create_order, $api_key) {
+            $url = $this->get_env()['api_url'] . '/paynow/orders';
+            $header = array('content-type: application/json', 'API-Key: ' . $api_key);
+            return http_request($url, 'POST', $create_order, $header);
+        }
+
         public function get_order($order_id, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/orders/' . $order_id;
             $header = array('content-type: application/json', 'API-Key: ' . $api_key);
@@ -1332,6 +1523,26 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 self::log($message);
                 wp_send_json($message);
                 exit;
+            }
+
+            // update order address if none
+            $delivery_address = $json['eventData']['deliveryAddress'];
+            if (empty(get_post_meta($order_id, '_billing_address_1') && !empty($delivery_address['address1']))) {
+                update_post_meta($order_id, '_billing_first_name', $delivery_address['contactFirstname']);
+                update_post_meta($order_id, '_billing_last_name', $delivery_address['contactLastname']);
+                update_post_meta($order_id, '_billing_phone', $delivery_address['tel']);
+                // update_post_meta($order_id, '_billing_email', $delivery_address['email']);
+                update_post_meta($order_id, '_billing_address_1', $delivery_address['address1']);
+                update_post_meta($order_id, '_billing_address_2', $delivery_address['address2']);
+                update_post_meta($order_id, '_billing_city', $delivery_address['district']);
+                update_post_meta($order_id, '_billing_state', $delivery_address['region']);
+                update_post_meta($order_id, '_shipping_first_name', $delivery_address['contactFirstname']);
+                update_post_meta($order_id, '_shipping_last_name', $delivery_address['contactLastname']);
+                update_post_meta($order_id, '_shipping_phone', $delivery_address['contactNumber']);
+                update_post_meta($order_id, '_shipping_address_1', $delivery_address['address1']);
+                update_post_meta($order_id, '_shipping_address_2', $delivery_address['address2']);
+                update_post_meta($order_id, '_shipping_city', $delivery_address['district']);
+                update_post_meta($order_id, '_shipping_state', $delivery_address['region']);
             }
 
             // update order status to processing

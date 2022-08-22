@@ -246,4 +246,50 @@ jQuery(function ($) {
       init();
     }
   }
+
+  function getVariations(formEl) {
+    var attrs = Array.from(formEl.querySelectorAll("[name^='attribute_']"));
+    return attrs.map(function (element) {
+      return { value: element.value, name: element.name };
+    });
+  }
+
+  var expressCheckout = function () {
+    var formEl = document.querySelector("form.cart");
+    var isGroupedProduct = formEl.classList.contains("grouped_form");
+    var isVariantProduct = formEl.classList.contains("variations_form");
+    var products = [];
+
+    if (!isGroupedProduct) {
+      products = [
+        {
+          id: document.querySelector('[name="add-to-cart"]').value,
+          quantity: document.querySelector('[name="quantity"]').value,
+          variations: isVariantProduct ? getVariations(formEl) : [],
+        },
+      ];
+    } else {
+      // TODO: group products
+    }
+
+    $.ajax({
+      method: "POST",
+      url: wcdivit.ajaxUrl,
+      data: {
+        action: "divit_express_checkout",
+        products: products,
+      },
+      success: function (data) {
+        window.location.href = data.data.redirectURL;
+      },
+      error: function (err) {
+        console.log("init error", err);
+      },
+    });
+  };
+
+  $("#place_express_order").on("click", function (e) {
+    e.preventDefault();
+    expressCheckout();
+  });
 });

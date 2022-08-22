@@ -3,7 +3,7 @@
  * Plugin Name:       Divit payment gateway for WooCommerce
  * Plugin URI:        https://divit.com.hk
  * Description:       Divit payment gateway & others
- * Version:           1.3.4
+ * Version:           1.3.6
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -16,7 +16,7 @@
 
 require_once('utils.php');
 
-define('DIVIT_PLUGIN_VERSION', '1.3.4');
+define('DIVIT_PLUGIN_VERSION', '1.3.6');
 
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
@@ -77,6 +77,7 @@ if (!class_exists('Divit_Plugin')) {
                 // woocommerce hooks
                 add_action( 'woocommerce_after_shop_loop_item_title', array($gateway, 'render_shop_loop_product_earn_miles_message'), 40);
                 add_action( 'woocommerce_before_add_to_cart_button', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );
+                add_action( 'woocommerce_after_add_to_cart_button', array($gateway, 'render_single_product_express_checkout_button'), 10, 0 );
                 add_action( 'woocommerce_widget_shopping_cart_total', array($gateway, 'render_mini_cart_earn_miles_message'), 20, 0);
                 add_action( 'woocommerce_proceed_to_checkout', array($gateway, 'render_cart_earn_miles_message'), 10, 0 );
                 add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );

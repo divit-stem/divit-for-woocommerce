@@ -127,7 +127,6 @@ function get_utc() {
     return gmdate("Y-m-d\TH:i:s\Z");
 }
 
-
 function isset_all_keys($keys, $arr) {
     foreach($keys as $key){
         if(!array_key_exists($key, $arr)) return false;
@@ -136,11 +135,8 @@ function isset_all_keys($keys, $arr) {
 }
 
 function get_current_url() {
-    // $url = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-    // $url .= $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];  
-    // return $url;
     global $wp;
-    return home_url( $wp->request );
+    return home_url(add_query_arg(array($_GET), $wp->request));
 }
 
 function get_redirect_url() {

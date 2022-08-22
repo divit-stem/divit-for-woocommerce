@@ -21,6 +21,17 @@
 	align-items: center;
 }
 
+/* express checkout */
+
+#place_express_order.divit_place_express_order_button {
+	display: block;
+	width: 100%;
+	margin-top: 25px;
+	background-color: white;
+	border-radius: 30px;
+	border: 1px solid #1C1C1C;	
+}
+
 /* checkout */
 
 .divit_radio {
