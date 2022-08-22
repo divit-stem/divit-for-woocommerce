@@ -988,7 +988,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 die();
             }
 
-            // $cart = new WC_Cart();
             $cart = WC()->cart;
             $shipping = WC()->shipping();
             $data_store = WC_Data_Store::load( 'product' );
@@ -1017,23 +1016,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $checkout = WC()->checkout();
             $order_id = $checkout->create_order(array());
+
             $order = wc_get_order($order_id);
-
-            // $order = wc_create_order();
-            // $order->add_product(wc_get_product((int)$product['id']), (int)$product['quantity']);
-
-            // $shipping = new WC_Order_Item_Shipping();
-            // $shipping->set_method_id('advanced_free_shipping');
-            // $shipping->set_instance_id('advanced_free_shipping');
-            // $shipping->save();
-            // $order->add_item($shipping);
-
-            // $order->set_payment_method('divit');
-            // $order->set_payment_method_title('divit express checkout');
-
-            // $order->calculate_shipping();
-            // $order->calculate_totals();
-            // $order->save();
+            $order->set_payment_method($this->id);
+            $order->set_payment_method_title($this->method_title);
 
             $merchant_ref = $order->get_id();
 
@@ -1118,7 +1104,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     wp_send_json_error($err);
                     die();
                 }
-                self::log("divit create order error 1001");
+                self::log("divit express create order error 1001");
                 self::log($create_order_resp['status_code']);
                 self::log(json_encode($create_order_resp['body'])); 
                 wp_send_json_error($err);
@@ -1129,8 +1115,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $redirect_uri = $create_order_resp_data['redirectURI'];
             self::log('created order ' . json_encode($create_order_data) . ', ' . json_encode($create_order_resp['body']));
 
-            // // save divit order id for cancel, reference
+            // save divit order id for cancel, reference
             $order->update_meta_data('divit_order_id', $create_order_id);
+            $order->update_meta_data('divit_express_checkout', true);
             $order->save();
 
             // divit checkout method
@@ -1141,10 +1128,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (str_contains($redirect_uri, '?')) {
                 $redirect_uri = str_replace('?', '/fast?', $redirect_uri);
             } else {
-                $redirect_uri = $redirect_uri . '/fast';
+                $redirect_uri = $redirect_uri . '/fast?';
             }
 
             wp_send_json_success(array(
+                'orderId' => $create_order_id,
                 'redirectURL' => $redirect_uri . '&' . $checkout_params,
             ));
 
