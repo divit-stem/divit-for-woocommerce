@@ -19,6 +19,13 @@ jQuery(function ($) {
     return arr.filter((a) => !!a && !!a.trim()).join(sep);
   }
 
+  function serializeFormData($form) {
+    return $form.serializeArray().reduce(function (obj, item) {
+      obj[item.name] = item.value;
+      return obj;
+    }, {});
+  }
+
   // login button
 
   var $loginedInButton = $(".divit-login-button");
@@ -254,7 +261,7 @@ jQuery(function ($) {
     });
   }
 
-  var expressCheckout = function () {
+  var expressCheckout = function (formData) {
     var formEl = document.querySelector("form.cart");
     var isGroupedProduct = formEl.classList.contains("grouped_form");
     var isVariantProduct = formEl.classList.contains("variations_form");
@@ -272,24 +279,35 @@ jQuery(function ($) {
       // TODO: group products
     }
 
+    var submitData = formData;
+    submitData.products = products;
+
     $.ajax({
       method: "POST",
       url: wcdivit.ajaxUrl,
       data: {
         action: "divit_express_checkout",
-        products: products,
+        data: submitData,
       },
       success: function (data) {
-        window.location.href = data.data.redirectURL;
+        console.log(data);
+        if (data.success) {
+          window.location.href = data.data.redirectURL;
+        } else {
+          window.location.reload();
+        }
       },
       error: function (err) {
-        console.log("init error", err);
+        console.log("express checkout error", err);
+        window.location.reload();
       },
     });
   };
 
   $("#place_express_order").on("click", function (e) {
     e.preventDefault();
-    expressCheckout();
+    var data = serializeFormData($("#divit_express_checkout_form"));
+    console.log(data);
+    expressCheckout(data || {});
   });
 });

@@ -424,15 +424,46 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '</div>';
         }
 
-        public function render_single_product_express_checkout_button() {
+        public function render_single_product_express_checkout_form() {
+            $product = get_product_from_the_post();
+            if (empty($product)) return;
             $divit_logo_img = '<img style="width:80px;height:28.53px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
             $button = '';
-            $button .= '<button class="button alt divit_place_express_order_button" id="place_express_order">';
+            $button .= '<button type="submit" class="button alt divit_place_express_order_button" id="place_express_order">';
             $button .= '<span style="color:#1c1c1c;display:flex;justify-content:center;align-items:center;">';
             $button .= sprintf(__(' %3$s %1$sexpress checkout%2$s', 'woo-divit'), '<span style="font-size:16px;margin-top:8px;margin-left:8px;">', '</span>', $divit_logo_img);
             $button .= '</button>'; 
+            echo '<form id="divit_express_checkout_form">';
+            echo do_action('divit_add_before_express_checkout_button');
             echo $button;
-            echo '<div class="divit_express_checkout_tips"></div>';
+            echo '<div class="divit_express_checkout_tips">' . do_action('divit_express_checkout_tips') . '</div>';
+            echo '</form>';
+            // production variants
+            if ($product->is_type('variable')) {
+            ?>
+                <script>
+                    jQuery(function($){
+                        function show_express_checkout() { 
+                            $('#divit_express_checkout_form').show();
+                        }
+                        function hide_express_checkout() { 
+                            $('#divit_express_checkout_form').hide();
+                        }
+                        $(document).on('found_variation', function(event, variation) {
+                            show_express_checkout();
+                        })
+                        $('.variations select').change(function() {
+                            $(this).val() === '' && hide_express_checkout();
+                        })
+                        $( '.reset_variations' ).on('click', function() {
+                            hide_express_checkout();
+                        })
+                        // default hide until it selected variation
+                        hide_express_checkout();
+                    })
+                </script>
+            <?php
+            }
         }
 
         public function render_mini_cart_earn_miles_message() {
@@ -981,10 +1012,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_express_checkout()
         {
-            $products = $_POST['products'];
+            $form_data = $_POST['data'];
+            $products = $form_data['products'];
 
             if (empty($products)) {
                 wp_send_json_error('no products');
+                die();
+            }
+
+            do_action('divit_express_checkout_validation', $form_data);
+            if (0 !== wc_notice_count( 'error' )) {
+                wp_send_json_error('invalid');
                 die();
             }
 
@@ -1263,13 +1301,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         <form id="divit_checkout_miles_form">
                             <div class="divit_checkout_miles_input_container divit-items-center">
                                 <div class="divit_checkout_miles_input_box divit-flex-1">
-                                    <img src="<?php echo $this->get_env()['static_url']; ?>/miles/miles-icon.png" width="16px" height="16px" />
-                                    <input id="divit_checkout_miles_input" type="number" />
+                                    <div class="divit_checkout_cash_input_symbol">$</div>
+                                    <input id="divit_checkout_cash_input" type="number" />
                                 </div>
                                 <div class="divit_checkout_miles_input_plus">+</div>
                                 <div class="divit_checkout_miles_input_box divit-flex-1">
-                                    <div class="divit_checkout_cash_input_symbol">$</div>
-                                    <input id="divit_checkout_cash_input" type="number" />
+                                    <img src="<?php echo $this->get_env()['static_url']; ?>/miles/miles-icon.png" width="16px" height="16px" />
+                                    <input id="divit_checkout_miles_input" type="number" />
                                 </div>
                             </div>
                             <div style="height:16px"></div>
