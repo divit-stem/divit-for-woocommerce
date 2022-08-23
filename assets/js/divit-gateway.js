@@ -1,4 +1,22 @@
 jQuery(function ($) {
+  // add overlay to html
+  $loadingOverlay = $("<div></div>")
+    .addClass("divit_loading_overlay")
+    .html(
+      '<div class="divit_loading_overlay_content">' +
+        '<img src="https://static.divit.com.hk/icons/spinner.svg" width="40px" height="40px" />' +
+        "</div>"
+    )
+    .appendTo(document.body);
+
+  function showLoading() {
+    $loadingOverlay.show();
+  }
+
+  function hideLoading() {
+    $loadingOverlay.hide();
+  }
+
   // utils
 
   var REGION_MAP = {
@@ -24,6 +42,14 @@ jQuery(function ($) {
       obj[item.name] = item.value;
       return obj;
     }, {});
+  }
+
+  function showNotice(html) {
+    var $noticeWrapper = $(".woocommerce-notices-wrapper");
+    if ($noticeWrapper.length > 0) {
+      $noticeWrapper.html(html);
+      $noticeWrapper.get(0).scrollIntoView({ behavior: "smooth" });
+    }
   }
 
   // login button
@@ -282,6 +308,8 @@ jQuery(function ($) {
     var submitData = formData;
     submitData.products = products;
 
+    showLoading();
+
     $.ajax({
       method: "POST",
       url: wcdivit.ajaxUrl,
@@ -290,14 +318,19 @@ jQuery(function ($) {
         data: submitData,
       },
       success: function (data) {
-        console.log(data);
+        hideLoading();
         if (data.success) {
           window.location.href = data.data.redirectURL;
         } else {
-          window.location.reload();
+          if (data.data.messages) {
+            showNotice(data.data.messages);
+          } else {
+            window.location.reload();
+          }
         }
       },
       error: function (err) {
+        hideLoading();
         console.log("express checkout error", err);
         window.location.reload();
       },
@@ -307,7 +340,6 @@ jQuery(function ($) {
   $("#place_express_order").on("click", function (e) {
     e.preventDefault();
     var data = serializeFormData($("#divit_express_checkout_form"));
-    console.log(data);
     expressCheckout(data || {});
   });
 });

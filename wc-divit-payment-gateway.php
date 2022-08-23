@@ -1022,7 +1022,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             do_action('divit_express_checkout_validation', $form_data);
             if (0 !== wc_notice_count( 'error' )) {
-                wp_send_json_error('invalid');
+                ob_start();
+                wc_print_notices();
+                $messages = ob_get_clean();
+                wp_send_json_error(array(
+                    'messages' => $messages
+                ));
                 die();
             }
 
