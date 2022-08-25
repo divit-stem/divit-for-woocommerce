@@ -150,7 +150,9 @@ jQuery(function ($) {
     var $cashInput = $("#divit_checkout_cash_input");
 
     function updateServer() {
-      var method = $("[class*=divit_radio_].checked").data("radio-id");
+      var method = $(
+        "[class*=divit_checkout_].checked divit_checkout_block_overlay"
+      ).data("method-id");
 
       $.ajax({
         method: "POST",
@@ -189,11 +191,17 @@ jQuery(function ($) {
     }
 
     // choose different divit method
-    $(".divit_radio").on("click", function () {
-      var method = $(this).data("radio-id");
-      $("[class*=divit_checkout_]").removeClass("checked");
+    $(".divit_checkout_block_overlay").on("click", function () {
+      var method = $(this).data("method-id");
+      $("[class*=divit_checkout_]")
+        .removeClass("checked")
+        .find(".divit_checkout_block_overlay")
+        .show();
       $("[class*=divit_radio_]").removeClass("checked");
-      $(".divit_checkout_" + method).addClass("checked");
+      $(".divit_checkout_" + method)
+        .addClass("checked")
+        .find(".divit_checkout_block_overlay")
+        .hide();
       $(".divit_radio_" + method).addClass("checked");
       updateServer();
     });

@@ -1266,6 +1266,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     </script>
                 <?php endif ?>
                 <div class="divit_checkout_block divit_checkout_paynow checked">
+                    <div class="divit_checkout_block_overlay" data-method-id="paynow"></div>
                     <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>
                     <div style="width:22px;"></div>
                     <div class="divit_checkout_block_content">
@@ -1284,7 +1285,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 </div>
                 <div style="height:24px"></div>
                 <div class="divit_checkout_block divit_checkout_spend">
-                    <div class="divit_radio divit_radio_spend" data-radio-id="spend"></div>
+                    <div class="divit_checkout_block_overlay" data-method-id="spend"></div>
+                    <div class="divit_radio divit_radio_spend"></div>
                     <div style="width:22px;"></div>
                     <div class="divit_checkout_block_content">
                         <div class="divit_checkout_block_title">
