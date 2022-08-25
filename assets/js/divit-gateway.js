@@ -48,7 +48,9 @@ jQuery(function ($) {
     var $noticeWrapper = $(".woocommerce-notices-wrapper");
     if ($noticeWrapper.length > 0) {
       $noticeWrapper.html(html);
-      $noticeWrapper.get(0).scrollIntoView({ behavior: "smooth" });
+      var elY = $noticeWrapper.get(0).getBoundingClientRect().top;
+      var scrollY = elY + window.pageYOffset - 50;
+      window.scrollTo({ top: scrollY, behavior: "smooth" });
     }
   }
 
