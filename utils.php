@@ -145,3 +145,30 @@ function get_redirect_url() {
     }
     return home_url();
 }
+
+const COUNTRY_TELS = array(
+    array( "countryCode" => "852", "length" => 8 ),
+    array( "countryCode" => "853", "length" => 8 ),
+    array( "countryCode" => "86", "length" => 11 ),
+);
+
+function to_tel($phone) {
+    if (empty($phone)) return array("countryCode" => "", "tel" => "");
+    if (str_starts_with($phone, "+")) {
+        $phone = substr($phone, 1);
+    }
+    foreach(COUNTRY_TELS as $tel) {
+        if (str_starts_with($phone, $tel['countryCode'])) {
+            return array(
+                "countryCode" => "+" . $tel['countryCode'], 
+                "tel" => substr($phone, strlen($tel["countryCode"]))
+            );
+        }
+    }
+    foreach(COUNTRY_TELS as $tel) {
+        if (strlen($phone) == $tel['length']) {
+            return array("countryCode" => "+" . $tel['countryCode'], "tel" => $phone); 
+        }
+    }
+    return array("countryCode" => "+852", "tel" => $phone);
+}

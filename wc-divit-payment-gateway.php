@@ -892,11 +892,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
 
+            // tel
+            $tel = to_tel($order->get_billing_phone());
+
             $create_order_customer_data = array(
                 'firstName' => $order->get_billing_first_name(),
                 'lastName' => $order->get_billing_last_name(),
                 'email' => $order->get_billing_email(),
-                'tel' => '+852' . $order->get_billing_phone(),
+                'tel' => $tel['countryCode'] . $tel['tel'],
                 'floor' => '',
                 'building' => $order->get_billing_address_1(),
                 'street' => $order->get_billing_address_2(),
