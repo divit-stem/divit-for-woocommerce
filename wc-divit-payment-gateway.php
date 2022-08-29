@@ -126,6 +126,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // sso
             $this->set_default_setting('sso-enabled', 'no');
             $this->set_default_setting('sso-login-button-menu', 'primary');
+
+            // express checkout
+            $this->set_default_setting('express-enabled', 'no');
         }
 
         public function process_admin_options() {
@@ -425,6 +428,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function render_single_product_express_checkout_form() {
+            if ($this->settings['express-enabled'] !== 'yes') return ''; 
             $product = get_product_from_the_post();
             if (empty($product)) return;
             $divit_logo_img = '<img style="width:80px;height:28.53px;margin-bottom:2px;" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
@@ -710,6 +714,24 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 ));
             }
 
+            if (isset($_GET['panel']) && $_GET['panel'] == 'express-checkout') {
+                $menu_location_options = array_reduce(array_keys(get_nav_menu_locations()), function ($arr, $v) { 
+                        $arr[$v] = $v;
+                        return $arr; 
+                    },
+                    array('' => 'none'),
+                );
+
+                $form_fields = array_merge($form_fields, array(
+                    'express-enabled' => array(
+                        'title' => __('Enable', 'woo-divit'),
+                        'type' => 'checkbox',
+                        'label' => __('Enable divit express checkout', 'woo-divit'),
+                        'default' => 'no',
+                    ),
+                ));
+            }
+
             if (!isset($_GET['panel']) || (isset($_GET['panel']) && $_GET['panel'] == 'payment')) {
                 $form_fields = array_merge($form_fields, array(
                     'enabled' => array(
@@ -831,6 +853,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     class="nav-tab <?php echo $panel == 'single-sign-on' ? 'nav-tab-active' : '' ?>"
                 >
                     Single sign on
+                </a>
+                <a 
+                    href="?page=wc-settings&tab=checkout&section=divit&panel=express-checkout" 
+                    class="nav-tab <?php echo $panel == 'express-checkout' ? 'nav-tab-active' : '' ?>"
+                >
+                    Express checkout
                 </a>
             </h2>
 
