@@ -331,7 +331,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             echo '<div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">';
             echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="' . $static_url . '/miles/miles-icon.png" />';
             echo '<b> <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span> <span style="margin-left:0;margin-right:6px;">=</span></b>';
-            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="' . $static_url . '/miles/miles-flag-am-colored-icon.png" />';
+            echo '<img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="' . $static_url . '/miles/miles-flag-am-bw-icon.png" />';
             echo '<b <span class="divit_miles" style="margin:0 5px;">' . $miles . '</span></b>';
             echo '</div>';
             echo '</div>';
