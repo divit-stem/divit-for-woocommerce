@@ -153,6 +153,7 @@ const COUNTRY_TELS = array(
 );
 
 function to_tel($phone) {
+    $phone = trim_all($phone);
     if (empty($phone)) return array("countryCode" => "", "tel" => "");
     if (str_starts_with($phone, "+")) {
         $phone = substr($phone, 1);
@@ -171,4 +172,8 @@ function to_tel($phone) {
         }
     }
     return array("countryCode" => "+852", "tel" => $phone);
+}
+
+function trim_all($str) {
+    return str_replace(' ', '', $str);
 }
