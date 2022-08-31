@@ -151,7 +151,7 @@ jQuery(function ($) {
 
     function updateServer() {
       var method = $(
-        "[class*=divit_checkout_].checked divit_checkout_block_overlay"
+        "[class*=divit_checkout_].checked .divit_checkout_block_overlay"
       ).data("method-id");
 
       $.ajax({
