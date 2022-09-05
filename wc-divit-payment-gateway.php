@@ -1591,7 +1591,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // update order address if none
             $delivery_address = $json['eventData']['deliveryAddress'];
-            if (empty(get_post_meta($order_id, '_billing_address_1') && !empty($delivery_address['address1']))) {
+            $is_express_checkout = get_post_meta($order_id, 'divit_express_checkout') == true;
+            if ($is_express_checkout && !is_null($delivery_address) && isset($delivery_address['address1'])) {
                 update_post_meta($order_id, '_billing_first_name', $delivery_address['contactFirstname']);
                 update_post_meta($order_id, '_billing_last_name', $delivery_address['contactLastname']);
                 update_post_meta($order_id, '_billing_phone', $delivery_address['tel']);
