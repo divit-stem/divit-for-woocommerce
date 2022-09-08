@@ -1788,7 +1788,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      </div>';
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
-            $html .= '  <div class="divit-login-popup">';
+            $html .= '  <div class="divit-login-popup divit-loggedin">';
             $html .= '      <div class="divit-text">' . __('my total miles balance') . '</div>';
             $html .= '      <div style="height:4px;"></div>';
             $html .= '      <div class="divit-items-center divit-user-miles-content">';
@@ -1821,6 +1821,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
             $html .= '          <div class="divit-space-between">';
             $html .= '              <div class="divit-link-text">view my divit account</div>';
+            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
+            $html .= '          </div>';
+            $html .= '      </a>';
+            $html .= '      <div style="height:16px;"></div>';
+            $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/referral/share">';
+            $html .= '          <div class="divit-space-between">';
+            $html .= '              <div class="divit-link-text">refer a friend, earn 500 bonus miles</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
             $html .= '          </div>';
             $html .= '      </a>';

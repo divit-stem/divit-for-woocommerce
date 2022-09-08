@@ -21,6 +21,13 @@
 	align-items: center;
 }
 
+.divit-tag-yellow {
+	color: #1c1c1c;
+	background-color: #FFCC33;
+	padding: 3px 15px;
+	border-radius: 35px;
+}
+
 .divit_loading_overlay {
 	display: none;
 	position: fixed;
@@ -406,6 +413,10 @@ input#divit_promotion_code:focus {
 	border-radius: 8px;
 	text-align: center;
 	z-index: 999999;
+}
+
+.divit-login-popup.divit-loggedin {
+	width: 300px;
 }
 
 .divit-login-popup > * {
