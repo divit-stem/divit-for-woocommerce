@@ -88,6 +88,8 @@ if (!class_exists('Divit_Plugin')) {
 
                 // shortcode
                 add_shortcode( 'divit_earn_miles_tag', array( $gateway, 'shortcode_divit_earn_miles_tag' ) );
+                add_shortcode( 'divit_earn_miles_tag_product_in_cart', array( $gateway, 'shortcode_divit_earn_miles_tag_product_in_cart' ) );
+                add_shortcode( 'divit_earn_miles_tag_in_cart', array( $gateway, 'shortcode_divit_earn_miles_tag_in_cart' ) );
                 add_shortcode( 'divit_login_button', array( $gateway, 'shortcode_divit_login_button' ) );
 
                 // cron

@@ -375,6 +375,31 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->render_miles_message($miles);
         }
 
+        public function shortcode_divit_earn_miles_tag_product_in_cart($attrs) {
+            if (!$this->is_earn_miles_enabled()) return;
+            if ($this->settings['osm-mini-cart-page'] != 'yes') return;
+            $product_id = $attrs['product_id'];
+            if (empty($product_id)) return;
+            $subtotal = 0;
+            $cart = WC()->cart;
+            foreach ( $cart->get_cart() as $cart_item ) {
+                if ($product_id == $cart_item['product_id']) {
+                    $subtotal = $cart_item['line_subtotal'];
+                    break;
+                }
+            }
+            $miles = $this->calc_earn_miles($subtotal);
+            $this->render_miles_message($miles);
+        }
+
+        public function shortcode_divit_earn_miles_tag_in_cart() {
+            if (!$this->is_earn_miles_enabled()) return;
+            if ($this->settings['osm-mini-cart-page'] != 'yes') return;
+            $cart = WC()->cart;
+            $miles = $this->get_cart_miles($cart);
+            $this->render_miles_message($miles);
+        }
+
         public function render_shop_loop_product_earn_miles_message() {
             if (!$this->is_earn_miles_enabled()) return;
             if ($this->settings['osm-loop-product-page'] != 'yes') return;
