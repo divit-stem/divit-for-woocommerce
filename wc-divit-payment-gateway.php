@@ -1339,6 +1339,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         </div>
                     </div>
                 </div>
+                <?php if ($this->settings['sso-enabled'] === 'yes'): ?>
                 <div style="height:24px"></div>
                 <div class="divit_checkout_block divit_checkout_spend">
                     <div class="divit_checkout_block_overlay" data-method-id="spend"></div>
@@ -1386,6 +1387,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     </div>
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
     <?php
         }
