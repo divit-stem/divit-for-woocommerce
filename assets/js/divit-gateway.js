@@ -283,7 +283,7 @@ jQuery(function ($) {
 
   // only render when payment method applied
   if ($(".payment_method_divit_desc").length > 0) {
-    if ($(document.body).hasClass("woocommerce-checkout")) {
+    if (wcdivit.isCheckoutPage === "1") {
       $(document.body).on("updated_checkout", init);
     } else {
       init();
