@@ -1016,6 +1016,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
                 "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                // "expiredAt" => 1664442745,
                 // "webhookEvents" => 'https://devwoo.free.beeceptor.com',
             );
 
@@ -1240,20 +1241,24 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         
         public function payment_fields()
         {
-            if (!$this->is_earn_miles_enabled()) {
-                echo $this->description;
-                return;
-            }
             $is_logged_in = !empty($this->get_divit_user());
-            $currency_symbol = get_woocommerce_currency_symbol();
-            $cart_total = $this->get_cart_total(WC()->cart);
-            $shipping_total = WC()->cart->get_shipping_total();
-            $formatted_order_total = $currency_symbol . number_format($cart_total + $shipping_total);
+
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
             $is_valid_promo = WC()->session->get(self::DIVIT_VALID_PROMO_CODE, '') == 'true';
             $is_empty_promo = $promotion_code == '';
-            // $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
 
+            // get cart data or order-pay order
+            $currency_symbol = get_woocommerce_currency_symbol();
+            $cart_total = $this->get_cart_total(WC()->cart);
+            $shipping_total = WC()->cart->get_shipping_total();
+            $total = $cart_total + $shipping_total;
+            $order = wc_get_order(get_query_var('order-pay'));
+            if (!empty($order)) {
+                $total = $order->get_total();
+            }
+            $formatted_order_total = $currency_symbol . number_format($total);
+
+            // render
             ob_start();
             $this->render_checkout_earn_miles();
             $checkout_html = ob_get_clean();
