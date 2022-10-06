@@ -236,8 +236,13 @@
 	margin: 0 !important;
 }
 
+/* checkout earn miles message */
+.payment_method_divit_desc .divit_earn_miles_message {
+	margin-bottom: 24px;
+}
+
 .divit_promotion_code_container {
-	margin: 24px 0;
+	margin-bottom: 24px;
 }
 
 .divit_promotion_code_input_container {
