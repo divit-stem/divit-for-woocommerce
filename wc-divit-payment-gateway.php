@@ -25,7 +25,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->method_title = 'divit payment gateway';
             $this->method_description = 'earn miles faster spend miles easier';
 
-            $this->environments = $this->get_environments();
+            $this->environments = $this->get_environments(true);
 
             $this->init_settings();
             $this->init_form_fields();
@@ -79,8 +79,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
-        public function get_environments() {
+        public function get_environments($all) {
             $environments = include 'environments.php';
+            if ($all) {
+                return $environments;
+            }
             if (isset($_GET['debug']) && $_GET['debug'] == 'true') {
                 return $environments;
             }
@@ -714,6 +717,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'title' => __('Environment', 'woo-divit'),
                         'type' => 'select',
                         'options' => wp_list_pluck($this->environments, 'name'),
+                        'options' => wp_list_pluck($this->get_environments(false), 'name'),
                         'default' => 'test',
                     ),
                     'title' => array(
