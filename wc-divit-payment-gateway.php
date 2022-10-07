@@ -21,11 +21,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         
         public function __construct()
         {
-            $this->environments = include 'environments.php';
-            
             $this->id           = 'divit';
             $this->method_title = 'divit payment gateway';
-            $this->method_description = 'pay now, pay later, earn miles';
+            $this->method_description = 'earn miles faster spend miles easier';
+
+            $this->environments = $this->get_environments();
 
             $this->init_settings();
             $this->init_form_fields();
@@ -36,7 +36,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->mode = $this->settings['mode'];
             $this->title = $this->settings['title'];
             $this->description = $this->settings['description'];
-            $this->api_key = $this->settings['api_key'];
+            $this->api_key = $this->get_api_key();
 
             // merchant setup
             $this->merchant_id = $this->settings['merchant_id'];
@@ -79,6 +79,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
+        public function get_environments() {
+            $environments = include 'environments.php';
+            if (isset($_GET['debug']) && $_GET['debug'] == 'true') {
+                return $environments;
+            }
+            unset($environments['dev']);
+            unset($environments['demo']);
+            return $environments;
+        }
+
+        public function get_api_key() {
+            if ($this->settings['mode'] == 'production') {
+                return $this->settings['api_key_production'];
+            }
+            return $this->settings['api_key_sandbox'];
+        }
+
         public function is_valid_for_use() {
             return in_array($this->get_currency(), array('HKD'), true);
         }
@@ -107,6 +124,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function set_default_settings() {
             // account
+            $this->set_default_setting('mode', 'sandbox');
+            $this->set_default_setting('api_key_sandbox', '');
+            $this->set_default_setting('api_key_production', '');
+            $this->set_default_setting('updated_date', get_utc());
             $this->set_default_setting('merchant_id', '');
             $this->set_default_setting('campaigns', array());
             $this->set_default_setting('selected_campaign_id', '');
@@ -142,7 +163,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 		}
 
         public function reset_settings() {
-            $this->settings['api_key'] = '';
+            // $this->settings['api_key_sandbox'] = '';
+            // $this->settings['api_key_production'] = '';
             $this->settings['merchant_id'] = '';
             $this->settings['campaigns'] = array();
             $this->settings['selected_campaign_id'] = '';
@@ -151,7 +173,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function setup_merchant() {
-            $api_key = $this->settings['api_key'];
+            $api_key = $this->get_api_key();
 
             $this->log("start setup merchant");
 
@@ -706,18 +728,24 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'default' => 'pay now, pay later, earn miles',
                         'description' => '',
                     ),
-                    'api_key' => array(
-                        'title' => 'Api key',
+                    'api_key_sandbox' => array(
+                        'title' => 'Sandbox Api key',
                         'type' => 'password',
                         'default' => '',
-                        'description' => 'api key for divit merchant',
+                        'description' => 'sandbox api key for divit merchant',
+                    ),
+                    'api_key_production' => array(
+                        'title' => 'Production Api key',
+                        'type' => 'password',
+                        'default' => '',
+                        'description' => 'production api key for divit merchant',
                     ),
                     'campaign_mode' => array(
                         'title' => 'Campaign mode',
                         'type' => 'select',
                         'options' => array(
                             self::CAMPAIGN_MODE_ORDER => 'order (base on order total)',
-                            self::CAMPAIGN_MODE_PRODUCT => 'product (base on product campaign)',
+                            // self::CAMPAIGN_MODE_PRODUCT => 'product (base on product campaign)',
                         ),
                         'default' => self::CAMPAIGN_MODE_ORDER,
                     ),
@@ -727,7 +755,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'options' => $this->campaigns_to_options($this->settings['campaigns']),
                         'default' => '',
                         // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
-                        'description' => 'only available in order campaign mode',
+                        // 'description' => 'only available in order campaign mode',
                     ),
                 ));
             }
@@ -827,18 +855,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 ));
             }
 
-            if (isset($_GET['panel']) && $_GET['panel'] == 'others') {
-                $form_fields = array_merge($form_fields, array(
-                    'promotion-code-enabled' => array(
-                        'title' => __('Promotion code', 'woo-divit'),
-                        'type' => 'checkbox',
-                        'label' => __('Enable promotion code', 'woo-divit'),
-                        'default' => 'no',
-                        'description' => 'controls divit promotion code input in checkout',
-                    )
-                ));
-            }
-
             if (isset($_GET['panel']) && $_GET['panel'] == 'express-checkout') {
                 $menu_location_options = array_reduce(array_keys(get_nav_menu_locations()), function ($arr, $v) { 
                         $arr[$v] = $v;
@@ -853,6 +869,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'type' => 'checkbox',
                         'label' => __('Enable divit express checkout', 'woo-divit'),
                         'default' => 'no',
+                    ),
+                ));
+            }
+
+            if (isset($_GET['panel']) && $_GET['panel'] == 'others') {
+                $form_fields = array_merge($form_fields, array(
+                    'promotion-code-enabled' => array(
+                        'title' => __('Promotion code', 'woo-divit'),
+                        'type' => 'checkbox',
+                        'label' => __('Enable promotion code', 'woo-divit'),
+                        'default' => 'no',
+                        'description' => 'controls divit promotion code input in checkout',
                     ),
                 ));
             }

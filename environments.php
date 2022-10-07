@@ -1,8 +1,8 @@
 <?php
 
 return array(
-	"test" => array(
-    "name" => "test",
+	"dev" => array(
+    "name" => "dev",
 		"api_url" =>  "https://dev-api.divit.dev",
     "web_url" => "https://dev-consumer.divit.dev",
     "static_url" => "https://static.divit.dev",
