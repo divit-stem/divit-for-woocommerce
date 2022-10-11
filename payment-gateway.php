@@ -1,15 +1,15 @@
 <?php
-/* @wordpress-plugin
- * Plugin Name:       Divit payment gateway for WooCommerce
- * Plugin URI:        https://divit.com.hk
- * Description:       Divit payment gateway & others
+/** 
+ * Plugin Name:       Divit Rewards and Payment Gateway
+ * Plugin URI:        https://developer.divit.com.hk/docs/platforms/woocommerce/overview/
+ * Description:       Divit Rewards and Payment Gateway
  * Version:           1.3.15
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
  * Author URI:        https://divit.com.hk
- * Text Domain:       woocommerce-divit-payment-gateway
- * Domain Path: /languages
+ * Text Domain:       wc-divit-payment-gateway
+ * Domain Path:       /languages
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  */
@@ -107,7 +107,7 @@ if (!class_exists('Divit_Plugin')) {
                 add_filter( 'wp_nav_menu_items', array($gateway, 'divit_render_nav_login_item'), 10, 2);
                 
                 // translation
-                load_plugin_textdomain('woo-divit', FALSE, basename(dirname(__FILE__)) . '/languages/');
+                load_plugin_textdomain('wc-divit-payment-gateway', FALSE, basename(dirname(__FILE__)) . '/languages/');
             }
         }
 
@@ -154,7 +154,7 @@ if (!class_exists('Divit_Plugin')) {
             
             ob_start();
 
-            ?><img src="<?php echo WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url'] ?>/brand/fps-by-divit.png" width="97.2px" height="25px" alt="Divit" /><?php
+            ?><img src="<?php echo esc_attr(WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url']); ?>/brand/fps-by-divit.png" width="97.2px" height="25px" alt="Divit" /><?php
 
             return ob_get_clean();
         }
@@ -164,7 +164,7 @@ if (!class_exists('Divit_Plugin')) {
                 sprintf(
                     '<a href="%s">%s</a>',
                     esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=divit' ) ),
-                    esc_html__( 'Settings', 'woo-divit' )
+                    esc_html__( 'Settings', 'wc-divit-payment-gateway' )
                 )
             );
 

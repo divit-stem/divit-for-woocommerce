@@ -13,7 +13,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Loco https://localise.biz/\n"
 "X-Loco-Version: 2.5.5; wp-5.8.2\n"
-"X-Domain: woo-divit"
+"X-Domain: wc-divit-payment-gateway"
 
 #: wc-divit-payment-gateway.php:303
 #, php-format

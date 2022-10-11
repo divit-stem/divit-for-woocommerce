@@ -1,6 +1,6 @@
-=== Divit Payment Gateway ===
+=== Divit Rewards and Payment Gateway ===
 Contributors: divit
-Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway
+Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Air Miles,Miles,Earn,Spend
 Requires at least: 5.0
 Tested up to: 6.0
 Stable tag: 1.3.15
@@ -12,15 +12,23 @@ Divit Payment Gateway for WooCommerce
 
 == Description ==
 
-This plugin will add Divit Payment Gateway for your WooCommerce.
+This plugin will add the Divit Rewards and Payment Gateway for your WooCommerce.
 
-Divit is a Hong Kong based fintech company partnered with Cathay. We integrate loyalty into real-time payments, enabling consumers to earn and spend miles when they pay with FPS.
+Divit is a Hong Kong based fintech company partnered with the worlds leading airlines. We integrate loyalty with real-time payments. 
+
+Customers can:
+- Make secure real-time bank transfers by QR Code or Manual Payment using their own banking app.
+- Earn Miles for their purchase: at a fixed or variable rate or for selected products
+- Spend Miles for a deduction in their cash spend at the checkout
 
 You can find more details in our websites:
 
 - [website](https://divit.com.hk)
 - [shop](https://shop.divit.com.hk)
 - [developer portal](https://developer.divit.com.hk/docs/platforms/woocommerce/overview).
+
+Countries Supported:
+- Hong Kong SAR, China
 
 == Installation ==
 
@@ -54,13 +62,19 @@ Follow the steps below to connect the plugin to your Divit merchant account:
 
 == Frequently Asked Questions ==
 
-= What is divit ? =
+= Who is divit? =
 
 We are a Hong Kong based fintech company partnered with Cathay. We integrate loyalty into real-time payments, enabling consumers to earn and spend miles when they pay with FPS.
 
-= what is FPS ? =
+= What is FPS? =
 
 The Hong Kong Monetary Authority (HKMA) launched the Faster Payment System (FPS) on 17 September 2018. FPS enables customers to make safe instant payments from their bank account or e-wallet on a 24/7 basis.
+
+There are over 10 million FPS registrations in Hong Kong at the end of August 2022. All of the major banks in Hong Kong support FPS for the transfer of funds, both for Individual and SME accounts.
+
+= What is a divit mile? = 
+
+A divit mile is our loyalty award which you earn with every purchase at a divit merchant. It is converatble into other loyalty programs, which we are adding to all the time. 
 
 = Contact divit =
 

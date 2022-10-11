@@ -141,7 +141,7 @@ function get_current_url() {
 
 function get_redirect_url() {
     if (isset($_GET['redirect'])) {
-        return $_GET['redirect'];
+        return sanitize_text_field($_GET['redirect']);
     }
     return home_url();
 }
