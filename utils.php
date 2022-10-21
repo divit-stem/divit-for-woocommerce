@@ -1,16 +1,5 @@
 <?php
 
-function get_wp_version() {
-    global $wp_version;
-    return $wp_version;
-}
-
-function get_plugin_version() {
-    $plugin_dir = WP_PLUGIN_DIR . '/divit-woocommerce/payment-gateway.php';
-    $plugin_data = get_plugin_data($plugin_dir);
-    return $plugin_data['Version'];
-}
-
 function get_product_from_the_post() {
     global $post;
     $product = wc_get_product( $post->ID );
@@ -58,7 +47,7 @@ function get_miles_by_reward_statement($reward_statement, $amount) {
     $statement = $reward_statement;
     $statement = str_replace('Round(', 'RoundNormal(', $statement);
     $statement = str_replace('InstalmentAmount', '$InstalmentAmount', $statement);
-    eval('$result = ' . $statement . ';');
+    eval(wp_kses_post('$result = ' . $statement . ';'));
     return $result / 100;
 }
 
@@ -77,45 +66,29 @@ function validate_webhook($signature, $secret, $body) {
 }
 
 function http_request($url, $method, $body, $headers) {
-    $ch = curl_init();
     if ($method == 'GET') {
-        $url .= '?' . http_build_query($body);
+        $url = add_query_arg( $body, $url );
     }
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    if ($method == 'GET') {
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-    } elseif ($method == 'POST') {
-        curl_setopt($ch, CURLOPT_POST, true);
-        if (!is_string($body)) {
-            $body = json_encode($body);
+    $args = array(
+        "method" => $method,
+        "headers" => $headers,
+        "body" => $method == 'GET' ? array() : json_encode($body),
+        'blocking' => true,
+        "timeout" => 70,
+    );
+    $response = wp_remote_request( $url, $args );
+    $response_code = wp_remote_retrieve_response_code( $response );
+    $response_body = wp_remote_retrieve_body( $response );
+    try {
+        $j = json_decode( $response_body, true );
+        if ($j) {
+            $response_body = $j;
         }
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-    } elseif ($method == 'PATCH') {
-        curl_setopt ($ch, CURLOPT_CUSTOMREQUEST, "PATCH");  
-        if (!is_string($body)) {
-            $body = json_encode($body);
-        }
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-    }
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 70);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    $result = curl_exec($ch);
-    $status_code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-    $body = json_decode($result, true);
-
-    $curl_errno = curl_errno($ch);
-    if ($curl_errno > 0) {
-        $body = curl_error($ch);
-    }
-
-    curl_close($ch);
-
+    } catch ( Exception $ex ) { }
     return array(
-        "status_code" => $status_code,
-        "body" => $body
+        "status_code" => $response_code,
+        "body" => $response_body,
+        "raw" => wp_remote_retrieve_body( $response ),
     );
 }
 

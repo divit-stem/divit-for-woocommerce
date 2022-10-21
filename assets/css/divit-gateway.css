@@ -294,6 +294,25 @@ input#divit_promotion_code:focus {
 	border: 1px solid #1C1C1C;
 }
 
+#place_order.divit_place_order_button .divit_place_order_button_image {
+	width:80px;
+	height:28.53px;
+	margin-bottom:2px;
+}
+
+#place_order.divit_place_order_button .divit_place_order_button_container {
+	color:#1c1c1c;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+}
+
+#place_order.divit_place_order_button .divit_place_order_button_spacing {
+	font-size:16px;
+	margin-top:8px;
+	margin-left:8px;
+}
+
 .divit_rangeslider.rangeslider {
 	max-width: 390px;
 	background: #DEDEDE;
