@@ -130,12 +130,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('mode', 'sandbox');
             $this->set_default_setting('api_key_sandbox', '');
             $this->set_default_setting('api_key_production', '');
-            $this->set_default_setting('updated_date', get_utc());
+            $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
             $this->set_default_setting('merchant_id', '');
             $this->set_default_setting('campaigns', array());
             $this->set_default_setting('selected_campaign_id', '');
             $this->set_default_setting('campaign_mode', '');
-            $this->set_default_setting('updated_date', get_utc());
+            $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
 
             // osm
             $this->set_default_setting('osm-enabled', 'yes');
@@ -209,7 +209,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
 
             // when this account is updated, may updated by cron job
-            $this->settings['updated_date'] = get_utc();
+            $this->settings['updated_date'] = DIVIT_UTILS::get_utc();
 
             $this->log("finished setup merchant");
 
@@ -271,7 +271,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($campaign)) $campaign = $this->selected_campaign;
             if (empty($campaign)) return 0;
             $reward_statement = $campaign['rewardStatement'];
-            return intval(get_miles_by_reward_statement($reward_statement, $price));
+            return intval(DIVIT_UTILS::get_miles_by_reward_statement($reward_statement, $price));
         }
 
         public function get_miles_rate() {
@@ -346,7 +346,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 // apply promo code
                 $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
                 if (!empty($promo)) {
-                    return intval(get_miles_by_reward_statement($promo['rewardStatement'], $total));
+                    return intval(DIVIT_UTILS::get_miles_by_reward_statement($promo['rewardStatement'], $total));
                 } else {
                     return $this->calc_earn_miles($total);
                 }
@@ -428,7 +428,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function shortcode_divit_earn_miles_tag() {
             if (!$this->is_earn_miles_enabled()) return;
-            $product = get_product_from_the_post();
+            $product = DIVIT_UTILS::get_product_from_the_post();
             if (empty($product)) return;
             $miles = $this->get_product_miles($product);
             $this->render_miles_message($miles);
@@ -462,7 +462,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_shop_loop_product_earn_miles_message() {
             if (!$this->is_earn_miles_enabled()) return;
             if ($this->settings['osm-loop-product-page'] != 'yes') return;
-            $product = get_product_from_the_post();
+            $product = DIVIT_UTILS::get_product_from_the_post();
             $miles = $this->get_product_miles($product);
         ?>
             <div style="margin-top:5px;"></div>
@@ -473,7 +473,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_single_product_earn_miles_message() {
             if (!$this->is_earn_miles_enabled()) return;
             if ($this->settings['osm-single-product-page'] != 'yes') return;
-            $product = get_product_from_the_post();
+            $product = DIVIT_UTILS::get_product_from_the_post();
             if (empty($product)) return;
             $miles = $this->get_product_miles($product);
             // product variants
@@ -515,7 +515,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_single_product_express_checkout_form() {
             if ($this->settings['express-enabled'] !== 'yes') return ''; 
-            $product = get_product_from_the_post();
+            $product = DIVIT_UTILS::get_product_from_the_post();
             if (empty($product)) return;
 
         ?>
@@ -589,7 +589,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
                 if (!empty($promo)) {
                     $price = $this->get_cart_total($cart);
-                    $miles = intval(get_miles_by_reward_statement($promo['rewardStatement'], $price));
+                    $miles = intval(DIVIT_UTILS::get_miles_by_reward_statement($promo['rewardStatement'], $price));
                 }
             }
             $this->render_miles_flag($miles);
@@ -1080,7 +1080,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_currency = $order->get_currency();
 
             // tel
-            $tel = to_tel($order->get_billing_phone());
+            $tel = DIVIT_UTILS::to_tel($order->get_billing_phone());
 
             $create_order_customer_data = array(
                 'firstName' => $order->get_billing_first_name(),
@@ -1651,70 +1651,70 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $url = $this->get_env()['api_url'] . '/login';
             $body =  "client_id=" . $client_id . "&client_secret=" . $client_secret;
             $headers = array('Content-Type' => 'application/x-www-form-urlencoded');
-            return http_request($url, 'POST', $body, $headers);
+            return DIVIT_UTILS::http_request($url, 'POST', $body, $headers);
         }
 
         public function get_merchant($api_key) {
             $url = $this->get_env()['api_url'] . '/partners';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'GET', array(), $header);
+            return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
 
         public function create_order($create_order, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/orders/fast';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'POST', $create_order, $header);
+            return DIVIT_UTILS::http_request($url, 'POST', $create_order, $header);
         }
 
         public function create_express_order($create_order, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/orders';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'POST', $create_order, $header);
+            return DIVIT_UTILS::http_request($url, 'POST', $create_order, $header);
         }
 
         public function get_order($order_id, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/orders/' . $order_id;
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'GET', array(), $header);
+            return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
 
         public function get_campaigns($merchant_id, $api_key) {
             $url = $this->get_env()['api_url'] . '/campaign/merchants/' . $merchant_id;
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'GET', array(), $header);
+            return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
 
         public function get_HKD_DVM_rate($api_key) {
             $url = $this->get_env()['api_url'] . '/miles/rates/merchants/HKD/DVM';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'GET', array(), $header);
+            return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
 
         public function get_promotion_code($merchant_id, $promotion_code, $api_key) {
             $url = $this->get_env()['api_url'] . '/campaign/merchants/' . $merchant_id . '/promo/' . $promotion_code;
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
-            return http_request($url, 'GET',  array(), $header);
+            return DIVIT_UTILS::http_request($url, 'GET',  array(), $header);
         }
 
         public function apply_promotion_code($order_id, $promotion_code, $api_key) {
             $url = $this->get_env()['api_url'] . '/paynow/fast/orders/' . $order_id . '/promo';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             $body = array('promoCode' => $promotion_code);
-            return http_request($url, 'PATCH', $body, $header);
+            return DIVIT_UTILS::http_request($url, 'PATCH', $body, $header);
         }
 
         public function get_user_profile($access_token, $scope, $api_key) {
             $url = $this->get_env()['api_url'] . '/auth/customer';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             $body = array('accessToken' => $access_token, 'scope' => $scope);
-            return http_request($url, 'GET', $body, $header);
+            return DIVIT_UTILS::http_request($url, 'GET', $body, $header);
         }
 
         public function revoke_user($refresh_token, $api_key) {
             $url = $this->get_env()['api_url'] . '/auth/token/revoke';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             $body = array('refreshToken' => $refresh_token);
-            return http_request($url, 'POST', $body, $header);
+            return DIVIT_UTILS::http_request($url, 'POST', $body, $header);
         }
 
         public function callback_divit_payment_handler() {
@@ -1731,7 +1731,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // validate signature
             $signature = array_key_exists('X-Divit-Signature', $headers) ? $headers['X-Divit-Signature'] : '';
             $signature = array_key_exists('x-divit-signature', $headers) ? $headers['x-divit-signature'] : $signature;
-            $valid = validate_webhook($signature, $this->api_key, $resp);
+            $valid = DIVIT_UTILS::validate_webhook($signature, $this->api_key, $resp);
             if (!$valid) {
                 $message = "callback: signature valid error, merchant reference {$merchant_ref}";
                 self::log($message);
@@ -1764,7 +1764,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // find order in wc by order number
             // BUG: plugin changing order number after process payment
-            // $order_id = get_order_by_order_number($merchant_ref);
+            // $order_id = DIVIT_UTILS::get_order_by_order_number($merchant_ref);
 
             $order_id = $merchant_ref;
             $order = wc_get_order($order_id);
@@ -1856,7 +1856,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $url = $this->get_env()['web_url'];
             $scope = 'full';
             $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
-            $redirect = get_current_url();
+            $redirect = DIVIT_UTILS::get_current_url();
 
             return $url . '/sso?' . http_build_query(array(
                 'scope' => $scope,
@@ -1866,15 +1866,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function get_divit_logout_url() {
-            return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_current_url();
+            return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . DIVIT_UTILS::get_current_url();
         }
 
         public function divit_auth_login_handler() {
             // validation
-            if (!isset_all_keys(array('customerID', 'accessToken', 'refreshToken', 'scope', 'expiresIn'), $_GET)) {
+            if (!DIVIT_UTILS::isset_all_keys(array('customerID', 'accessToken', 'refreshToken', 'scope', 'expiresIn'), $_GET)) {
                 $this->divit_auth_logout();
                 wc_add_notice(_('login to divit fail'), 'error');
-                wp_redirect(get_redirect_url());
+                wp_redirect(DIVIT_UTILS::get_redirect_url());
                 exit;
             }
 
@@ -1899,14 +1899,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             ));
 
             wc_add_notice(__('login to divit successfully', 'wc-divit-payment-gateway'));
-            wp_redirect(get_redirect_url());
+            wp_redirect(DIVIT_UTILS::get_redirect_url());
             exit;
         }
 
         public function divit_auth_logout_handler() {
             $this->divit_auth_logout();
             wc_add_notice(__('logout divit successfully.', 'wc-divit-payment-gateway'));
-            wp_redirect(get_redirect_url());
+            wp_redirect(DIVIT_UTILS::get_redirect_url());
             exit;
         }
 
