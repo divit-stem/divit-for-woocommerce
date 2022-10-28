@@ -1,5 +1,5 @@
 === Divit Rewards and Payment Gateway ===
-Contributors: divit
+Contributors: janderson852, kyktommy 
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Air Miles,Miles,Earn,Spend
 Requires at least: 5.0
 Tested up to: 6.0
@@ -88,6 +88,9 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 3. Divit FPS checkout
 
 == Changelog ==
+
+= 1.4.3 =
+* Feat - more controlable settings
 
 = 1.3.15 =
 * Feat - express checkout, single sign on
