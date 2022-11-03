@@ -74,6 +74,9 @@ if (!class_exists('Divit_Plugin')) {
                 add_action('wp_enqueue_scripts', array( $this, 'divit_enqueue_script'));
                 add_filter( 'woocommerce_gateway_icon', array( $this, 'filter_woocommerce_gateway_icon' ), 10, 2 );
 
+                // page
+                add_action('wp_head', array($gateway, 'prefill_promo_code_from_url'));
+
                 // woocommerce hooks
                 add_action( 'woocommerce_after_shop_loop_item_title', array($gateway, 'render_shop_loop_product_earn_miles_message'), 40);
                 add_action( 'woocommerce_before_add_to_cart_button', array($gateway, 'render_single_product_earn_miles_message'), 10, 0 );

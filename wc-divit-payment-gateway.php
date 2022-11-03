@@ -18,6 +18,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         const CAMPAIGN_MODE_PRODUCT = 'product';
 
         const META_PRODUCT_CAMPAIGN = '_product_campaign_id';
+
+        const QUERY_DIVIT_PROMO_CODE_KEY = 'divitpromocode';
         
         public function __construct()
         {
@@ -1422,7 +1424,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             <div class="divit_promotion_code_input">
                                 <?php
                                     if ($is_valid_promo) {
-                                        echo esc_html(sprintf(
+                                        echo wp_kses_post(sprintf(
                                             __('promo code %s applied! you will earn 1 mile every %s spent', 'wc-divit-payment-gateway'), 
                                             '<b>' . $promotion_code . '</b>',
                                             '$' . $this->get_miles_rate(),
@@ -1548,6 +1550,46 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
     <?php
         }
 
+        public function reset_promo_code() {
+            WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
+            WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, array()); 
+            WC()->session->set(self::DIVIT_VALID_PROMO_CODE, '');
+        }
+
+        public function do_apply_promotion_code($promotion_code) {
+            $this->reset_promo_code();
+
+            if (empty($promotion_code)) {
+                return array('success' => true, 'data' => 'clear promotion code');
+            }
+
+            $promotion_code = trim($promotion_code);
+
+            $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $this->api_key);
+            if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
+                WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
+                WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
+                return array('success' => false, 'data' => 'invalid promotion code, ' . $promotion_code);
+            }
+            WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
+            WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, $resp['body']['data']);
+            WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'true');
+            return array('success' => true, 'data' => 'applied promotion code, ' . $promotion_code);
+        }
+
+        public function prefill_promo_code_from_url() {
+            if (!$this->is_promotion_code_enabled()) {
+                return;
+            }
+            if (isset($_GET[self::QUERY_DIVIT_PROMO_CODE_KEY])) {
+                $promotion_code = $_GET[self::QUERY_DIVIT_PROMO_CODE_KEY];
+                $result = $this->do_apply_promotion_code($promotion_code);
+                if (!$result['success']) {
+                    $this->reset_promo_code();
+                }
+            }
+        }
+
         // apply promotion code to session in checkout page
         public function divit_apply_promotion_code() {
             if (!$this->is_promotion_code_enabled()) {
@@ -1557,30 +1599,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $promotion_code = sanitize_text_field($_POST['promotion_code']);
 
-            // reset
-            WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
-            WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, array());
+            $result = $this->do_apply_promotion_code($promotion_code);
 
-            if (empty($promotion_code)) {
-                WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, '');
-                WC()->session->set(self::DIVIT_VALID_PROMO_CODE, '');
-                wp_send_json_success('clear promotion code');
-                die(); 
+            if ($result['success']) {
+                wp_send_json_success($result['data']);
+            } else {
+                wp_send_json_error($result['data']);
             }
 
-            $promotion_code = trim($promotion_code);
-
-            $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $this->api_key);
-            if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
-                WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
-                WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'false');
-                wp_send_json_error('invalid promotion code, ' . $promotion_code);
-                die();
-            }
-            WC()->session->set(self::DIVIT_PROMOTION_CODE_INPUT, $promotion_code);
-            WC()->session->set(self::DIVIT_PROMOTION_CAMPAIGN, $resp['body']['data']);
-            WC()->session->set(self::DIVIT_VALID_PROMO_CODE, 'true');
-            wp_send_json_success('applied');
             die();
         }
 
