@@ -125,7 +125,7 @@ jQuery(function ($) {
       isEmptyShippingForm &&
       deliveryAddresses.length > 0
     ) {
-      var address = profile.addresses[0];
+      var address = deliveryAddresses[0];
       if (!$shippingCheckbox.prop("checked")) {
         $shippingCheckbox.click();
       }
