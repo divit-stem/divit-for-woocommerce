@@ -276,7 +276,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return intval(DIVIT_UTILS::get_miles_by_reward_statement($reward_statement, $price));
         }
 
-        public function get_miles_rate() {
+        public function get_miles_rate($is_calc_promotion_code = false) {
+            if ($is_calc_promotion_code) {
+                if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+                    $promo_campaign = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
+                    if (!empty($promo_campaign)) {
+                        return 100 / $this->calc_earn_miles(100, $promo_campaign);
+                    }
+                }
+            }
             return 100 / $this->calc_earn_miles(100);
         }
 
@@ -1427,7 +1435,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                                         echo wp_kses_post(sprintf(
                                             __('promo code %s applied! you will earn 1 mile every %s spent', 'wc-divit-payment-gateway'), 
                                             '<b>' . $promotion_code . '</b>',
-                                            '$' . $this->get_miles_rate(),
+                                            '$' . $this->get_miles_rate(true),
                                         ));
                                     } else {
                                         woocommerce_form_field( 'divit_promotion_code', array(
@@ -1582,9 +1590,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 return;
             }
             if (isset($_GET[self::QUERY_DIVIT_PROMO_CODE_KEY])) {
+                DIVIT_UTILS::create_wc_session_if_empty();
                 $promotion_code = $_GET[self::QUERY_DIVIT_PROMO_CODE_KEY];
                 $result = $this->do_apply_promotion_code($promotion_code);
-                if (!$result['success']) {
+                if ($result['success']) {
+                    // refresh cart by js
+            ?>
+                <script>
+                    jQuery(function() {
+                        setTimeout(() => {
+                            jQuery(document.body).trigger('wc_fragment_refresh');
+                        }, 0.5 * 1000);
+                    });
+                </script>
+            <?php 
+                } else {
                     $this->reset_promo_code();
                 }
             }

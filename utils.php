@@ -4,6 +4,13 @@ if (!class_exists('DIVIT_UTILS'))
 {
     class DIVIT_UTILS {
 
+        static function create_wc_session_if_empty() {
+            if ( ! WC()->session->has_session() ) {
+                WC()->session->set_customer_session_cookie( true );
+            }
+            return WC()->session;
+        }
+
         static function get_product_from_the_post() {
             global $post;
             $product = wc_get_product( $post->ID );
