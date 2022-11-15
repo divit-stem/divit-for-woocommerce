@@ -151,7 +151,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // sso
             $this->set_default_setting('sso-enabled', 'no');
-            $this->set_default_setting('sso-login-button-menu', 'primary');
+            $this->set_default_setting('sso-login-button-menu', 'none');
 
             // express checkout
             $this->set_default_setting('express-enabled', 'no');
@@ -880,32 +880,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'title' => __('Login Button in menu location', 'wc-divit-payment-gateway'),
                         'type' => 'select',
                         'options' => $menu_location_options,
-                        'default' => 'primary',
-                    ),
-                ));
-            }
-
-
-            if ($panel == 'single-sign-on') {
-                $menu_location_options = array_reduce(array_keys(get_nav_menu_locations()), function ($arr, $v) { 
-                        $arr[$v] = $v;
-                        return $arr; 
-                    },
-                    array('' => 'none'),
-                );
-
-                $form_fields = array_merge($form_fields, array(
-                    'sso-enabled' => array(
-                        'title' => __('Enable', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'label' => __('Enable divit single sign on', 'wc-divit-payment-gateway'),
-                        'default' => 'no',
-                    ),
-                    'sso-login-button-menu' => array(
-                        'title' => __('Login Button in menu location', 'wc-divit-payment-gateway'),
-                        'type' => 'select',
-                        'options' => $menu_location_options,
-                        'default' => 'primary',
+                        'default' => 'none',
                     ),
                 ));
             }
@@ -1519,7 +1494,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             <?php if($is_logged_in): ?>
                                 <?php echo esc_html(__('spend your divit miles to save!', 'wc-divit-payment-gateway')); ?>
                             <?php else: ?>
-                                <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a href="<?php echo esc_html($this->get_divit_login_url()); ?>">log in</a>
+                                <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a href="<?php echo esc_html($this->get_divit_login_url()); ?>"><?php _e('log in', 'wc-divit-payment-gateway'); ?></a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1661,7 +1636,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_set_checkout_method() {
             WC()->session->set(self::DIVIT_CHECKOUT_METHOD, sanitize_text_field($_POST['checkout_method']));
-            WC()->session->set(self::DIVIT_CHECKOUT_META, sanitize_text_field($_POST['checkout_meta']));
+            WC()->session->set(self::DIVIT_CHECKOUT_META, array_map( 'sanitize_text_field', $_POST['checkout_meta'] ));
             wp_send_json_success();
             die();
         }
@@ -1971,37 +1946,42 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '<div class="divit-login">';
             $html .= '  <div class="divit-login-button">';
             $html .= '      <div class="divit-login-button-content divit-login-text">';
-            $html .= '          ' . __('login', 'wc-divit-payment-gateway');
+            $html .= '          ' . __('log in', 'wc-divit-payment-gateway');
             $html .= '      </div>';
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
             $html .= '  <div class="divit-login-popup">';
             $html .= '      <a class="divit-login-text" href="' . $this->get_divit_login_url() . '">';
             $html .= '          <div class="divit-login-button">';
-            $html .= '              ' . __('login', 'wc-divit-payment-gateway');
+            $html .= '              ' . __('log in', 'wc-divit-payment-gateway');
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '      <div style="height:19px;"></div>';
-            $html .= '      <div class="divit-login-signup-text">don&rsquo;t have a divit account yet? <a href="' . $this->get_env()['web_url'] . '">sign up</a></div>';
+            $html .= '      <div class="divit-login-signup-text">' . __('don&rsquo;t have a divit account yet?', 'wc-divit-payment-gateway') . ' <a href="' . $this->get_env()['web_url'] . '">' . __('sign up', 'wc-divit-payment-gateway') . '</a></div>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <div class="divit-separator"></div>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">convert my Asia Miles</div>';
+            $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />'; 
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">view my divit account</div>';
+            $html .= '              <div class="divit-link-text">' . __('view my divit account', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />'; 
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '  </div>';
             $html .= '</div>';
             return $html;
+        }
+
+        public function get_login_button_in_nav_html() {
+            $login_button_html = $this->get_login_button_html();
+            return '<li class="menu-item">' . $login_button_html . '</li>';
         }
 
         public function get_user_profile_html($profile) {
@@ -2038,7 +2018,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '/history">'; 
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">view my orders</div>';
+            $html .= '              <div class="divit-link-text">' . __('view my orders', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />'; 
             $html .= '          </div>';
             $html .= '      </a>';
@@ -2047,27 +2027,32 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">convert my Asia Miles</div>';
+            $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">view my divit account</div>';
+            $html .= '              <div class="divit-link-text">' . __('view my divit account', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/referral/share">';
             $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">refer a friend, earn 500 bonus miles</div>';
+            $html .= '              <div class="divit-link-text">' . __('refer a friend, earn 500 bonus miles', 'wc-divit-payment-gateway') . '</div>';
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
             $html .= '          </div>';
             $html .= '      </a>';
             $html .= '  </div>';
             $html .= '</div>';
             return $html;
+        }
+
+        public function get_user_profile_in_nav_html($profile) {
+            $user_profile_html = $this->get_user_profile_html($profile);
+            return '<li class="menu-item">' . $user_profile_html . '</li>';
         }
 
         public function shortcode_divit_login_button() {
@@ -2089,7 +2074,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function divit_render_nav_login_item( $items, $args ) {
             if ($this->settings['sso-enabled'] !== 'yes') return $items;
             if ( $this->settings['sso-login-button-menu'] === $args->theme_location) {
-                $login_button_html = $this->get_login_button_html();
+                $login_button_html = $this->get_login_button_in_nav_html();
                 $user = $this->get_divit_user();
                 if (empty($user)) {
                     $items .= $login_button_html;
@@ -2101,7 +2086,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $items .= $login_button_html;
                     return $items;
                 }
-                $user_profile_html = $this->get_user_profile_html($profile);
+                $user_profile_html = $this->get_user_profile_in_nav_html($profile);
                 $items .= $user_profile_html;
                 return $items;
             }

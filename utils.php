@@ -124,8 +124,9 @@ if (!class_exists('DIVIT_UTILS'))
         }
 
         static function get_current_url() {
-            global $wp;
-            return home_url(add_query_arg(array($_GET), $wp->request));
+            $is_https = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+            $protocol = $is_https ? 'https://' : 'http://';
+            return $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
         }
 
         static function get_redirect_url() {
