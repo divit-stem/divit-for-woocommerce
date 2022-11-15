@@ -1376,9 +1376,20 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $is_show_earn_miles_label = $this->is_earn_miles_enabled() && $this->settings['osm-checkout-page'] == 'yes';
             $is_promotion_code_enabled = $this->is_promotion_code_enabled();
 
+            // validate promo code
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
             $is_valid_promo = WC()->session->get(self::DIVIT_VALID_PROMO_CODE, '') == 'true';
             $is_empty_promo = $promotion_code == '';
+            $is_display_invalid_promo = !$is_valid_promo && !$is_empty_promo;
+            if (!$is_empty_promo) {
+                $resp = $this->get_promotion_code($this->merchant_id, $promotion_code, $this->api_key);
+                if ($resp['status_code'] != 200 || empty($resp['body']['data']['promoCode'])) {
+                    $this->reset_promo_code();
+                    $promotion_code = '';
+                    $is_valid_promo = false;
+                    $is_empty_promo = true;
+                }
+            }
 
             // get cart data or order-pay order
             $currency_symbol = get_woocommerce_currency_symbol();
@@ -1428,7 +1439,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             </button>
                         </form>
                         <div class="divit_promotion_code_message_failed">
-                            <?php echo esc_html(!$is_valid_promo && !$is_empty_promo  ? 'invalid code' : ''); ?>
+                            <?php echo esc_html($is_display_invalid_promo ? 'invalid code' : ''); ?>
                         </div>
                     </div>
                     <?php endif ?>
