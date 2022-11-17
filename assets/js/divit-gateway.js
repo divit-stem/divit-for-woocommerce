@@ -9,6 +9,19 @@ jQuery(function ($) {
     )
     .appendTo(document.body);
 
+  // patch login, logout redirect url
+  function patchRedirectUrl() {
+    var loginAnchor = $(".divit_redirect_url");
+    loginAnchor.each(function () {
+      var url = $(this).attr("href");
+      var newUrl = new URL(url);
+      newUrl.searchParams.set("redirect", window.location.href);
+      $(this).attr("href", newUrl.href);
+    });
+  }
+  patchRedirectUrl();
+  $(document.body).on("updated_checkout", patchRedirectUrl);
+
   function showLoading() {
     $loadingOverlay.show();
   }
@@ -113,7 +126,7 @@ jQuery(function ($) {
     var $shippingCity = $("#shipping_city");
     var $shippingState = $("#shipping_state");
 
-    var deliveryAddresses = (profile.addresses || []).filter(
+    var deliveryAddresses = ((profile && profile.addresses) || []).filter(
       (a) => a.addressType === "delivery"
     );
     var isEmptyShippingForm =

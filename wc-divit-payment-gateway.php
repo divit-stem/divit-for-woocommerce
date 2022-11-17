@@ -1505,7 +1505,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             <?php if($is_logged_in): ?>
                                 <?php echo esc_html(__('spend your divit miles to save!', 'wc-divit-payment-gateway')); ?>
                             <?php else: ?>
-                                <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a href="<?php echo esc_html($this->get_divit_login_url()); ?>"><?php _e('log in', 'wc-divit-payment-gateway'); ?></a>
+                                <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a class="divit_redirect_url" href="<?php echo esc_html($this->get_divit_login_url()); ?>"><?php _e('log in', 'wc-divit-payment-gateway'); ?></a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1888,7 +1888,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $url = $this->get_env()['web_url'];
             $scope = 'full';
             $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
-            $redirect = DIVIT_UTILS::get_current_url();
+            $redirect = get_site_url(); 
 
             return $url . '/sso?' . http_build_query(array(
                 'scope' => $scope,
@@ -1898,7 +1898,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function get_divit_logout_url() {
-            return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . DIVIT_UTILS::get_current_url();
+            return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_site_url();
         }
 
         public function divit_auth_login_handler() {
@@ -1962,7 +1962,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
             $html .= '  <div class="divit-login-popup">';
-            $html .= '      <a class="divit-login-text" href="' . $this->get_divit_login_url() . '">';
+            $html .= '      <a class="divit-login-text divit_redirect_url" href="' . $this->get_divit_login_url() . '">';
             $html .= '          <div class="divit-login-button">';
             $html .= '              ' . __('log in', 'wc-divit-payment-gateway');
             $html .= '          </div>';
@@ -2021,7 +2021,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '          <div class="divit-miles">' . $miles . '</div>';
             $html .= '      </div>';
             $html .= '      <div style="height:16px;"></div>';
-            $html .= '      <a class="divit-logout-text" href="' . $this->get_divit_logout_url() . '">';
+            $html .= '      <a class="divit-logout-text divit_redirect_url" href="' . $this->get_divit_logout_url() . '">';
             $html .= '          <div class="divit-logout-button">';
             $html .= '              '. __('log out', 'wc-divit-payment-gateway');
             $html .= '          </div>';
