@@ -3,7 +3,7 @@ Contributors: janderson852, kyktommy
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Air Miles,Miles,Earn,Spend
 Requires at least: 5.0
 Tested up to: 6.1
-Stable tag: 1.4.5
+Stable tag: 1.4.6
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
