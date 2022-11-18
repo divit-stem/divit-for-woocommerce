@@ -1776,8 +1776,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $order_id = $merchant_ref;
                 $order = wc_get_order($merchant_ref);
                 $is_same_order = get_post_meta($order_id, 'divit_order_id')[0] == $json['eventData']['orderID'];
-                if ($is_same_order && !$order->is_paid()) {
-                    $order->add_order_note(__('Payment is cancelled by customer', 'wc-divit-payment-gateway'));
+                $is_divit_payment_method = $order->get_payment_method() == $this->id;
+                $is_valid_order_status = $order->get_status() == 'pending';
+                if ($is_same_order && $is_divit_payment_method && $is_valid_order_status) {
+                    $order->add_order_note(__('divit payment is cancelled', 'wc-divit-payment-gateway'));
                     $order->update_status('failed');
                     $message = "callback: order is cancelled, merchant reference {$merchant_ref}";
                     self::log($message);
