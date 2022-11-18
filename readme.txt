@@ -3,7 +3,7 @@ Contributors: janderson852, kyktommy
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Air Miles,Miles,Earn,Spend
 Requires at least: 5.0
 Tested up to: 6.1
-Stable tag: 1.4.6
+Stable tag: 1.4.7
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -88,6 +88,12 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 3. Divit FPS checkout
 
 == Changelog ==
+
+= 1.4.7 =
+* Fix - payment failed webhook handling
+
+= 1.4.6 =
+* Fix - single sign on redirect url
 
 = 1.4.5 =
 * Fix - single sign on redirect url
