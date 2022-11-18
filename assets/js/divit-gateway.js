@@ -264,14 +264,16 @@ jQuery(function ($) {
     $milesSlider.attr({ max: maxMilesToBurn });
     $milesSlider.rangeslider("update", true);
 
-    // initialize with server
-    var paymentMethod = d.checkoutOption.method;
-    var paymentMeta = d.checkoutOption.meta || {};
-    if (paymentMethod === "spend" && paymentMeta.cash >= 0) {
-      updateCash(parseInt(paymentMeta.cash, 10));
-      updateMilesSlider(undefined, parseInt(paymentMeta.cash, 10));
+    // select previous checkout option if logged in
+    if (isLoggedIn) {
+      var paymentMethod = d.checkoutOption.method;
+      var paymentMeta = d.checkoutOption.meta || {};
+      if (paymentMethod === "spend" && paymentMeta.cash >= 0) {
+        updateCash(parseInt(paymentMeta.cash, 10));
+        updateMilesSlider(undefined, parseInt(paymentMeta.cash, 10));
+      }
+      $('[data-method-id="' + paymentMethod + '"]').click();
     }
-    $('[data-method-id="' + paymentMethod + '"]').click();
 
     // show content
     $(".divit_checkout_spend_loading").hide();
