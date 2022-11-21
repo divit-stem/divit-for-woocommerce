@@ -1401,6 +1401,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $total = $order->get_total();
             }
             $formatted_order_total = $currency_symbol . number_format($total);
+
+            // checkout option
+            if (!$is_logged_in) {
+                $this->do_set_checkout_method('paynow', array());
+            }
     ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
                 <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER): ?>
@@ -1645,9 +1650,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             die();
         }
 
+        public function do_set_checkout_method($checkout_method, $checkout_meta) {
+            WC()->session->set(self::DIVIT_CHECKOUT_METHOD, $checkout_method);
+            WC()->session->set(self::DIVIT_CHECKOUT_META, $checkout_meta);
+        }
+
         public function divit_set_checkout_method() {
-            WC()->session->set(self::DIVIT_CHECKOUT_METHOD, sanitize_text_field($_POST['checkout_method']));
-            WC()->session->set(self::DIVIT_CHECKOUT_META, array_map( 'sanitize_text_field', $_POST['checkout_meta'] ));
+            $this->do_set_checkout_method(
+                sanitize_text_field($_POST['checkout_method']), 
+                array_map( 'sanitize_text_field', $_POST['checkout_meta'] )
+            );
             wp_send_json_success();
             die();
         }
