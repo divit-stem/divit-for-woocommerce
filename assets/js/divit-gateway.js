@@ -46,6 +46,11 @@ jQuery(function ($) {
     return Math.round(value);
   }
 
+  function num2(value) {
+    const places = 10 ** 2;
+    return Math.round(value * places) / places;
+  }
+
   function joinAddress(arr, sep) {
     return arr.filter((a) => !!a && !!a.trim()).join(sep);
   }
@@ -193,7 +198,7 @@ jQuery(function ($) {
       var fiat = miles * buyRate;
       var cash = orderTotal - fiat;
       $milesInput.val(num(miles));
-      $cashInput.val(num(cash));
+      $cashInput.val(num2(cash));
     }
 
     function updateCash(cash) {
@@ -270,7 +275,7 @@ jQuery(function ($) {
       var paymentMeta = d.checkoutOption.meta || {};
       if (paymentMethod === "spend" && paymentMeta.cash >= 0) {
         updateCash(parseInt(paymentMeta.cash, 10));
-        updateMilesSlider(undefined, parseInt(paymentMeta.cash, 10));
+        updateMilesSlider(undefined, num2(parseFloat(paymentMeta.cash)));
       }
       $('[data-method-id="' + paymentMethod + '"]').click();
     }
