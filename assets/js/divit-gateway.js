@@ -111,7 +111,7 @@ jQuery(function ($) {
       $billingAddress1.val() === "" &&
       $billingAddress2.val() === "" &&
       $billingCity.val() === "";
-    if (isEmptyBillingForm) {
+    if (isEmptyBillingForm && profile) {
       $billingAddress1.val(profile.floor);
       $billingAddress2.val(
         joinAddress([profile.building, profile.street], ", ")

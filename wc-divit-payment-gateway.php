@@ -1657,8 +1657,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_set_checkout_method() {
             $this->do_set_checkout_method(
-                sanitize_text_field($_POST['checkout_method']), 
-                array_map( 'sanitize_text_field', $_POST['checkout_meta'] )
+                sanitize_text_field($_POST['checkout_method'] ?? ''), 
+                array_map( 'sanitize_text_field', $_POST['checkout_meta'] ?? array() )
             );
             wp_send_json_success();
             die();
