@@ -81,6 +81,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
+        public function get_transaction_url( $order ): string {
+            $base_url = $this->get_env()['partner_portal_url'];
+            $url = $base_url . '/orders/pay-now/' . $order->get_transaction_id() . '/view';
+            $this->view_transaction_url = $url;
+            return parent::get_transaction_url( $order );
+        }
+
         public function get_environments($all) {
             $environments = include 'environments.php';
             if ($all) {
@@ -1169,6 +1176,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // save divit order id for cancel, reference
             $order->update_meta_data('divit_order_id', $create_order_id);
+            $order->set_transaction_id($create_order_id);
             $order->save();
 
             // divit checkout method
@@ -1854,6 +1862,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $message = "callback: complete order, merchant reference {$merchant_ref}";
             self::log($message);
+
+            // get more divit order data mark it in order
+            $divit_order_resp = $this->get_order($json['eventData']['orderID'], $this->api_key);
+            if ($divit_order_resp['status_code'] == 200) {
+                $divit_order = $divit_order_resp['body']['data'];
+                $divit_refundable_amount = $divit_order['refundableAmount']['amount'] ?? 0;
+                $order->update_meta_data('divit_refundable_amount', $divit_refundable_amount / 100); 
+                $divit_nonrefundable_amount = $divit_order['nonrefundableAmount']['amount'] ?? 0;
+                $order->update_meta_data('divit_nonrefundable_amount', $divit_nonrefundable_amount / 100);
+                $order->update_meta_data('divit_miles_burned', $divit_order['milesBurned'] ?? 0);
+                $order->save();
+            }
+
             wp_send_json($message);
             exit;
         }
