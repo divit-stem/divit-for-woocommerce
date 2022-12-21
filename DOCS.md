@@ -27,8 +27,11 @@
 
 ### deploy for manual install
 
-- zip all files as name: `divit-for-woocommerce.zip`
-- by using same zip filename, can replace the existing installed one.
+1. update version in `payment-gateway.txt` > `Version` and `DIVIT_PLUGIN_VERSION`
+1. update version in `readme.txt` > `Stable tag`
+1. write changelog in `readme.txt` > `== Changelog ==`
+1. zip all files as name: `divit-for-woocommerce.zip`
+1. NOTE: by using same zip filename, admin can replace the existing installed one.
 
 ### deploy to wordpress.org 
 
@@ -42,6 +45,7 @@ Deploy:
 
 1. update version in `payment-gateway.txt` > `Version` and `DIVIT_PLUGIN_VERSION`
 1. update version in `readme.txt` > `Stable tag`
+1. write changelog in `readme.txt` > `== Changelog ==`
 1. NOTE: you make need to remove `DOCS.md` after you copy files
 1. copy and replace all files to `SVN folder` > `truck`
 1. create new folder and copy all files to `SVN folder` > `tags` > `new version`
