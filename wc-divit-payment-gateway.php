@@ -2084,13 +2084,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
             $html .= '          </div>';
             $html .= '      </a>';
-            $html .= '      <div style="height:16px;"></div>';
-            $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '/profile/referral/share">';
-            $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">' . __('refer a friend, earn 500 bonus miles', 'wc-divit-payment-gateway') . '</div>';
-            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
-            $html .= '          </div>';
-            $html .= '      </a>';
             $html .= '  </div>';
             $html .= '</div>';
             return $html;
