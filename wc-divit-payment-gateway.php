@@ -23,17 +23,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         
         public function __construct()
         {
+            // payment info
             $this->id           = 'divit';
             $this->method_title = 'divit payment gateway';
             $this->method_description = 'earn miles faster spend miles easier';
 
+            // env
             $this->environments = $this->get_environments(true);
 
+            // settings
             $this->init_settings();
             $this->init_form_fields();
             $this->set_default_settings();
-
-            // setting
             $this->enabled = $this->settings['enabled'];
             $this->mode = $this->settings['mode'];
             $this->title = $this->settings['title'];
@@ -51,7 +52,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'setup_merchant'), 11, 0);
             // add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( 'Divit_Plugin_Cron', 'fire_jobs'), 12, 0);
 
-            // AJAX
+            // AJAX for frontend use
             add_action("wp_ajax_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
             add_action("wp_ajax_nopriv_divit_apply_promotion_code", array($this, "divit_apply_promotion_code") );
             add_action("wp_ajax_divit_get_checkout_data", array($this, "divit_get_checkout_data") );
@@ -81,18 +82,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 			return self::$instance;
 		}
 
-        public function get_transaction_url( $order ): string {
-            $base_url = $this->get_env()['partner_portal_url'];
-            $url = $base_url . '/orders/pay-now/' . $order->get_transaction_id() . '/view';
-            $this->view_transaction_url = $url;
-            return parent::get_transaction_url( $order );
+        public function get_env() {
+            return $this->environments[$this->settings['mode']];
         }
+
 
         public function get_environments($all) {
             $environments = include 'environments.php';
             if ($all) {
                 return $environments;
             }
+            // turns on dev, demo if query string has debug=true
             if (isset($_GET['debug']) && sanitize_text_field($_GET['debug'])== 'true') {
                 return $environments;
             }
@@ -101,11 +101,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return $environments;
         }
 
+        // redirect url to divit order in order details, use with set_transaction_id
+        public function get_transaction_url( $order ): string {
+            $base_url = $this->get_env()['partner_portal_url'];
+            $url = $base_url . '/orders/pay-now/' . $order->get_transaction_id() . '/view';
+            $this->view_transaction_url = $url;
+            return parent::get_transaction_url( $order );
+        }
+
         public function get_api_key() {
             if ($this->settings['mode'] == 'production') {
                 return $this->settings['api_key_production'];
             }
             return $this->settings['api_key_sandbox'];
+        }
+
+        public function get_currency() {
+            return get_woocommerce_currency();
         }
 
         public function is_valid_for_use() {
@@ -120,13 +132,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function getSettings() {
 			return $this->settings;
 		}
-
-        public function get_currency() {
-            // woocommerce default currency
-            // return get_option('woocommerce_currency');
-            // multiple currency
-            return get_woocommerce_currency();
-        }
 
         public function set_default_setting($key, $default_value) {
             if (!array_key_exists($key, $this->settings)) {
@@ -168,6 +173,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('checkout-button-replacement', 'yes');
         }
 
+        // trigger after click save changes in admin page
         public function process_admin_options() {
 			parent::process_admin_options();
 
@@ -304,6 +310,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return $miles;
         }
 
+        // calculate subtotal only, exclude shipping, discount, tax
         public function get_cart_total($cart) {
             $total = 0;
             foreach ( $cart->get_cart() as $cart_item ) {
@@ -316,23 +323,27 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return $total;
         }
 
+        public function get_cart_miles_by_product($cart) {
+            $total = 0;
+            foreach ( $cart->get_cart() as $cart_item ) {
+                $subtotal = $cart_item['line_subtotal'];
+                $product = wc_get_product($cart_item['product_id']);
+                $campaign = $this->get_product_campaign_by_id($product->get_id());
+                if (!empty($campaign)) {
+                    $total += $this->calc_earn_miles($subtotal, $campaign);
+                }
+            }
+            return $total;
+        }
+
         public function get_cart_miles($cart) {
             if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                 $total = $this->get_cart_total($cart);
                 return $this->calc_earn_miles($total);
             } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                // ignore discount, only calcuate total miles,
-                // to support product discount, calcuate the subtotal for each type of product
-                $total = 0;
-                foreach ( $cart->get_cart() as $cart_item ) {
-                    $subtotal = $cart_item['line_subtotal'];
-                    $product = wc_get_product($cart_item['product_id']);
-                    $campaign = $this->get_product_campaign_by_id($product->get_id());
-                    if (!empty($campaign)) {
-                        $total += $this->calc_earn_miles($subtotal, $campaign);
-                    }
-                }
-                return $total;
+                // ignore discount, only calculate total miles,
+                // calculate the subtotal for each type of product
+                return $this->get_cart_miles_by_product($cart);
             }
             return 0;
         }
@@ -368,8 +379,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     return $this->calc_earn_miles($total);
                 }
             } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                // ignore discount, only calcuate total miles,
-                // to support product discount, calcuate the subtotal for each type of product
+                // ignore discount, only calculate total miles,
+                // calculate the subtotal for each type of product
                 $total = 0;
                 foreach ( $order->get_items() as $item_key => $item_values ) {
                     $subtotal = $item_values['line_subtotal'];
@@ -383,6 +394,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 return $total;
             }
             return 0;
+        }
+
+        public function get_miles_in_divit_order($divit_order) {
+            $txns = $divit_order['milesTransactions'];
+            if (empty($txns)) return 0;
+            $miles = 0;
+            foreach($txns as $txn) {
+                $miles_earned = $txn['targetAmount']['amount'];
+                $miles += intval($miles_earned / 100);
+            }
+            return $miles;
         }
 
         public function render_logo() {
@@ -612,6 +634,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->render_miles_flag($miles);
         }
 
+        // replace "place order" button when divit payment is checked
         public function render_place_order_button_text($button_html) {
             if ($this->settings['checkout-button-replacement'] != 'yes') return $button_html; 
 
@@ -652,17 +675,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
         }
 
-        public function get_miles_in_order($divit_order) {
-            $txns = $divit_order['milesTransactions'];
-            if (empty($txns)) return 0;
-            $miles = 0;
-            foreach($txns as $txn) {
-                $miles_earned = $txn['targetAmount']['amount'];
-                $miles += intval($miles_earned / 100);
-            }
-            return $miles;
-        }
-
+        // after payment success, display miles earned in thank you page
         public function render_thank_you_earn_miles_message($thank_you_title, $order) {
             if (!$this->is_earn_miles_enabled()) return;
             if ($this->settings['osm-order-receive-page'] != 'yes') return;
@@ -673,7 +686,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($divit_order_resp['status_code'] != 200) return;
 
             $divit_order = $divit_order_resp['body']['data'];
-            $miles = $this->get_miles_in_order($divit_order);
+            $miles = $this->get_miles_in_divit_order($divit_order);
             if ($miles > 0) {
                 echo wp_kses_post($thank_you_title);
                 $this->render_earned_miles_message($miles);
@@ -693,7 +706,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($divit_order_resp['status_code'] != 200) return;
 
             $divit_order = $divit_order_resp['body']['data'];
-            $miles = $this->get_miles_in_order($divit_order);
+            $miles = $this->get_miles_in_divit_order($divit_order);
             if ($miles <= 0) return;
 
             // need inline css for email
@@ -708,6 +721,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             </div>
         <?php
         }
+
+        /**
+         * Product campaign
+         */
 
         public function campaigns_to_options($campaigns) {
             $options = array_reduce(
@@ -752,11 +769,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 update_post_meta( $post_id, self::META_PRODUCT_CAMPAIGN, $campaign );
             }
         }
-
-        public function get_env() {
-            return $this->environments[$this->settings['mode']];
-        }
         
+        // UI for admin page content
         public function init_form_fields()
         {
             $form_fields = array();
@@ -931,13 +945,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $this->form_fields = $form_fields;
         }
-        /**
-         * Admin Panel Options
-         * - Options for bits like 'title' and availability on a country-by-country basis
-         *
-         * @since 1.0.0
-         * @return void
-         */
+
+        // UI for admin page tab
         public function admin_options()
         {
             $panel = isset($_GET['panel']) ? sanitize_text_field($_GET['panel']) : 'payment';
@@ -1378,6 +1387,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             die();
         }
         
+        // UI in checkout
         public function payment_fields()
         {
             $is_logged_in = !empty($this->get_divit_user());
@@ -1414,7 +1424,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!$is_logged_in) {
                 $this->do_set_checkout_method('paynow', array());
             }
-    ?>
+
+            ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
                 <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER): ?>
                     <?php if ($is_show_earn_miles_label): ?>
@@ -1554,7 +1565,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 </div>
                 <?php endif; ?>
             </div>
-    <?php
+            <?php
         }
 
         public function reset_promo_code() {
@@ -1629,6 +1640,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             die();
         }
 
+        // data used for checkout calculations and options
         public function divit_get_checkout_data() {
             $miles_rate_resp = $this->get_HKD_DVM_rate($this->api_key);
             if ($miles_rate_resp['status_code'] != 200) { 
@@ -1673,6 +1685,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         // logging for "WooCommerce > System Status > Logs" in the WordPress admin
+        // Select / Search for date of log
         public static function log($message) {
             if (empty(self::$log)) {
 				self::$log = new WC_Logger;
@@ -1858,7 +1871,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // Reduce stock levels
             wc_reduce_stock_levels($order_id);
 
-            // we can't clear customer cart here, cuz this method call by server
+            // we can't clear customer cart here, cuz this method call by server, 
+            // cannot get specific user section, see function 'order_received_action'
 
             $message = "callback: complete order, merchant reference {$merchant_ref}";
             self::log($message);
@@ -1879,6 +1893,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             exit;
         }
 
+        // trigger in woocommerce_thankyou
         public function order_received_action($order_id) {
             self::log('order received: ' . $order_id);
 
@@ -1894,7 +1909,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         /**
-         * divit auth
+         * divit single sign on
          */
 
         const DIVIT_AUTH_COOKIE_KEY = 'divit-auth';
@@ -1925,6 +1940,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
             $redirect = get_site_url(); 
 
+            // redirect url should be allowed in divit partner portal
+
             return $url . '/sso?' . http_build_query(array(
                 'scope' => $scope,
                 'redirectUrl' => $redirect_url,
@@ -1936,6 +1953,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return get_site_url() . '/?wc-api=DIVIT_AUTH_LOGOUT&redirect=' . get_site_url();
         }
 
+        // redirect back after loggined in divit app
         public function divit_auth_login_handler() {
             // validation
             if (!DIVIT_UTILS::isset_all_keys(array('customerID', 'accessToken', 'refreshToken', 'scope', 'expiresIn'), $_GET)) {

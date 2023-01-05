@@ -130,6 +130,7 @@ if (!class_exists('Divit_Plugin')) {
             wp_enqueue_script('rangeslider', plugins_url('assets/js/rangeslider.min.js', __FILE__) , array( 'jquery') , DIVIT_PLUGIN_VERSION, true);
             wp_enqueue_script('divit-gateway', plugins_url('assets/js/divit-gateway.js', __FILE__) , array( 'jquery', 'rangeslider') , DIVIT_PLUGIN_VERSION, true);
 
+            // custom js for frontend usage
             wp_localize_script('divit-gateway', 'wcdivit', array(
                 'ajaxUrl' => admin_url("admin-ajax.php"),
                 'autoFillAddressEnabled' => $gateway->settings['sso-auto-fill-address'] ?? false,
@@ -148,6 +149,7 @@ if (!class_exists('Divit_Plugin')) {
             return in_array('woocommerce/woocommerce.php', $active_plugins) || array_key_exists('woocommerce/woocommerce.php', $active_plugins);
         }
 
+        // show divit icon in payment gateway list
         public function filter_woocommerce_gateway_icon($icon_html, $gateway_id) {
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
@@ -162,6 +164,7 @@ if (!class_exists('Divit_Plugin')) {
             return ob_get_clean();
         }
 
+        // show setting in plugin listing page
         public function filter_action_links($links) {
             $new = array(
                 sprintf(
