@@ -642,7 +642,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $button = '';
             $button .= '<button type="submit" class="button alt divit_place_order_button" name="woocommerce_checkout_place_order" id="place_order">';
             $button .= '<span class="divit_place_order_button_container">';
-            $button .= sprintf(__(' %3$s %1$scheckout%2$s', 'woo-divit'), '<span class="divit_place_order_button_spacing">', '</span>', $divit_logo_img);
+            $button .= sprintf(__(' %3$s %1$scheckout%2$s', 'wc-divit-payment-gateway'), '<span class="divit_place_order_button_spacing">', '</span>', $divit_logo_img);
             $button .= '</button>';
         ?>
             <script>
@@ -1451,7 +1451,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                                         woocommerce_form_field( 'divit_promotion_code', array(
                                             'type'          => 'text',
                                             'class'         => array('transaction_type form-row-wide'),
-                                            'label'         => __('divit promotional code', 'wc-divit-payment-gateway'),
+                                            'label'         => 'divit promotional code',
                                             'placeholder'    => __('divit promotional code (optional) ', 'wc-divit-payment-gateway'),
                                             'description'   => '',
                                         ), $promotion_code);
@@ -1463,7 +1463,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             </button>
                         </form>
                         <div class="divit_promotion_code_message_failed">
-                            <?php echo esc_html($is_display_invalid_promo ? 'invalid code' : ''); ?>
+                            <?php echo esc_html($is_display_invalid_promo ? __('invalid code', 'wc-divit-payment-gateway') : ''); ?>
                         </div>
                     </div>
                     <?php endif ?>
@@ -1990,7 +1990,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_auth_logout_handler() {
             $this->divit_auth_logout();
-            wc_add_notice(__('logout divit successfully.', 'wc-divit-payment-gateway'));
+            wc_add_notice(__('logout divit successfully', 'wc-divit-payment-gateway'));
             wp_redirect(DIVIT_UTILS::get_redirect_url());
             exit;
         }

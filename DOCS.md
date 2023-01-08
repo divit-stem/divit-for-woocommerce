@@ -20,6 +20,16 @@
 - single sign on
 - autofill address if logged in
 
+### translation
+
+- install wp-cli `brew install wp-cli`
+- generate new pot file `wp i18n make-pot . languages/wc-divit-payment-gateway.pot` 
+- install [Poedit] to load pot file and generate .po, .mo content
+- .po file naming should be `wc-divit-payment-gateway-{lang_code}.po`
+- if you want to update .po file after updated .pot, select menu -> translation -> update from pot file
+
+[Poedit]: https://poedit.net/
+
 ### debugging
 
 1. use `self::log()` function to log message / object

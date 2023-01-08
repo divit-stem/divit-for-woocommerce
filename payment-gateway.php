@@ -3,7 +3,7 @@
  * Plugin Name:       Divit Rewards and Payment Gateway
  * Plugin URI:        https://developer.divit.com.hk/docs/platforms/woocommerce/overview/
  * Description:       Divit Rewards and Payment Gateway
- * Version:           1.4.9
+ * Version:           1.4.10
  * WC requires at least: 3.0
  * WC tested up to: 5.5
  * Author:            Divit team
@@ -16,7 +16,7 @@
 
 require_once('utils.php');
 
-define('DIVIT_PLUGIN_VERSION', '1.4.9');
+define('DIVIT_PLUGIN_VERSION', '1.4.10');
 
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
@@ -109,9 +109,10 @@ if (!class_exists('Divit_Plugin')) {
                 // nav items
                 add_filter( 'wp_nav_menu_items', array($gateway, 'divit_render_nav_login_item'), 10, 2);
                 
-                // translation
-                load_plugin_textdomain('wc-divit-payment-gateway', FALSE, basename(dirname(__FILE__)) . '/languages/');
             }
+
+            // translation
+            load_plugin_textdomain( 'wc-divit-payment-gateway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' ); 
         }
 
         public function add_payment_gateway($gateways)
