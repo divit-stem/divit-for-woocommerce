@@ -320,7 +320,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $c = new WC_Coupon($coupon);
                 $total -= $c->get_amount();
             }
-            return $total;
+            return max($total, 0);
         }
 
         public function get_cart_miles_by_product($cart) {
@@ -1076,7 +1076,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_miles = $this->get_order_miles($order);
             $order_subtotal = $order->get_subtotal();
             $order_discount = $this->get_order_discount($order);
-            $order_total_for_reward = ($order_subtotal - $order_discount) * 100;
+            $order_total_for_reward = max($order_subtotal - $order_discount, 0) * 100;
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
 
@@ -1304,7 +1304,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_miles = $this->get_order_miles($order);
             $order_subtotal = $order->get_subtotal();
             $order_discount = $this->get_order_discount($order);
-            $order_total_for_reward = ($order_subtotal - $order_discount) * 100;
+            $order_total_for_reward = max($order_subtotal - $order_discount, 0) * 100;
             $order_total = $order->get_total() * 100;
             $order_currency = $order->get_currency();
 
