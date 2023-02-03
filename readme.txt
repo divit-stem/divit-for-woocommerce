@@ -90,7 +90,8 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 == Changelog ==
 
 = 1.4.10 =
-* Feat - add 
+* Feat - partial multi-language support
+* Fix - order total calculation when applying coupon
 
 = 1.4.9 =
 * Feat - add extra data to order
