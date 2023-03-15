@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/divit-for-"
 "woocommerce\n"
 "POT-Creation-Date: 2023-01-08T07:34:15-06:00\n"
-"PO-Revision-Date: 2023-01-08 21:35+0800\n"
+"PO-Revision-Date: 2023-02-04 12:27+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_TW\n"
@@ -14,13 +14,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.2.2\n"
 "X-Domain: wc-divit-payment-gateway\n"
 
 #. Plugin Name of the plugin
 #. Description of the plugin
 msgid "Divit Rewards and Payment Gateway"
-msgstr ""
+msgstr "Divit 獎勵和支付網關"
 
 #. Plugin URI of the plugin
 msgid "https://developer.divit.com.hk/docs/platforms/woocommerce/overview/"
@@ -28,7 +28,7 @@ msgstr ""
 
 #. Author of the plugin
 msgid "Divit team"
-msgstr ""
+msgstr "Divit團隊"
 
 #. Author URI of the plugin
 msgid "https://divit.com.hk"
@@ -36,11 +36,11 @@ msgstr ""
 
 #: divit-plugin-cron.php:8
 msgid "Every 15 minutes"
-msgstr ""
+msgstr "每15分鐘"
 
 #: payment-gateway.php:174
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: wc-divit-payment-gateway.php:438
 msgid "earn miles"
@@ -48,7 +48,7 @@ msgstr "賺取里數"
 
 #: wc-divit-payment-gateway.php:449
 msgid "you have just earned"
-msgstr "你已賺取賺"
+msgstr "你已賺取"
 
 #: wc-divit-payment-gateway.php:462 wc-divit-payment-gateway.php:718
 msgid "sign up to claim miles"
@@ -56,11 +56,11 @@ msgstr "註冊領取里數"
 
 #: wc-divit-payment-gateway.php:462
 msgid "view your miles"
-msgstr "查看你地里數"
+msgstr "查看你的里數"
 
 #: wc-divit-payment-gateway.php:549
 msgid "purchase this product to earn "
-msgstr "購買後獲得 "
+msgstr "購買後可賺取 "
 
 #: wc-divit-payment-gateway.php:568
 msgid "express checkout"
@@ -77,79 +77,79 @@ msgstr ""
 #: wc-divit-payment-gateway.php:784 wc-divit-payment-gateway.php:895
 #: wc-divit-payment-gateway.php:919
 msgid "Enable"
-msgstr ""
+msgstr "啟用"
 
 #: wc-divit-payment-gateway.php:786
 msgid "Enable divit payment"
-msgstr ""
+msgstr "啟用divit支付"
 
 #: wc-divit-payment-gateway.php:790
 msgid "Environment"
-msgstr ""
+msgstr "連至divit運作環境"
 
 #: wc-divit-payment-gateway.php:842
 msgid "Enable on-site messging"
-msgstr ""
+msgstr "啟用網內訊息標題"
 
 #: wc-divit-payment-gateway.php:847
 msgid "Display miles tag in pages"
-msgstr ""
+msgstr "於page內顯示里數標簽"
 
 #: wc-divit-payment-gateway.php:848
 msgid "Display miles in single product page"
-msgstr ""
+msgstr "於單一產品頁內顯示里數"
 
 #: wc-divit-payment-gateway.php:854
 msgid "Display miles in loop product page"
-msgstr ""
+msgstr "於loop產品頁內顯示里數"
 
 #: wc-divit-payment-gateway.php:858
 msgid "Display miles in mini cart page"
-msgstr ""
+msgstr "於mini購物車內顯示里數"
 
 #: wc-divit-payment-gateway.php:863
 msgid "Display miles in cart page"
-msgstr ""
+msgstr "於購物車內顯示里數"
 
 #: wc-divit-payment-gateway.php:868
 msgid "Display miles in checkout page"
-msgstr ""
+msgstr "於結帳頁內顯示里數"
 
 #: wc-divit-payment-gateway.php:873
 msgid "Display miles in order receive page"
-msgstr ""
+msgstr "於收取帳單頁內顯示里數"
 
 #: wc-divit-payment-gateway.php:878
 msgid "Display miles in order email"
-msgstr ""
+msgstr "於帳單電郵內顯示里數"
 
 #: wc-divit-payment-gateway.php:897
 msgid "Enable divit single sign on"
-msgstr ""
+msgstr "啟用divit single sign on"
 
 #: wc-divit-payment-gateway.php:901
 msgid "Login Button in menu location"
-msgstr ""
+msgstr "在menu位置顯示登入按鈕"
 
 #: wc-divit-payment-gateway.php:921
 msgid "Enable divit express checkout"
-msgstr ""
+msgstr "啟用divit快速結帳"
 
 #: wc-divit-payment-gateway.php:930
 msgid "Promotion code"
-msgstr ""
+msgstr "優惠碼"
 
 #: wc-divit-payment-gateway.php:932
 msgid "Enable promotion code"
-msgstr ""
+msgstr "啟用優惠碼"
 
 #: wc-divit-payment-gateway.php:937
 msgid "Divit checkout button"
-msgstr ""
+msgstr "Divit結帳按鈕"
 
 #: wc-divit-payment-gateway.php:939
 msgid "Replace divit checkout button"
-msgstr ""
+msgstr "使用divit結帳按鈕"
 
 #: wc-divit-payment-gateway.php:1434
 msgid "you will earn"
@@ -161,11 +161,11 @@ msgstr "於訂單完成後"
 
 #: wc-divit-payment-gateway.php:1446
 msgid "promo code %s applied! you will earn 1 mile every %s spent"
-msgstr "優惠卷 %s 已套用！你將會賺取 1里數 每 %s  消費"
+msgstr "優惠碼 %s 已套用！你將會賺取 1里數 每 %s  消費"
 
 #: wc-divit-payment-gateway.php:1455
 msgid "divit promotional code (optional) "
-msgstr "divit 優惠卷 (optional) "
+msgstr "divit 優惠碼 (optional) "
 
 #: wc-divit-payment-gateway.php:1461 wc-divit-payment-gateway.php:1462
 msgid "remove"
@@ -181,7 +181,7 @@ msgstr "套用"
 
 #: wc-divit-payment-gateway.php:1466
 msgid "invalid code"
-msgstr "錯誤優惠卷"
+msgstr "錯誤優惠碼"
 
 #: wc-divit-payment-gateway.php:1504
 msgid "pay now"
@@ -210,7 +210,7 @@ msgstr "登入"
 
 #: wc-divit-payment-gateway.php:1815
 msgid "divit payment is cancelled"
-msgstr ""
+msgstr "divit支付已取消"
 
 #: wc-divit-payment-gateway.php:1986
 msgid "login to divit successfully"

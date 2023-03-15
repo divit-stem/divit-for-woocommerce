@@ -425,7 +425,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
                 <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span> <span style="margin-left:0;margin-right:6px;">=</span></b>
                 <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-flag-am-bw-icon.png" />
-                <b <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span></b>
+                <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span></b>
                 </div>
             </div>
         <?php
@@ -1196,6 +1196,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'checkoutMiles' => $checkout_meta['miles'] ?? 0,
             ));
 
+            // append current language in the redirect_uri
+            $current_lang = apply_filters('locale', NULL);
+            if ($current_lang != NULL) {
+                if (str_contains($redirect_uri, '?')) {
+                    $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
+                } else {
+                    $redirect_uri = $redirect_uri . "?lang=$current_lang";
+                }
+            }
+
             return array(
                 'result' => 'success',
                 'redirect' => $redirect_uri . '&token=' . $create_order_token . '&' . $checkout_params,
@@ -1377,6 +1387,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $redirect_uri = str_replace('?', '/fast?', $redirect_uri);
             } else {
                 $redirect_uri = $redirect_uri . '/fast?';
+            }
+            $current_lang = apply_filters('locale', NULL);
+            if ($current_lang != NULL) {
+                $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
             }
 
             wp_send_json_success(array(
