@@ -1963,6 +1963,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function get_divit_login_url() {
             $url = $this->get_env()['web_url'];
             $scope = 'full';
+            $current_lang = get_locale();
             $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
             $redirect = get_site_url(); 
 
@@ -1972,6 +1973,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'scope' => $scope,
                 'redirectUrl' => $redirect_url,
                 'redirect' => $redirect,
+                'lang' => $current_lang,
             )); 
         }
 
