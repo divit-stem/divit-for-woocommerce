@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/divit-for-"
 "woocommerce\n"
 "POT-Creation-Date: 2023-01-08T07:34:15-06:00\n"
-"PO-Revision-Date: 2023-02-04 12:27+0800\n"
+"PO-Revision-Date: 2023-03-21 15:15+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_TW\n"
@@ -56,7 +56,7 @@ msgstr "註冊領取里數"
 
 #: wc-divit-payment-gateway.php:462
 msgid "view your miles"
-msgstr "查看你的里數"
+msgstr "查閱你的里數"
 
 #: wc-divit-payment-gateway.php:549
 msgid "purchase this product to earn "
@@ -165,7 +165,7 @@ msgstr "優惠碼 %s 已套用！你將會賺取 1里數 每 %s  消費"
 
 #: wc-divit-payment-gateway.php:1455
 msgid "divit promotional code (optional) "
-msgstr "divit 優惠碼 (optional) "
+msgstr "divit 優惠碼 (選填) "
 
 #: wc-divit-payment-gateway.php:1461 wc-divit-payment-gateway.php:1462
 msgid "remove"
@@ -236,7 +236,7 @@ msgstr "兌換亞洲萬里通里數"
 
 #: wc-divit-payment-gateway.php:2037 wc-divit-payment-gateway.php:2101
 msgid "view my divit account"
-msgstr "查看我的divit帳號"
+msgstr "查閱我的divit帳號"
 
 #: wc-divit-payment-gateway.php:2079
 msgid "log out"
@@ -245,3 +245,23 @@ msgstr "登出"
 #: wc-divit-payment-gateway.php:2085
 msgid "view my orders"
 msgstr "查看我的訂單"
+
+#: wc-divit-payment-gateway.php:1021
+msgid "Others"
+msgstr "其他"
+
+#: wc-divit-payment-gateway.php:934
+msgid "controls divit promotion code input in checkout"
+msgstr "在結帳頁內可輸入divit優惠碼"
+
+#: wc-divit-payment-gateway.php:941
+msgid "replace when divit payment is checked"
+msgstr "使用divit支付按鈕"
+
+#: wc-divit-payment-gateway.php:2086
+msgid "hi"
+msgstr "您好"
+
+#: wc-divit-payment-gateway.php:2096
+msgid "my total miles balance"
+msgstr "我的里數餘額"
