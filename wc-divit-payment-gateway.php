@@ -425,7 +425,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
                 <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span> <span style="margin-left:0;margin-right:6px;">=</span></b>
                 <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-flag-am-bw-icon.png" />
-                <b <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span></b>
+                <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles);?></span></b>
                 </div>
             </div>
         <?php
@@ -931,14 +931,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'type' => 'checkbox',
                         'label' => __('Enable promotion code', 'wc-divit-payment-gateway'),
                         'default' => 'no',
-                        'description' => 'controls divit promotion code input in checkout',
+                        'description' => __('controls divit promotion code input in checkout', 'wc-divit-payment-gateway'),
                     ),
                     'checkout-button-replacement' => array(
                         'title' => __('Divit checkout button', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'label' => __('Replace divit checkout button', 'wc-divit-payment-gateway'),
                         'default' => 'yes',
-                        'description' => 'replace when divit payment is checked',
+                        'description' => __('replace when divit payment is checked', 'wc-divit-payment-gateway'),
                     ),
                 ));
             }
@@ -1018,7 +1018,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     href="?page=wc-settings&tab=checkout&section=divit&panel=others" 
                     class="nav-tab <?php echo esc_html($panel == 'others' ? 'nav-tab-active' : ''); ?>"
                 >
-                    Others
+                    <?php echo __('Others', 'wc-divit-payment-gateway')?>
                 </a>
             </h2>
 
@@ -1195,6 +1195,20 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'checkoutMethod' => $checkout_method,
                 'checkoutMiles' => $checkout_meta['miles'] ?? 0,
             ));
+
+            // append current language in the redirect_uri
+            $current_lang = get_locale(); 
+            if ($current_lang != NULL) {
+                if (str_contains($redirect_uri, 'lang=')) {
+                    $redirect_uri = preg_replace('/lang=[a-zA-Z_\-]*[^&]/', 'lang='.$current_lang, $redirect_uri);
+                } else {
+                    if (str_contains($redirect_uri, '?')) {
+                        $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
+                    } else {
+                        $redirect_uri = $redirect_uri . "?lang=$current_lang";
+                    }
+                }
+            }
 
             return array(
                 'result' => 'success',
@@ -1377,6 +1391,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $redirect_uri = str_replace('?', '/fast?', $redirect_uri);
             } else {
                 $redirect_uri = $redirect_uri . '/fast?';
+            }
+            $current_lang = get_locale(); 
+            if ($current_lang != NULL) {
+                if (str_contains($redirect_uri, 'lang=')) {
+                    $redirect_uri = preg_replace('/lang=[a-zA-Z_\-]*[^&]/', 'lang='.$current_lang, $redirect_uri);
+                } else {
+                    if (str_contains($redirect_uri, '?')) {
+                        $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
+                    } else {
+                        $redirect_uri = $redirect_uri . "?lang=$current_lang";
+                    }
+                }
             }
 
             wp_send_json_success(array(
@@ -1937,6 +1963,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function get_divit_login_url() {
             $url = $this->get_env()['web_url'];
             $scope = 'full';
+            $current_lang = get_locale();
             $redirect_url = get_site_url() . '/?wc-api=DIVIT_AUTH_LOGIN';
             $redirect = get_site_url(); 
 
@@ -1946,6 +1973,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'scope' => $scope,
                 'redirectUrl' => $redirect_url,
                 'redirect' => $redirect,
+                'lang' => $current_lang,
             )); 
         }
 
@@ -2057,7 +2085,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '<div class="divit-login">';
             $html .= '  <div class="divit-login-button divit-loggedin">';
             $html .= '      <div class="divit-login-button-content divit-user-profile">';
-            $html .= '          <div class="divit-user-name">'. __("hi") . ' ' . $firstname . ',</div>';
+            $html .= '          <div class="divit-user-name">'. __('hi', 'wc-divit-payment-gateway') . ' ' . $firstname . ',</div>';
             $html .= '          <div style="height:2px;"></div>';
             $html .= '          <div class="divit-flex">';
             $html .= '              <img src="' . $static_url . '/miles/miles-flag-divit-icon-black-bordered.png" style="margin-right:4px;" width="12px" height="12px" />';
@@ -2067,7 +2095,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div class="divit-arrow-down"></div>';
             $html .= '  </div>';
             $html .= '  <div class="divit-login-popup divit-loggedin">';
-            $html .= '      <div class="divit-text">' . __('my total miles balance') . '</div>';
+            $html .= '      <div class="divit-text">' . __('my total miles balance', 'wc-divit-payment-gateway') . '</div>';
             $html .= '      <div style="height:4px;"></div>';
             $html .= '      <div class="divit-items-center divit-user-miles-content">';
             $html .= '          <img src="' . $static_url . '/miles/miles-icon.png" style="margin-right:4px;" width="24px" height="24px" />';
@@ -2075,9 +2103,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      </div>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-logout-text divit_redirect_url" href="' . $this->get_divit_logout_url() . '">';
-            $html .= '          <div class="divit-logout-button">';
-            $html .= '              '. __('log out', 'wc-divit-payment-gateway');
-            $html .= '          </div>';
+            $html .= '          <div class="divit-logout-button">'. __('log out', 'wc-divit-payment-gateway') . '</div>';
             $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '/history">'; 

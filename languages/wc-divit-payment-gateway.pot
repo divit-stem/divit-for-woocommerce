@@ -246,3 +246,23 @@ msgstr ""
 #: wc-divit-payment-gateway.php:2085
 msgid "view my orders"
 msgstr ""
+
+#: wc-divit-payment-gateway.php:1021
+msgid "Others"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:934
+msgid "controls divit promotion code input in checkout"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:941
+msgid "replace when divit payment is checked"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:2086
+msgid "hi"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:2096
+msgid "my total miles balance"
+msgstr ""
