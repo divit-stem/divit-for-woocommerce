@@ -313,12 +313,25 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         // calculate subtotal only, exclude shipping, discount, tax
         public function get_cart_total($cart) {
             $total = 0;
-            foreach ( $cart->get_cart() as $cart_item ) {
+            $qty = 0;
+            foreach ($cart->get_cart() as $cart_item ) {
                 $total += $cart_item['line_subtotal'];
+                $qty += $cart_item['quantity'];
             }
+            $original_total = $total;
             foreach ($cart->applied_coupons as $coupon) {
                 $c = new WC_Coupon($coupon);
-                $total -= $c->get_amount();
+                switch ($c->get_discount_type()) {
+                    case 'percent':
+                        $total -= $original_total * ($c->get_amount()/100);
+                        break;
+                    case 'fixed_cart':
+                        $total -= $c->get_amount();
+                        break;
+                    case 'fixed_product':
+                        $total -= $qty * $c->get_amount();
+                        break;
+                }
             }
             return max($total, 0);
         }
