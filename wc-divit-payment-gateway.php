@@ -410,7 +410,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         }
 
         public function get_miles_in_divit_order($divit_order) {
-            $txns = $divit_order['milesTransactions'];
+            $txns = $divit_order['milesTransactions'] ?? [];
             if (empty($txns)) return 0;
             $miles = 0;
             foreach($txns as $txn) {
@@ -1478,16 +1478,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             $current_lang = substr(get_locale(), 0, 2); 
 
                             // banner
-                            $banner = '';
-                            if (isset($config_data->banner->$current_lang)) {
-                                 $banner = $config_data->banner->$current_lang;
-                            } elseif (isset($config_data->banner->en)) {
-                                    $banner = $config_data->banner->en;
-                            }
-                            $bannerURL = '';
-                            if (isset($config_data->bannerURL)) {
-                                $bannerURL = $config_data->bannerURL;
-                            }
+                            $banner = $config_data->banner->$current_lang ?? $config_data->banner->en ?? '';
+                            $bannerURL = $config_data->bannerURL ?? '';
                             if ($banner != '') { ?>
                                 <div class="divit_promotion_banner_container">
                                     <?php if ($bannerURL != '') { ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php }?>
@@ -1497,12 +1489,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             }
 
                             // format the message if any
-                            $message = '';
-                            if (isset($config_data->message->$current_lang)) {
-                                $message = $config_data->message->$current_lang;
-                            } elseif (isset($config_data->message->en)) {
-                                $message = $config_data->message->en;
-                            }
+                            $message = $config_data->message->$current_lang ?? $config_data->message->en ?? '';
                             if ($message != '') {
                                 if (str_contains($message, '{{formula}}')) {
                                     if (isset($config_data->formula)) {
