@@ -1466,6 +1466,73 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
+                <?php
+                    // read campaign message config file from static
+                    $config_env = $this->get_env();
+                    $config_url = $config_env['static_url'].'/configs/woocommerce/'.$config_env['name'].'-checkout-message-config.json?t='.(floor(time()/100));
+                    $config_content=file_get_contents($config_url);
+                    $config_data=json_decode($config_content);
+
+                    if (isset($config_data->marketCampaignEndDate)) {
+                        if (date_parse($config_data->marketCampaignEndDate) > strtotime(date('Y-m-d'))) {
+                            $current_lang = substr(get_locale(), 0, 2); 
+
+                            // banner
+                            $banner = '';
+                            if (isset($config_data->banner->$current_lang)) {
+                                 $banner = $config_data->banner->$current_lang;
+                            } elseif (isset($config_data->banner->en)) {
+                                    $banner = $config_data->banner->en;
+                            }
+                            $bannerURL = '';
+                            if (isset($config_data->bannerURL)) {
+                                $bannerURL = $config_data->bannerURL;
+                            }
+                            if ($banner != '') { ?>
+                                <div class="divit_promotion_banner_container">
+                                    <?php if ($bannerURL != '') { ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php }?>
+                                    <img src="<?php echo esc_attr($banner);?>" alt="banner" />
+                                    <?php if ($bannerURL != '') { ?></a><?php }?>
+                                </div><?php
+                            }
+
+                            // format the message if any
+                            $message = '';
+                            if (isset($config_data->message->$current_lang)) {
+                                $message = $config_data->message->$current_lang;
+                            } elseif (isset($config_data->message->en)) {
+                                $message = $config_data->message->en;
+                            }
+                            if ($message != '') {
+                                if (str_contains($message, '{{formula}}')) {
+                                    if (isset($config_data->formula)) {
+                                        $formula_val = 0;
+                                        // for security reason, we dont allow using php variable sign directly
+                                        $formula = str_replace('$', '', $config_data->formula);
+                                        $formula = "\$formula_val = ".str_replace('{{amount}}', $total, $formula).";";
+                                        try {
+                                            eval($formula);
+                                            $message = str_replace('{{formula}}', "<b>".number_format($formula_val)."</b>", $message);
+                                        }catch (ex){
+                                            $message = '';
+                                        }
+                                    }
+                                }
+                                if ($message != '') {
+                                    if (str_contains($message, '{{icon}}')) {
+                                        if (isset($config_data->icon)) {
+                                            $icon = "<img src=\"".esc_attr($config_data->icon)."\" alt=\"icon\" width=\"24\" />";
+                                            $message = str_replace('{{icon}}', $icon, $message);
+                                        }
+                                    }
+                                    ?>
+                                    <div class="divit_earn_miles_message divit_promotion_messasge"><?php echo $message;?></div>
+                                    <?php
+                                }
+                            }
+                        }
+                    }
+                ?>
                 <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER): ?>
                     <?php if ($is_show_earn_miles_label): ?>
                     <div class="divit_earn_miles_message">

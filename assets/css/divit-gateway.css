@@ -241,6 +241,16 @@
 	margin-bottom: 24px;
 }
 
+.divit_promotion_banner_container {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+.divit_promotion_messasge {
+	margin-top: 10px;
+	margin-bottom: 10px !important;
+}
+
 .divit_promotion_code_container {
 	margin-bottom: 24px;
 }
