@@ -1482,8 +1482,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             $bannerURL = $config_data->bannerURL ?? '';
                             if ($banner != '') { ?>
                                 <div class="divit_promotion_banner_container">
-                                    <?php if ($bannerURL != '') { ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php }?>
-                                    <img src="<?php echo esc_attr($banner);?>" alt="banner" />
+                                    <?php if ($bannerURL != '') { 
+                                        ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php 
+                                        $desktopBanner = str_replace('{{form}}', '', $banner);
+                                        $mobileBanner = str_replace('{{form}}', 'm', $banner);
+                                    }?>
+                                    <picture>
+                                        <source media="(min-width: 640px)" srcset="<?php echo $desktopBanner ?>" />
+                                        <source media="(max-width: 639px)" srcset="<?php echo $mobileBanner ?>" />
+                                        <img src="<?php echo esc_attr($desktopBanner);?>" alt="banner" style="margin:0" />
+                                    </picture>
                                     <?php if ($bannerURL != '') { ?></a><?php }?>
                                 </div><?php
                             }
@@ -1497,12 +1505,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                                         // for security reason, we dont allow using php variable sign directly
                                         $formula = str_replace('$', '', $config_data->formula);
                                         $formula = "\$formula_val = ".str_replace('{{amount}}', $total, $formula).";";
-                                        try {
-                                            eval($formula);
-                                            $message = str_replace('{{formula}}', "<b>".number_format($formula_val)."</b>", $message);
-                                        }catch (ex){
-                                            $message = '';
-                                        }
+                                        eval($formula);
+                                        $message = str_replace('{{formula}}', "<b>".number_format($formula_val)."</b>", $message);
                                     }
                                 }
                                 if ($message != '') {
