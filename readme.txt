@@ -3,7 +3,7 @@ Contributors: janderson852, kyktommy
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Air Miles,Miles,Earn,Spend
 Requires at least: 5.0
 Tested up to: 6.1
-Stable tag: 1.4.13
+Stable tag: 1.5.0
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -89,7 +89,7 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 
 == Changelog ==
 
-= 1.4.13 =
+= 1.5.0 =
 * Feat - promotion message at checkout
 
 = 1.4.12 =
