@@ -1474,7 +1474,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $config_data=json_decode($config_content);
 
                     if (isset($config_data->marketCampaignEndDate)) {
-                        if (date_parse($config_data->marketCampaignEndDate) > strtotime(date('Y-m-d'))) {
+                        if (strtotime($config_data->marketCampaignEndDate) > strtotime(date('Y-m-d'))) {
                             $current_lang = substr(get_locale(), 0, 2); 
 
                             // banner
