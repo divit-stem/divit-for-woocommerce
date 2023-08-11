@@ -1472,54 +1472,54 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $config_url = $config_env['static_url'].'/configs/woocommerce/'.$config_env['name'].'-checkout-message-config.json?t='.(floor(time()/100));
                     $config_content=file_get_contents($config_url);
                     $config_data=json_decode($config_content);
+                    $campaign_active = isset($config_data->campaignStartDate) && (strtotime($config_data->campaignStartDate) <= strtotime(date('Y-m-d'))) &&
+                        isset($config_data->campaignEndDate) && (strtotime($config_data->campaignEndDate) > strtotime(date('Y-m-d')));
 
-                    if (isset($config_data->marketCampaignEndDate)) {
-                        if (strtotime($config_data->marketCampaignEndDate) > strtotime(date('Y-m-d'))) {
-                            $current_lang = substr(get_locale(), 0, 2); 
+                    if ($campaign_active) {
+                        $current_lang = substr(get_locale(), 0, 2); 
 
-                            // banner
-                            $banner = $config_data->banner->$current_lang ?? $config_data->banner->en ?? '';
-                            $bannerURL = $config_data->bannerURL ?? '';
-                            if ($banner != '') { ?>
-                                <div class="divit_promotion_banner_container">
-                                    <?php if ($bannerURL != '') { 
-                                        ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php 
-                                        $desktopBanner = str_replace('{{form}}', '', $banner);
-                                        $mobileBanner = str_replace('{{form}}', 'm', $banner);
-                                    }?>
-                                    <picture>
-                                        <source media="(min-width: 640px)" srcset="<?php echo $desktopBanner ?>" />
-                                        <source media="(max-width: 639px)" srcset="<?php echo $mobileBanner ?>" />
-                                        <img src="<?php echo esc_attr($desktopBanner);?>" alt="banner" style="margin:0" />
-                                    </picture>
-                                    <?php if ($bannerURL != '') { ?></a><?php }?>
-                                </div><?php
+                        // banner
+                        $banner = $config_data->banner->$current_lang ?? $config_data->banner->en ?? '';
+                        $bannerURL = $config_data->bannerURL ?? '';
+                        if ($banner != '') { ?>
+                            <div class="divit_promotion_banner_container">
+                                <?php if ($bannerURL != '') { 
+                                    ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php 
+                                    $desktopBanner = str_replace('{{form}}', '', $banner);
+                                    $mobileBanner = str_replace('{{form}}', 'm', $banner);
+                                }?>
+                                <picture>
+                                    <source media="(min-width: 640px)" srcset="<?php echo $desktopBanner ?>" />
+                                    <source media="(max-width: 639px)" srcset="<?php echo $mobileBanner ?>" />
+                                    <img src="<?php echo esc_attr($desktopBanner);?>" alt="banner" style="margin:0" />
+                                </picture>
+                                <?php if ($bannerURL != '') { ?></a><?php }?>
+                            </div><?php
+                        }
+
+                        // format the message if any
+                        $message = $config_data->message->$current_lang ?? $config_data->message->en ?? '';
+                        if ($message != '') {
+                            if (str_contains($message, '{{formula}}')) {
+                                if (isset($config_data->formula)) {
+                                    $formula_val = 0;
+                                    // for security reason, we dont allow using php variable sign directly
+                                    $formula = str_replace('$', '', $config_data->formula);
+                                    $formula = "\$formula_val = ".str_replace('{{amount}}', $total, $formula).";";
+                                    eval($formula);
+                                    $message = str_replace('{{formula}}', "<b>".number_format($formula_val)."</b>", $message);
+                                }
                             }
-
-                            // format the message if any
-                            $message = $config_data->message->$current_lang ?? $config_data->message->en ?? '';
                             if ($message != '') {
-                                if (str_contains($message, '{{formula}}')) {
-                                    if (isset($config_data->formula)) {
-                                        $formula_val = 0;
-                                        // for security reason, we dont allow using php variable sign directly
-                                        $formula = str_replace('$', '', $config_data->formula);
-                                        $formula = "\$formula_val = ".str_replace('{{amount}}', $total, $formula).";";
-                                        eval($formula);
-                                        $message = str_replace('{{formula}}', "<b>".number_format($formula_val)."</b>", $message);
+                                if (str_contains($message, '{{icon}}')) {
+                                    if (isset($config_data->icon)) {
+                                        $icon = "<img src=\"".esc_attr($config_data->icon)."\" alt=\"icon\" width=\"24\" />";
+                                        $message = str_replace('{{icon}}', $icon, $message);
                                     }
                                 }
-                                if ($message != '') {
-                                    if (str_contains($message, '{{icon}}')) {
-                                        if (isset($config_data->icon)) {
-                                            $icon = "<img src=\"".esc_attr($config_data->icon)."\" alt=\"icon\" width=\"24\" />";
-                                            $message = str_replace('{{icon}}', $icon, $message);
-                                        }
-                                    }
-                                    ?>
-                                    <div class="divit_earn_miles_message divit_promotion_messasge"><?php echo $message;?></div>
-                                    <?php
-                                }
+                                ?>
+                                <div class="divit_earn_miles_message divit_promotion_messasge"><?php echo $message;?></div>
+                                <?php
                             }
                         }
                     }
