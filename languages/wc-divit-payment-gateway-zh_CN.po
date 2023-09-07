@@ -123,6 +123,38 @@ msgstr "于收取帐单页内显示里数"
 msgid "Display miles in order email"
 msgstr "于帐单电邮内显示里数"
 
+#: wc-divit-payment-gateway.php:847
+msgid "Display tickets tag in pages"
+msgstr "于page内显示抽奖次数标签"
+
+#: wc-divit-payment-gateway.php:848
+msgid "Display tickets in single product page"
+msgstr "于单一产品页内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:854
+msgid "Display tickets in loop product page"
+msgstr "于loop产品页内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:858
+msgid "Display tickets in mini cart page"
+msgstr "于mini购物车内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:863
+msgid "Display tickets in cart page"
+msgstr "于购物车内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:868
+msgid "Display tickets in checkout page"
+msgstr "于结帐页内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:873
+msgid "Display tickets in order receive page"
+msgstr "于收取帐单页内显示抽奖次数"
+
+#: wc-divit-payment-gateway.php:878
+msgid "Display tickets in order email"
+msgstr "于帐单电邮内显示抽奖次数"
+
 #: wc-divit-payment-gateway.php:897
 msgid "Enable divit single sign on"
 msgstr "启用divit single sign on"

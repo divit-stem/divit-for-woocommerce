@@ -3,9 +3,9 @@
  * Plugin Name:       Divit Rewards and Payment Gateway
  * Plugin URI:        https://developer.divit.com.hk/docs/platforms/woocommerce/overview/
  * Description:       Divit Rewards and Payment Gateway
- * Version:           1.5.2
- * WC requires at least: 3.0
- * WC tested up to: 5.5
+ * Version:           1.6.0
+ * WC requires at least: 5.0
+ * WC tested up to: 7.8
  * Author:            Divit team
  * Author URI:        https://divit.com.hk
  * Text Domain:       wc-divit-payment-gateway
@@ -16,7 +16,7 @@
 
 require_once('utils.php');
 
-define('DIVIT_PLUGIN_VERSION', '1.5.2');
+define('DIVIT_PLUGIN_VERSION', '1.6.0');
 
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
@@ -86,7 +86,7 @@ if (!class_exists('Divit_Plugin')) {
                 add_filter( 'woocommerce_order_button_html', array($gateway, 'render_place_order_button_text') );
                 // add_action( 'woocommerce_review_order_after_order_total', array($gateway, 'render_checkout_earn_miles_message'), 10, 0);
                 add_filter( 'woocommerce_thankyou_order_received_text', array($gateway, 'render_thank_you_earn_miles_message'), 20, 2 );
-                add_action( 'woocommerce_email_after_order_table', array($gateway, 'render_order_received_email_earn_miles_message'), 10, 1 );
+                add_action( 'woocommerce_email_after_order_table', array($gateway, 'render_order_received_email_earn_miles_message'), 10, 4 );
                 add_action( 'woocommerce_thankyou', array($gateway, 'order_received_action'), 10, 1 );
 
                 // shortcode

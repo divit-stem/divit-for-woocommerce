@@ -122,6 +122,38 @@ msgstr ""
 msgid "Display miles in order email"
 msgstr ""
 
+#: wc-divit-payment-gateway.php:847
+msgid "Display tickets tag in pages"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:848
+msgid "Display tickets in single product page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:854
+msgid "Display tickets in loop product page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:858
+msgid "Display tickets in mini cart page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:863
+msgid "Display tickets in cart page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:868
+msgid "Display tickets in checkout page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:873
+msgid "Display tickets in order receive page"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:878
+msgid "Display tickets in order email"
+msgstr ""
+
 #: wc-divit-payment-gateway.php:897
 msgid "Enable divit single sign on"
 msgstr ""
