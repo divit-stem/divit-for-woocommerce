@@ -540,17 +540,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             <div class="divit_flag" style="display:inline-block;font-size:18px;line-height:28px;font-weight:bold;color: #1c1c1c;">
                 <div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">
                     <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
-                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles); ?></span> <span style="margin-left:0;margin-right:6px;">=</span></b>
+                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html(number_format($miles)); ?></span> <span style="margin-left:0;margin-right:6px;">=</span></b>
                     <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-flag-am-bw-icon.png" />
-                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html($miles); ?></span></b>
+                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html(number_format($miles)); ?></span></b>
                 </div>
             </div>
         <?php
         }
 
-        public function render_miles_message($miles)
+        public function render_miles_message($miles, $long = false)
         {
             if (empty($miles) || $miles <= 0) return;
+
+            if (!$long) {
         ?>
             <div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">
                 <span><?php _e('earn miles', 'wc-divit-payment-gateway'); ?></span>
@@ -558,6 +560,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <?php $this->render_miles_flag($miles); ?>
             </div>
         <?php
+            } else {
+        ?>
+            <div class="divit_earn_miles_message">
+                <?php echo esc_html(__('you will earn', 'wc-divit-payment-gateway')); ?>
+                <?php $this->render_miles_flag($miles); ?>
+                <?php echo esc_html(__('when the order is complete', 'wc-divit-payment-gateway')); ?>
+            </div>
+        <?php
+            }
         }
 
         public function render_earned_miles_message($miles)
@@ -691,7 +702,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         if ($this->is_earn_miles_enabled() && $this->settings['osm-single-product-page'] == 'yes') {
                         ?>
                             function setMiles(miles) {
-                                $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10));
+                                $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10).toLocaleString('en-US');
                             }
                             function resetMiles() {
                                 setMiles(minMiles);
@@ -710,7 +721,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         if ($this->is_earn_tickets_enabled() && $this->settings['osm-single-product-page-tickets'] == 'yes') {
                             ?>
                             function setTickets(tickets) {
-                                $('.single_variation_wrap .divit_tickets').text(parseInt(tickets, 10));
+                                $('.single_variation_wrap .divit_tickets').text(parseInt(tickets, 10).toLocaleString('en-US');
                             }
                             function resetTickets() {
                                 const amount = <?php echo $min_price ?>;
@@ -776,7 +787,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             if ($this->is_earn_miles_enabled() && $this->settings['osm-cart-page'] == 'yes') {
                 $miles = $this->get_cart_miles($cart);
-                $this->render_miles_message($miles);
+                $this->render_miles_message($miles, true);
             }
             if ($this->is_earn_tickets_enabled() && $this->settings['osm-cart-page-tickets'] == 'yes') {
                 $config_data = $this->get_divit_config_json();
@@ -924,7 +935,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($tickets > 0) {
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
-                    $this->render_divit_promotion_message($config_data, false, $tickets);
+                    if ($miles > 0) {
+                        ?><div style="margin-top:-18px;"></div><?php
+                    }
+                    $this->render_divit_promotion_message($config_data, true, $tickets);
+                    ?><div style="margin-bottom:10px;"></div><?php
                 }
             }
             if ($miles > 0) {
@@ -934,13 +949,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_order_received_email_earn_miles_message($order, $sent_to_admin, $plain_text, $email)
         {
-            if (!('customer_processing_order' == $email->id || 'customer_completed_order' == $email->id)) return;
+            if (!($email->id == 'customer_processing_order' || $email->id == 'customer_completed_order')) {
+                return;
+            }
 
             $miles = 0;
             $tickets = 0;
 
-            if (($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes') ||
-                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-recieve-page-tickets' == 'yes'])) {
+            if (($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes') ||
+                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets' == 'yes'])) {
                 // get miles from server
                 $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
                 $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
@@ -950,7 +967,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $miles = $this->get_miles_in_divit_order($divit_order);
                 $tickets = $this->get_tickets_in_divit_order($divit_order);
             }
-
+            if (!($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes')) {
+                $miles = 0;
+            }
+            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets' == 'yes'])) {
+                $tickets = 0;
+            }
             if  ($miles > 0 || $tickets > 0) {
                 // need inline css for email
                 ?>
@@ -962,7 +984,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     if ($tickets > 0) {
                         $config_data = $this->get_divit_config_json();
                         if ($this->is_promotion_message_available($config_data)) {
-                            $this->render_divit_promotion_message($config_data, false, $tickets);
+                            if ($miles > 0) {
+                                ?><div style="margin-top:-18px;"></div><?php
+                            }
+                            $this->render_divit_promotion_message($config_data, true, $tickets);
+                            ?><div style="margin-bottom:10px;"></div><?php
                         }
                     }
                     if ($miles > 0) {?>
@@ -1733,7 +1759,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_divit_promotion_message($config_data, $short_message, $val) {
             // format the message if any
-            $current_lang = substr(get_locale(), 0, 2);
+            $locale = get_locale();
+            $locale_suff = strtolower(substr($locale, -2, 2));
+            $locale_prefix = strtolower(substr($locale, 0, 2)); // zh-hans
+            $current_lang = $locale_prefix == "zh" ? (($locale_suff == "cn" || $locale_suff == "ns")  ? "zh-cn" : "zh") : "en";
             $message = ($short_message && isset($config_data->shortmessage)) ? 
                 ($config_data->shortmessage->$current_lang ?? $config_data->shortmessage->en ?? '') :
                 ($config_data->message->$current_lang ?? $config_data->message->en ?? '');
