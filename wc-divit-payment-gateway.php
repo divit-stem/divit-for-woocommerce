@@ -575,7 +575,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             if (empty($miles) || $miles <= 0) return;
         ?>
-            <div class="divit_message" style="margin:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">
+            <div class="divit_message" style="margin-top:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">
                 <div><?php _e('you have just earned', 'wc-divit-payment-gateway'); ?></div>
                 <div style="margin-top:8px;"></div>
                 <?php $this->render_miles_flag($miles); ?>
@@ -916,7 +916,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $tickets = 0;
 
             if (($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes') ||
-                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-recieve-page-tickets' == 'yes'])) {
+                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
                 // get miles from server
                 $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
                 $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
@@ -926,7 +926,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $miles = $this->get_miles_in_divit_order($divit_order);
                 $tickets = $this->get_tickets_in_divit_order($divit_order);
             }
-            
+            if (!($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes')) {
+                $miles = 0;
+            }
+            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
+                $tickets = 0;
+            }
             echo wp_kses_post($thank_you_title);
 
             if ($miles > 0) {
@@ -935,12 +940,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($tickets > 0) {
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
-                    if ($miles > 0) {
-                        ?><div style="margin-top:-18px;"></div><?php
-                    }
                     $this->render_divit_promotion_message($config_data, true, $tickets);
                     ?><div style="margin-bottom:10px;"></div><?php
                 }
+            } else {
+                ?><div style="margin-top:18px;"></div><?php
             }
             if ($miles > 0) {
                 $this->render_claim_miles_button();
@@ -957,7 +961,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $tickets = 0;
 
             if (($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes') ||
-                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets' == 'yes'])) {
+                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets'] == 'yes')) {
                 // get miles from server
                 $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
                 $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
@@ -970,7 +974,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes')) {
                 $miles = 0;
             }
-            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets' == 'yes'])) {
+            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets'] == 'yes')) {
                 $tickets = 0;
             }
             if  ($miles > 0 || $tickets > 0) {
@@ -984,12 +988,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     if ($tickets > 0) {
                         $config_data = $this->get_divit_config_json();
                         if ($this->is_promotion_message_available($config_data)) {
-                            if ($miles > 0) {
-                                ?><div style="margin-top:-18px;"></div><?php
-                            }
                             $this->render_divit_promotion_message($config_data, true, $tickets);
                             ?><div style="margin-bottom:10px;"></div><?php
                         }
+                    } else {
+                        ?><div style="margin-top:18px;"></div><?php
                     }
                     if ($miles > 0) {?>
                         <div style="text-align:center;">
