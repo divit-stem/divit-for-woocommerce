@@ -1801,10 +1801,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         style="width:100%;font-size:16px;color:#1c1c1c;
                             border-left: 3px solid #FFCC33;padding: 10px 23px;
                             background-color: #FFFAEA;margin-top: 10px; 
-                            margin-bottom: 10px !important;"><?php echo $message ?></div><?
+                            margin-bottom: 10px !important;"><?php echo $message ?></div><?php
                     } else {
                     ?><div class="divit_tickets" 
-                        style="font-size:16px;color:#1c1c1c;padding: 5px 0px;"><?php echo $message ?></div><?
+                        style="font-size:16px;color:#1c1c1c;padding: 5px 0px;"><?php echo $message ?></div><?php
                     }
                 }
             }
@@ -1923,7 +1923,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     <?php endif; ?>
                     <script>
                         jQuery(function($) {
-                            var $code = $('[name=divit_promotion_code]')
+                            var $code = $('[name=divit_promotion_code]');
 
                             function submitPromotionCode() {
                                 var type = $(this).data('submit-type');
