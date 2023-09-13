@@ -180,9 +180,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('osm-checkout-page', 'yes');
             $this->set_default_setting('osm-order-receive-page', 'yes');
             $this->set_default_setting('osm-order-email', 'yes');
-            $this->set_default_setting('osm-single-product-page-tickets', 'yes');
+            $this->set_default_setting('osm-single-product-page-tickets', 'no');
             $this->set_default_setting('osm-loop-product-page-tickets', 'no');
-            $this->set_default_setting('osm-mini-cart-page-tickets', 'yes');
+            $this->set_default_setting('osm-mini-cart-page-tickets', 'no');
             $this->set_default_setting('osm-cart-page-tickets', 'yes');
             $this->set_default_setting('osm-order-receive-page-tickets', 'yes');
             $this->set_default_setting('osm-order-email-tickets', 'yes');
@@ -356,11 +356,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                     $promo_campaign = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
                     if (!empty($promo_campaign)) {
-                        return 100 / $this->calc_earn_miles(100, $promo_campaign);
+                        $m = $this->calc_earn_miles(100, $promo_campaign);
+                        if ($m > 0) {
+                            return 100 / $m;
+                        }
                     }
                 }
             }
-            return 100 / $this->calc_earn_miles(100);
+            return 1;
         }
 
         public function get_product_miles($product)
@@ -701,18 +704,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $variationId = $product->get_id();
                     $variableProduct = new WC_Product_Variable($variationId);
 
-                    $rate = $this->get_miles_rate();
                     $min_price = $variableProduct->get_variation_price('min', true);
                     $max_price = $variableProduct->get_variation_price('max', true);
                 ?>
                 <script>
                     jQuery(function($) {
-                        var minMiles = '<?php echo esc_js($min_price / $rate); ?>';
-                        var maxMiles = '<?php echo esc_js($max_price / $rate); ?>';
-
                         <?php
                         if ($this->is_earn_miles_enabled() && $this->settings['osm-single-product-page'] == 'yes') {
+                            $rate = $this->get_miles_rate(true);
                         ?>
+                            var minMiles = '<?php echo esc_js($min_price / $rate); ?>';
+                            var maxMiles = '<?php echo esc_js($max_price / $rate); ?>';
+
                             function setMiles(miles) {
                                 $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10).toLocaleString('en-US'));
                             }
