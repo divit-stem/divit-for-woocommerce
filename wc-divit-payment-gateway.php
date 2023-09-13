@@ -23,6 +23,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         const QUERY_DIVIT_PROMO_CODE_KEY = 'divitpromocode';
 
+        protected $environments;
+        protected $mode = '';
+        protected $api_key = '';
+        protected $merchant_id = '';
+        protected $campaigns = array();
+        protected $selected_campaign = null;
+        protected $campaign_mode = '';
+
         public function __construct()
         {
             // payment info
@@ -176,7 +184,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('osm-loop-product-page-tickets', 'no');
             $this->set_default_setting('osm-mini-cart-page-tickets', 'yes');
             $this->set_default_setting('osm-cart-page-tickets', 'yes');
-            $this->set_default_setting('osm-checkout-page-tickets', 'yes');
             $this->set_default_setting('osm-order-receive-page-tickets', 'yes');
             $this->set_default_setting('osm-order-email-tickets', 'yes');
 
@@ -381,6 +388,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function get_ticket_formula_js() {
             $config_data = $this->get_divit_config_json();
             if ($this->is_promotion_message_available($config_data) && isset($config_data->formula)) {
+                $config_data->formula = str_replace('floor', 'Math.floor', $config_data->formula);
                 return str_replace('{{amount}}', 'amount', $config_data->formula);
             }
             return "(amount * 0)";
@@ -689,9 +697,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
                 // product variants
                 if ($product->is_type('variable')) {
+                    // product object is WC_Product_Variable, not WC_Product
+                    $variationId = $product->get_id();
+                    $variableProduct = new WC_Product_Variable($variationId);
+
                     $rate = $this->get_miles_rate();
-                    $min_price = $product->get_variation_price('min', true);
-                    $max_price = $product->get_variation_price('max', true);
+                    $min_price = $variableProduct->get_variation_price('min', true);
+                    $max_price = $variableProduct->get_variation_price('max', true);
                 ?>
                 <script>
                     jQuery(function($) {
@@ -702,7 +714,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         if ($this->is_earn_miles_enabled() && $this->settings['osm-single-product-page'] == 'yes') {
                         ?>
                             function setMiles(miles) {
-                                $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10).toLocaleString('en-US');
+                                $('.single_variation_wrap .divit_miles').text(parseInt(miles, 10).toLocaleString('en-US'));
                             }
                             function resetMiles() {
                                 setMiles(minMiles);
@@ -721,7 +733,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         if ($this->is_earn_tickets_enabled() && $this->settings['osm-single-product-page-tickets'] == 'yes') {
                             ?>
                             function setTickets(tickets) {
-                                $('.single_variation_wrap .divit_tickets').text(parseInt(tickets, 10).toLocaleString('en-US');
+                                $('.single_variation_wrap .divit_tickets .ticket_count').text(parseInt(tickets, 10).toLocaleString('en-US'));
                             }
                             function resetTickets() {
                                 const amount = <?php echo $min_price ?>;
@@ -1186,11 +1198,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     ),
                     'osm-cart-page-tickets' => array(
                         'label' => __('Display tickets in cart page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-checkout-page-tickets' => array(
-                        'label' => __('Display tickets in checkout page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
@@ -1682,6 +1689,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 self::log("divit express create order error 1001");
                 self::log($create_order_resp['status_code']);
                 self::log(json_encode($create_order_resp['body']));
+                $err = $create_order_resp['body'];
                 wp_send_json_error($err);
                 die();
             }
@@ -1840,36 +1848,37 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $this->do_set_checkout_method('paynow', array());
             }
 
-        ?>
+            ?>
             <div class="payment_method_<?php echo $this->id ?>_desc">
-                <?php
+            <?php
                 // read campaign message config file from static
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
-                        $current_lang = substr(get_locale(), 0, 2);
+                    $current_lang = substr(get_locale(), 0, 2);
 
-                        // banner
-                        $banner = $config_data->banner->$current_lang ?? $config_data->banner->en ?? '';
-                        $bannerURL = $config_data->bannerURL ?? '';
-                        if ($banner != '') { ?>
-                            <div class="divit_promotion_banner_container">
-                                <?php if ($bannerURL != '') {
-                                ?><a href="<?php echo $bannerURL; ?>" target="_blank"><?php
-                                    $desktopBanner = str_replace('{{form}}', '', $banner);
-                                    $mobileBanner = str_replace('{{form}}', 'm', $banner);
-                                } ?>
-                                    <picture>
-                                        <source media="(min-width: 640px)" srcset="<?php echo $desktopBanner ?>" />
-                                        <source media="(max-width: 639px)" srcset="<?php echo $mobileBanner ?>" />
-                                        <img src="<?php echo esc_attr($desktopBanner); ?>" alt="banner" style="margin:0" />
-                                    </picture>
-                                <?php if ($bannerURL != '') { ?></a><?php } ?>
-                            </div><?php
-                        }
+                    // banner
+                    $banner = $config_data->banner->$current_lang ?? $config_data->banner->en ?? '';
+                    $bannerURL = $config_data->bannerURL ?? '';
+                    if ($banner != '') { ?>
+                        <div class="divit_promotion_banner_container">
+                            <?php if ($bannerURL != '') { ?>
+                                <a href="<?php echo $bannerURL; ?>" target="_blank">
+                            <?php
+                                $desktopBanner = str_replace('{{form}}', '', $banner);
+                                $mobileBanner = str_replace('{{form}}', 'm', $banner);
+                            } ?>
+                                <picture>
+                                    <source media="(min-width: 640px)" srcset="<?php echo $desktopBanner ?>" />
+                                    <source media="(max-width: 639px)" srcset="<?php echo $mobileBanner ?>" />
+                                    <img src="<?php echo esc_attr($desktopBanner); ?>" alt="banner" style="margin:0" />
+                                </picture>
+                            <?php if ($bannerURL != '') { ?></a><?php } ?>
+                        </div><?php
+                    }
 
-                        // format the message if any
-                        $tickets = $this->calc_earn_tickets($total, $config_data);
-                        $this->render_divit_promotion_message($config_data, false, $tickets);
+                    // format the message if any
+                    $tickets = $this->calc_earn_tickets($total, $config_data);
+                    $this->render_divit_promotion_message($config_data, false, $tickets);
                 }
                 ?>
                 <?php if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) : ?>
@@ -1911,7 +1920,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                                 <?php echo esc_html($is_display_invalid_promo ? __('invalid code', 'wc-divit-payment-gateway') : ''); ?>
                             </div>
                         </div>
-                    <?php endif ?>
+                    <?php endif; ?>
                     <script>
                         jQuery(function($) {
                             var $code = $('[name=divit_promotion_code]')
@@ -1940,7 +1949,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             $('#divit_promotion_code_submit').click(submitPromotionCode)
                         })
                     </script>
-                <?php endif ?>
+                <?php endif; ?>
                 <div class="divit_checkout_block divit_checkout_paynow checked">
                     <div class="divit_checkout_block_overlay" data-method-id="paynow"></div>
                     <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>

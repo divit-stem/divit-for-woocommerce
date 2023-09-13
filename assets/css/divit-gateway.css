@@ -236,6 +236,10 @@
 	margin: 0 !important;
 }
 
+.ticket_count {
+	font-weight: 700;
+}
+
 /* checkout earn miles message */
 .payment_method_divit_desc .divit_earn_miles_message {
 	margin-bottom: 24px;
