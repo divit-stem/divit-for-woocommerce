@@ -1001,11 +1001,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     } ?>
                     <?php 
                     if ($tickets > 0) {
-                        $config_data = $this->get_divit_config_json();
-                        if ($this->is_promotion_message_available($config_data)) {
-                            $this->render_divit_promotion_message($config_data, true, $tickets);
-                            ?><div style="margin-bottom:10px;"></div><?php
-                        }
+                        $config_data = (object)[
+                            "icon" => "https://static.divit.com.hk/icons/divit-ticket.png",
+                            "shortmessage" => (object)[
+                                "en" => "{{icon}} <span class=\"ticket_count\">{{formula}}</span> lucky draw entries",
+                                "zh-cn" => "{{icon}} <span class=\"ticket_count\">{{formula}}</span> 次抽奖机会",
+                                "zh" => "{{icon}} <span class=\"ticket_count\">{{formula}}</span> 次抽獎機會"
+                            ],
+                        ];
+                        $this->render_divit_promotion_message($config_data, true, $tickets);
+                        ?><div style="margin-bottom:10px;"></div><?php
                     } else {
                         ?><div style="margin-top:18px;"></div><?php
                     }
@@ -1739,6 +1744,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_divit_config_json()
         {
+            DIVIT_UTILS::create_wc_session_if_empty();
+            
             // default config object
             $config_data = (object)array('marketCampaignEndDate' => '2000-01-01');
             $divit_config_loaded = WC()->session->get(self::DIVIT_CONFIG_JSON_LOADED, false);
