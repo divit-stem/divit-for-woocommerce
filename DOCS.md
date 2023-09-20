@@ -37,7 +37,7 @@
 
 ### deploy for manual install
 
-1. update version in `payment-gateway.txt` > `Version` and `DIVIT_PLUGIN_VERSION`
+1. update version in `payment-gateway.php` > `Version` and `DIVIT_PLUGIN_VERSION`
 1. update version in `readme.txt` > `Stable tag`
 1. write changelog in `readme.txt` > `== Changelog ==`
 1. zip all files as name: `divit-for-woocommerce.zip`
@@ -53,7 +53,7 @@ Setup:
 
 Deploy:
 
-1. update version in `payment-gateway.txt` > `Version` and `DIVIT_PLUGIN_VERSION`
+1. update version in `payment-gateway.php` > `Version` and `DIVIT_PLUGIN_VERSION`
 1. update version in `readme.txt` > `Stable tag`
 1. write changelog in `readme.txt` > `== Changelog ==`
 1. NOTE: you make need to remove `DOCS.md` after you copy files
