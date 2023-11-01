@@ -929,6 +929,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $miles = 0;
             $tickets = 0;
+            if (!$order) return;
 
             if (($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes') ||
                 ($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
