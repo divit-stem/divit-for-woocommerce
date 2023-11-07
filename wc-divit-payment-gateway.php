@@ -1422,7 +1422,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'street' => $order->get_billing_address_2(),
                 'district' => $order->get_billing_city(),
                 'region' => $order->get_billing_state(),
-                'language' => 'en-US'
+                'language' => get_locale() ?? 'en-US'
             );
 
             // promotion code that campaign used
@@ -1480,6 +1480,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
                 "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                "source" => "woocommerce"
                 // "expiredAt" => 1664442745,
             );
 
