@@ -298,3 +298,6 @@ msgstr ""
 #: wc-divit-payment-gateway.php:2096
 msgid "my total miles balance"
 msgstr ""
+
+msgid "divit miles"
+msgstr ""

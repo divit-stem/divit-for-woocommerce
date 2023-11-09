@@ -181,7 +181,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('osm-order-receive-page', 'yes');
             $this->set_default_setting('osm-order-email', 'yes');
             $this->set_default_setting('osm-single-product-page-tickets', 'no');
-            $this->set_default_setting('osm-loop-product-page-tickets', 'no');
+            // $this->set_default_setting('osm-loop-product-page-tickets', 'no');
             $this->set_default_setting('osm-mini-cart-page-tickets', 'no');
             $this->set_default_setting('osm-cart-page-tickets', 'yes');
             $this->set_default_setting('osm-order-receive-page-tickets', 'yes');
@@ -548,12 +548,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($miles) || $miles <= 0) return;
             $static_url = $this->get_env()['static_url'];
         ?>
-            <div class="divit_flag" style="display:inline-block;font-size:18px;line-height:28px;font-weight:bold;color: #1c1c1c;">
+            <div class="divit_flag" style="display:inline-block;font-size:14px;line-height:24px;color: #1c1c1c;">
                 <div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">
-                    <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:26.35px;height:26.35px;max-height:26.35px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
-                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html(number_format($miles)); ?></span> <span style="margin-left:0;margin-right:6px;">=</span></b>
-                    <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:17.67px;height:21.52px;max-height:21.52px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-flag-am-bw-icon.png" />
-                    <b> <span class="divit_miles" style="margin:0 5px;"><?php echo esc_html(number_format($miles)); ?></span></b>
+                    <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:20px;height:20px;max-height:20px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
+                    <b><span class="divit_miles"><?php echo esc_html(number_format($miles)); ?></span></b> 
+                        <span>&nbsp;<?php _e('divit miles', 'wc-divit-payment-gateway'); ?></span>
                 </div>
             </div>
         <?php
@@ -565,9 +564,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             if (!$long) {
         ?>
-            <div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:18px;color:#1c1c1c;">
+            <div class="divit_message" style="display:flex;align-items:center;flex-wrap:wrap;margin:18px 0;font-size:14px;color:#1c1c1c;">
                 <span><?php _e('earn miles', 'wc-divit-payment-gateway'); ?></span>
-                <span style="width:10px;"></span>
                 <?php $this->render_miles_flag($miles); ?>
             </div>
         <?php
@@ -586,7 +584,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             if (empty($miles) || $miles <= 0) return;
         ?>
-            <div class="divit_message" style="margin-top:18px 0;font-size:16px;font-weight:bold;color:#1c1c1c;">
+            <div class="divit_message" style="margin-top:18px 0;font-size:16px;color:#1c1c1c;">
                 <div><?php _e('you have just earned', 'wc-divit-payment-gateway'); ?></div>
                 <div style="margin-top:8px;"></div>
                 <?php $this->render_miles_flag($miles); ?>
@@ -679,13 +677,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <?php
                 $this->render_miles_flag($miles);
             }
-            if ($this->is_earn_tickets_enabled() && $this->settings['osm-loop-product-page-tickets'] == 'yes') {
-                $config_data = $this->get_divit_config_json();
-                if ($this->is_promotion_message_available($config_data)) {
-                    $tickets = $this->get_product_tickets($product);
-                    $this->render_divit_promotion_message($config_data, true, $tickets);
-                }
-            }
+            // if ($this->is_earn_tickets_enabled() && $this->settings['osm-loop-product-page-tickets'] == 'yes') {
+            //     $config_data = $this->get_divit_config_json();
+            //     if ($this->is_promotion_message_available($config_data)) {
+            //         $tickets = $this->get_product_tickets($product);
+            //         $this->render_divit_promotion_message($config_data, true, $tickets);
+            //     }
+            // }
         }
 
         public function render_single_product_earn_miles_message()
@@ -1195,11 +1193,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-loop-product-page-tickets' => array(
-                        'type' => 'checkbox',
-                        'label' => __('Display tickets in loop product page', 'wc-divit-payment-gateway'),
-                        'default' => 'no',
-                    ),
+                    // 'osm-loop-product-page-tickets' => array(
+                    //     'type' => 'checkbox',
+                    //     'label' => __('Display tickets in loop product page', 'wc-divit-payment-gateway'),
+                    //     'default' => 'no',
+                    // ),
                     'osm-mini-cart-page-tickets' => array(
                         'label' => __('Display tickets in mini cart page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
@@ -1797,26 +1795,27 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     if ($val >= 0) {
                         $result_val = $val;
                     }
-                    $message = str_replace('{{formula}}', "<b>" . number_format($result_val) . "</b>", $message);
+                    $message = str_replace('{{formula}}', "<b>" . number_format($result_val) . "</b>&nbsp;", $message);
                 }
 
                 if ($message != '' && $result_val >= 0) {
 
                     if (str_contains($message, '{{icon}}')) {
                         if (isset($config_data->icon)) {
-                            $icon = "<img src=\"" . esc_attr($config_data->icon) . "\" alt=\"icon\" width=\"24\" />";
+                            $icon = "<img src=\"" . esc_attr($config_data->icon) . "\" alt=\"icon\" width=\"26\" height=\"22\" style=\"margin: 0 3px\" />";
                             $message = str_replace('{{icon}}', $icon, $message);
                         }
                     }
                     if (!$short_message) {
                     ?><div class="divit_tickets" 
-                        style="width:100%;font-size:16px;color:#1c1c1c;
+                        style="width:100%;font-size:14px;color:#1c1c1c;
                             border-left: 3px solid #FFCC33;padding: 10px 23px;
                             background-color: #FFFAEA;margin-top: 10px; 
+                            justify-content: start;display: flex;align-items:center;
                             margin-bottom: 10px !important;"><?php echo $message ?></div><?php
                     } else {
                     ?><div class="divit_tickets" 
-                        style="font-size:16px;color:#1c1c1c;padding: 5px 0px;"><?php echo $message ?></div><?php
+                        style="font-size:14px;color:#1c1c1c;line-height:24px"><?php echo $message ?></div><?php
                     }
                 }
             }
@@ -2522,13 +2521,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <div class="divit-separator"></div>';
             $html .= '      <div style="height:16px;"></div>';
-            $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
-            $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
-            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
-            $html .= '          </div>';
-            $html .= '      </a>';
-            $html .= '      <div style="height:16px;"></div>';
+            // $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
+            // $html .= '          <div class="divit-space-between">';
+            // $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
+            // $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
+            // $html .= '          </div>';
+            // $html .= '      </a>';
+            // $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
             $html .= '          <div class="divit-space-between">';
             $html .= '              <div class="divit-link-text">' . __('view my divit account', 'wc-divit-payment-gateway') . '</div>';
@@ -2585,13 +2584,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <div class="divit-separator"></div>';
-            $html .= '      <div style="height:16px;"></div>';
-            $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
-            $html .= '          <div class="divit-space-between">';
-            $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
-            $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
-            $html .= '          </div>';
-            $html .= '      </a>';
+            // $html .= '      <div style="height:16px;"></div>';
+            // $html .= '      <a class="divit-link" target="_blank" href="https://www.asiamiles.com/en/earn-miles/retail/detail/divit/miles-redemption-divit.html">';
+            // $html .= '          <div class="divit-space-between">';
+            // $html .= '              <div class="divit-link-text">' . __('convert my Asia Miles', 'wc-divit-payment-gateway') . '</div>';
+            // $html .= '              <img src="' . $static_url . '/icons/external-link-icon.svg' . '" width="12px" height="12px" />';
+            // $html .= '          </div>';
+            // $html .= '      </a>';
             $html .= '      <div style="height:16px;"></div>';
             $html .= '      <a class="divit-link" target="_blank" href="' . $this->get_env()['web_url'] . '">';
             $html .= '          <div class="divit-space-between">';

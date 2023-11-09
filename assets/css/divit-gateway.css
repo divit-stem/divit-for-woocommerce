@@ -207,16 +207,18 @@
 }
 
 .divit_checkout_paynow .divit_message {
-	font-size: 16px !important;
+	font-size: 14px !important;
 }
 
 .divit_earn_miles_message {
 	width: 100%;
-	font-size: 16px;
+	font-size: 14px;
 	color: #1c1c1c;
 	padding: 10px 23px;
 	border-left: 3px solid #FFCC33;
 	background-color: #FFFAEA;
+	align-items: center;
+	display: flex;
 }
 
 .divit_earn_miles_message .divit_flag {
@@ -232,12 +234,13 @@
 }
 
 .divit_earn_miles_message .divit_flag .divit_miles {
-	font-size: 16px;
-	margin: 0 !important;
+	font-size: 14px;
+	/* margin: 0 !important; */
 }
 
 .ticket_count {
 	font-weight: 700;
+	margin: 0 3px;
 }
 
 /* checkout earn miles message */
