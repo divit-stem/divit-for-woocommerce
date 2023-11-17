@@ -1074,7 +1074,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             if (isset($_POST[self::META_PRODUCT_CAMPAIGN])) {
                 $campaign = sanitize_text_field($_POST[self::META_PRODUCT_CAMPAIGN]);
-                update_post_meta($post_id, self::META_PRODUCT_CAMPAIGN, $campaign);
+                // HPOS compatibility
+                // update_post_meta($post_id, self::META_PRODUCT_CAMPAIGN, $campaign);
+                $order = wc_get_order( $post_id );
+                $order->update_meta_data( self::META_PRODUCT_CAMPAIGN, $campaign );
+                $order->save();
             }
         }
 
@@ -2334,21 +2338,40 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $delivery_address = $json['eventData']['deliveryAddress'];
             $is_express_checkout = get_post_meta($order_id, 'divit_express_checkout') == true;
             if ($is_express_checkout && !is_null($delivery_address) && isset($delivery_address['address1'])) {
-                update_post_meta($order_id, '_billing_first_name', $delivery_address['contactFirstname']);
-                update_post_meta($order_id, '_billing_last_name', $delivery_address['contactLastname']);
-                update_post_meta($order_id, '_billing_phone', $delivery_address['tel']);
+                
+                // HPOS compatibility
+                // update_post_meta($order_id, '_billing_first_name', $delivery_address['contactFirstname']);
+                // update_post_meta($order_id, '_billing_last_name', $delivery_address['contactLastname']);
+                // update_post_meta($order_id, '_billing_phone', $delivery_address['tel']);
                 // update_post_meta($order_id, '_billing_email', $delivery_address['email']);
-                update_post_meta($order_id, '_billing_address_1', $delivery_address['address1']);
-                update_post_meta($order_id, '_billing_address_2', $delivery_address['address2']);
-                update_post_meta($order_id, '_billing_city', $delivery_address['district']);
-                update_post_meta($order_id, '_billing_state', $delivery_address['region']);
-                update_post_meta($order_id, '_shipping_first_name', $delivery_address['contactFirstname']);
-                update_post_meta($order_id, '_shipping_last_name', $delivery_address['contactLastname']);
-                update_post_meta($order_id, '_shipping_phone', $delivery_address['contactNumber']);
-                update_post_meta($order_id, '_shipping_address_1', $delivery_address['address1']);
-                update_post_meta($order_id, '_shipping_address_2', $delivery_address['address2']);
-                update_post_meta($order_id, '_shipping_city', $delivery_address['district']);
-                update_post_meta($order_id, '_shipping_state', $delivery_address['region']);
+                // update_post_meta($order_id, '_billing_address_1', $delivery_address['address1']);
+                // update_post_meta($order_id, '_billing_address_2', $delivery_address['address2']);
+                // update_post_meta($order_id, '_billing_city', $delivery_address['district']);
+                // update_post_meta($order_id, '_billing_state', $delivery_address['region']);
+                // update_post_meta($order_id, '_shipping_first_name', $delivery_address['contactFirstname']);
+                // update_post_meta($order_id, '_shipping_last_name', $delivery_address['contactLastname']);
+                // update_post_meta($order_id, '_shipping_phone', $delivery_address['contactNumber']);
+                // update_post_meta($order_id, '_shipping_address_1', $delivery_address['address1']);
+                // update_post_meta($order_id, '_shipping_address_2', $delivery_address['address2']);
+                // update_post_meta($order_id, '_shipping_city', $delivery_address['district']);
+                // update_post_meta($order_id, '_shipping_state', $delivery_address['region']);
+
+                $order->update_meta_data( '_billing_first_name', $delivery_address['contactFirstname'] );
+                $order->update_meta_data( '_billing_last_name', $delivery_address['contactLastname'] );
+                $order->update_meta_data( '_billing_phone', $delivery_address['tel'] );
+                $order->update_meta_data( '_billing_address_1', $delivery_address['address1'] );
+                $order->update_meta_data( '_billing_address_2', $delivery_address['address2'] );
+                $order->update_meta_data( '_billing_city', $delivery_address['district'] );
+                $order->update_meta_data( '_billing_state', $delivery_address['region'] );
+                $order->update_meta_data( '_shipping_first_name', $delivery_address['contactFirstname'] );
+                $order->update_meta_data( '_shipping_last_name', $delivery_address['contactLastname'] );
+                $order->update_meta_data( '_shipping_phone', $delivery_address['contactNumber'] );
+                $order->update_meta_data( '_shipping_address_1', $delivery_address['address1'] );
+                $order->update_meta_data( '_shipping_address_2', $delivery_address['address2'] );
+                $order->update_meta_data( '_shipping_city', $delivery_address['district'] );
+                $order->update_meta_data( '_shipping_state', $delivery_address['region'] );
+                
+                $order->save();
             }
 
             // update order status to processing

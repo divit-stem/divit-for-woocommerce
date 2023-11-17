@@ -2,21 +2,19 @@
 /** 
  * Plugin Name:       Divit Rewards and Payment Gateway
  * Plugin URI:        https://developer.divit.com.hk/docs/platforms/woocommerce/overview/
- * Description:       Divit Rewards and Payment Gateway
- * Version:           1.6.7
+ * Description:       FPS by Divit. Rewards and Payment Gateway
+ * Version:           1.6.8
  * WC requires at least: 5.0
- * WC tested up to: 7.8
+ * WC tested up to:   8.3
  * Author:            Divit team
  * Author URI:        https://divit.com.hk
  * Text Domain:       wc-divit-payment-gateway
  * Domain Path:       /languages
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
 require_once('utils.php');
 
-define('DIVIT_PLUGIN_VERSION', '1.6.7');
+define('DIVIT_PLUGIN_VERSION', '1.6.8');
 
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
@@ -67,6 +65,12 @@ if (!class_exists('Divit_Plugin')) {
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
             if ($this->custom_payment_is_woocommerce_active()) {
+                add_action( 'before_woocommerce_init', function() {
+                    if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+                        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+                    }
+                } );
+                
                 // register payment gateway
                 add_filter('woocommerce_payment_gateways', array($this, 'add_payment_gateway'));
                 
