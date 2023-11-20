@@ -319,12 +319,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_product_campaign_by_id($product_id)
         {
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                $campaign_id = get_post_meta($product_id, self::META_PRODUCT_CAMPAIGN, true);
-                return $this->find_campaign($campaign_id);
-            } else {
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            //     $campaign_id = get_post_meta($product_id, self::META_PRODUCT_CAMPAIGN, true);
+            //     return $this->find_campaign($campaign_id);
+            // } else {
                 return $this->selected_campaign;
-            }
+            // }
         }
 
         public function calc_earn_miles($price, $campaign = null)
@@ -440,15 +440,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_cart_miles($cart)
         {
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                 $total = $this->get_cart_total($cart);
                 return $this->calc_earn_miles($total);
-            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            // } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
                 // ignore discount, only calculate total miles,
                 // calculate the subtotal for each type of product
-                return $this->get_cart_miles_by_product($cart);
-            }
-            return 0;
+                // return $this->get_cart_miles_by_product($cart);
+            // }
+            // return 0;
         }
 
         public function get_cart_tickets($cart)
@@ -483,7 +483,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!$this->is_reward_miles_enabled()) {
                 return 0;
             }
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                 $order_subtotal = $order->get_subtotal();
                 $order_discount = $this->get_order_discount($order);
                 $total = $order_subtotal - $order_discount;
@@ -494,21 +494,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 } else {
                     return $this->calc_earn_miles($total);
                 }
-            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                // ignore discount, only calculate total miles,
-                // calculate the subtotal for each type of product
-                $total = 0;
-                foreach ($order->get_items() as $item_key => $item_values) {
-                    $subtotal = $item_values['line_subtotal'];
-                    $item = $item_values->get_data();
-                    $product = wc_get_product($item['product_id']);
-                    $campaign = $this->get_product_campaign_by_id($product->get_id());
-                    if (!empty($campaign)) {
-                        $total += $this->calc_earn_miles($subtotal, $campaign);
-                    }
-                }
-                return $total;
-            }
+            // } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            //     // ignore discount, only calculate total miles,
+            //     // calculate the subtotal for each type of product
+            //     $total = 0;
+            //     foreach ($order->get_items() as $item_key => $item_values) {
+            //         $subtotal = $item_values['line_subtotal'];
+            //         $item = $item_values->get_data();
+            //         $product = wc_get_product($item['product_id']);
+            //         $campaign = $this->get_product_campaign_by_id($product->get_id());
+            //         if (!empty($campaign)) {
+            //             $total += $this->calc_earn_miles($subtotal, $campaign);
+            //         }
+            //     }
+            //     return $total;
+            // }
             return 0;
         }
 
@@ -932,7 +932,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes') ||
                 ($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
                 // get miles from server
-                $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
+                // $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
+                $divit_order_id = $order->get_meta('divit_order_id', true);
                 $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
                 if ($divit_order_resp['status_code'] != 200) return;
 
@@ -973,11 +974,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             $miles = 0;
             $tickets = 0;
-
+            if (!$order) return;
+            
             if (($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes') ||
                 ($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets'] == 'yes')) {
                 // get miles from server
-                $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
+                // $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
+                $divit_order_id = $order->get_meta('divit_order_id', true);
                 $divit_order_resp = $this->get_order($divit_order_id, $this->api_key);
                 if ($divit_order_resp['status_code'] != 200) return;
 
@@ -1059,27 +1062,29 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         ?>
             <div id="divit_options" class="panel woocommerce_options_panel hidden">
                 <p>if you want to specify reward for each product, please switch campaign mode to "product mode" in plugin settings.</p>
-                <?php woocommerce_wp_select(array(
-                    'id'          => self::META_PRODUCT_CAMPAIGN,
-                    'value'       => get_post_meta(get_the_ID(), self::META_PRODUCT_CAMPAIGN, true),
-                    'wrapper_class' => '',
-                    'label'       => 'Campaign',
-                    'options'     => $options,
-                )); ?>
+                <?php 
+                // woocommerce_wp_select(array(
+                //     'id'          => self::META_PRODUCT_CAMPAIGN,
+                //     'value'       => get_post_meta(get_the_ID(), self::META_PRODUCT_CAMPAIGN, true),
+                //     'wrapper_class' => '',
+                //     'label'       => 'Campaign',
+                //     'options'     => $options,
+                // )); 
+                ?>
             </div>
         <?php
         }
 
         public function divit_product_data_option_fields($post_id)
         {
-            if (isset($_POST[self::META_PRODUCT_CAMPAIGN])) {
-                $campaign = sanitize_text_field($_POST[self::META_PRODUCT_CAMPAIGN]);
+            // if (isset($_POST[self::META_PRODUCT_CAMPAIGN])) {
+                // $campaign = sanitize_text_field($_POST[self::META_PRODUCT_CAMPAIGN]);
                 // HPOS compatibility
                 // update_post_meta($post_id, self::META_PRODUCT_CAMPAIGN, $campaign);
-                $order = wc_get_order( $post_id );
-                $order->update_meta_data( self::META_PRODUCT_CAMPAIGN, $campaign );
-                $order->save();
-            }
+                // $order = wc_get_order( $post_id );
+                // $order->update_meta_data( self::META_PRODUCT_CAMPAIGN, $campaign );
+                // $order->save();
+            // }
         }
 
         // UI for admin page content
@@ -1393,13 +1398,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         "subtotal" => floatval($item['subtotal']),
                     )
                 );
-                if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                    $campaign = $this->get_product_campaign_by_id($product->get_id());
-                    if (!empty($campaign)) {
-                        $line_item['itemData']['promoCode'] = $campaign['promoCode'];
-                        $line_item['itemData']['campaignMode'] = 'addition';
-                    }
-                }
+                // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                //     $campaign = $this->get_product_campaign_by_id($product->get_id());
+                //     if (!empty($campaign)) {
+                //         $line_item['itemData']['promoCode'] = $campaign['promoCode'];
+                //         $line_item['itemData']['campaignMode'] = 'addition';
+                //     }
+                // }
                 $line_items[] = $line_item;
             }
 
@@ -1429,9 +1434,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // promotion code that campaign used
             $order_promo_code = $this->selected_campaign['promoCode'];
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                $order_promo_code = '';
-            }
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            //     $order_promo_code = '';
+            // }
 
             // promotion code that customer used in order campaign mode only
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
@@ -1441,16 +1446,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // save promotion code for reference
             $log_promotion_code = array();
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                 $log_promotion_code['order'] = $order_promo_code;
-            } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                foreach ($order->get_items() as $item_key => $item_values) {
-                    $item = $item_values->get_data();
-                    $product = wc_get_product($item['product_id']);
-                    $campaign = $this->get_product_campaign_by_id($product->get_id());
-                    $log_promotion_code[$item['product_id']] = $campaign['promoCode'] ?? "";
-                }
-            }
+            // } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            //     foreach ($order->get_items() as $item_key => $item_values) {
+            //         $item = $item_values->get_data();
+            //         $product = wc_get_product($item['product_id']);
+            //         $campaign = $this->get_product_campaign_by_id($product->get_id());
+            //         $log_promotion_code[$item['product_id']] = $campaign['promoCode'] ?? "";
+            //     }
+            // }
             $order->update_meta_data('divit_promotion_code', json_encode($log_promotion_code));
 
             // save number of miles reward to customer
@@ -1636,13 +1641,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         "subtotal" => floatval($item['subtotal']),
                     )
                 );
-                if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                    $campaign = $this->get_product_campaign_by_id($product->get_id());
-                    if (!empty($campaign)) {
-                        $line_item['itemData']['promoCode'] = $campaign['promoCode'];
-                        $line_item['itemData']['campaignMode'] = 'addition';
-                    }
-                }
+                // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+                //     $campaign = $this->get_product_campaign_by_id($product->get_id());
+                //     if (!empty($campaign)) {
+                //         $line_item['itemData']['promoCode'] = $campaign['promoCode'];
+                //         $line_item['itemData']['campaignMode'] = 'addition';
+                //     }
+                // }
                 $line_items[] = $line_item;
             }
 
@@ -1656,9 +1661,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // promotion code that campaign used
             $order_promo_code = $this->selected_campaign['promoCode'];
-            if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                $order_promo_code = '';
-            }
+            // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
+            //     $order_promo_code = '';
+            // }
 
             // save number of miles reward to customer
             $order->update_meta_data('divit_miles_for_reward', $order_miles);
@@ -2298,7 +2303,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($json['event']['eventId'] == 4000) {
                 $order_id = $merchant_ref;
                 $order = wc_get_order($merchant_ref);
-                $is_same_order = get_post_meta($order_id, 'divit_order_id')[0] == $json['eventData']['orderID'];
+                // $is_same_order = get_post_meta($order_id, 'divit_order_id')[0] == $json['eventData']['orderID'];
+                $is_same_order = $order->get_meta('divit_order_id')[0] == $json['eventData']['orderID'];
                 $is_divit_payment_method = $order->get_payment_method() == $this->id;
                 $is_valid_order_status = $order->get_status() == 'pending';
                 if ($is_same_order && $is_divit_payment_method && $is_valid_order_status) {
@@ -2336,7 +2342,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // update order address if none
             $delivery_address = $json['eventData']['deliveryAddress'];
-            $is_express_checkout = get_post_meta($order_id, 'divit_express_checkout') == true;
+            // $is_express_checkout = get_post_meta($order_id, 'divit_express_checkout') == true;
+            $is_express_checkout = $order->get_meta('divit_express_checkout') == true;
             if ($is_express_checkout && !is_null($delivery_address) && isset($delivery_address['address1'])) {
                 
                 // HPOS compatibility
