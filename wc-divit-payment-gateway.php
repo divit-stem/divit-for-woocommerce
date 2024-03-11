@@ -160,6 +160,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function set_default_settings()
         {
+            $this->set_default_setting('enabled', 'yes');
+            $this->set_default_setting('title', 'divit payment gateway');
+            $this->set_default_setting('description', 'earn miles faster spend miles easier');
             // account
             $this->set_default_setting('mode', 'sandbox');
             $this->set_default_setting('api_key_sandbox', '');
@@ -1145,7 +1148,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     'selected_campaign_id' => array(
                         'title' => 'Order campaign',
                         'type' => 'select',
-                        'options' => $this->campaigns_to_options($this->settings['campaigns']),
+                        'options' => $this->campaigns_to_options(isset($this->settings['campaigns']) ? $this->settings['campaigns'] : array()),
                         'default' => '',
                         // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
                         // 'description' => 'only available in order campaign mode',
