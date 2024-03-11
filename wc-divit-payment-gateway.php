@@ -552,7 +552,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <div class="divit_flag-inner" style="display:flex;flex-wrap:wrap;align-items:center;">
                     <img style="display:inline-block;vertical-align:middle;margin:2px 4px;width:20px;height:20px;max-height:20px;" src="<?php echo esc_attr($static_url); ?>/miles/miles-icon.png" />
                     <b><span class="divit_miles"><?php echo esc_html(number_format($miles)); ?></span></b> 
-                        <span>&nbsp;<?php _e('divit miles', 'wc-divit-payment-gateway'); ?></span>
+                    <span>&nbsp;<?php _e('divit miles', 'wc-divit-payment-gateway'); ?></span>
                 </div>
             </div>
         <?php
@@ -1371,13 +1371,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function process_payment($order_id)
         {
             $order = new WC_Order($order_id);
-
-            // debug
-            // $allmeta = get_option('woocommerce_currency');
-            // $allmeta = get_woocommerce_currency();
-            // wc_add_notice(json_encode($allmeta), 'error');
-            // return;
-
             $merchant_ref = $order->get_id();
 
             $line_items = array();
@@ -1398,13 +1391,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         "subtotal" => floatval($item['subtotal']),
                     )
                 );
-                // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-                //     $campaign = $this->get_product_campaign_by_id($product->get_id());
-                //     if (!empty($campaign)) {
-                //         $line_item['itemData']['promoCode'] = $campaign['promoCode'];
-                //         $line_item['itemData']['campaignMode'] = 'addition';
-                //     }
-                // }
                 $line_items[] = $line_item;
             }
 
@@ -1424,12 +1410,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'lastName' => $order->get_billing_last_name(),
                 'email' => $order->get_billing_email(),
                 'tel' => $tel['countryCode'] . $tel['tel'],
-                'floor' => '',
-                'building' => $order->get_billing_address_1(),
-                'street' => $order->get_billing_address_2(),
+                'address1' => $order->get_billing_address_1(),
+                'address2' => $order->get_billing_address_2(),
                 'district' => $order->get_billing_city(),
-                'region' => $order->get_billing_state(),
-                'language' => get_locale() ?? 'en-US'
+                'province' => $order->get_billing_state(),
+                'postalCode' => $order->get_billing_postcode(),
+                'country' => $order->get_billing_country(),
+                'language' => get_locale() ?? 'en'
             );
 
             // promotion code that campaign used
@@ -1446,16 +1433,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // save promotion code for reference
             $log_promotion_code = array();
-            // if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
-                $log_promotion_code['order'] = $order_promo_code;
-            // } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-            //     foreach ($order->get_items() as $item_key => $item_values) {
-            //         $item = $item_values->get_data();
-            //         $product = wc_get_product($item['product_id']);
-            //         $campaign = $this->get_product_campaign_by_id($product->get_id());
-            //         $log_promotion_code[$item['product_id']] = $campaign['promoCode'] ?? "";
-            //     }
-            // }
+            $log_promotion_code['order'] = $order_promo_code;
             $order->update_meta_data('divit_promotion_code', json_encode($log_promotion_code));
 
             // save number of miles reward to customer
@@ -1481,6 +1459,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     "currency" => $order_currency,
                 ),
                 "merchantRef" => $merchant_ref,
+                "uniqueMerchantOrderID" => $merchant_ref,
                 "orderType" => "retail",
                 "orderItems" => $line_items,
                 "promoCode" => $order_promo_code,
@@ -1661,9 +1640,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // promotion code that campaign used
             $order_promo_code = $this->selected_campaign['promoCode'];
-            // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
-            //     $order_promo_code = '';
-            // }
 
             // save number of miles reward to customer
             $order->update_meta_data('divit_miles_for_reward', $order_miles);
@@ -1688,6 +1664,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     "currency" => $order_currency,
                 ),
                 "merchantRef" => $merchant_ref,
+                "uniqueMerchantOrderID" => $merchant_ref,
                 "orderType" => "retail",
                 "orderItems" => $line_items,
                 "promoCode" => $order_promo_code,
@@ -2342,26 +2319,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // update order address if none
             $delivery_address = $json['eventData']['deliveryAddress'];
-            // $is_express_checkout = get_post_meta($order_id, 'divit_express_checkout') == true;
             $is_express_checkout = $order->get_meta('divit_express_checkout') == true;
             if ($is_express_checkout && !is_null($delivery_address) && isset($delivery_address['address1'])) {
-                
-                // HPOS compatibility
-                // update_post_meta($order_id, '_billing_first_name', $delivery_address['contactFirstname']);
-                // update_post_meta($order_id, '_billing_last_name', $delivery_address['contactLastname']);
-                // update_post_meta($order_id, '_billing_phone', $delivery_address['tel']);
-                // update_post_meta($order_id, '_billing_email', $delivery_address['email']);
-                // update_post_meta($order_id, '_billing_address_1', $delivery_address['address1']);
-                // update_post_meta($order_id, '_billing_address_2', $delivery_address['address2']);
-                // update_post_meta($order_id, '_billing_city', $delivery_address['district']);
-                // update_post_meta($order_id, '_billing_state', $delivery_address['region']);
-                // update_post_meta($order_id, '_shipping_first_name', $delivery_address['contactFirstname']);
-                // update_post_meta($order_id, '_shipping_last_name', $delivery_address['contactLastname']);
-                // update_post_meta($order_id, '_shipping_phone', $delivery_address['contactNumber']);
-                // update_post_meta($order_id, '_shipping_address_1', $delivery_address['address1']);
-                // update_post_meta($order_id, '_shipping_address_2', $delivery_address['address2']);
-                // update_post_meta($order_id, '_shipping_city', $delivery_address['district']);
-                // update_post_meta($order_id, '_shipping_state', $delivery_address['region']);
 
                 $order->update_meta_data( '_billing_first_name', $delivery_address['contactFirstname'] );
                 $order->update_meta_data( '_billing_last_name', $delivery_address['contactLastname'] );
