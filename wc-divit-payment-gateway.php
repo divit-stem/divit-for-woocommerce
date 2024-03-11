@@ -1458,8 +1458,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     "amount" => 0,
                     "currency" => $order_currency,
                 ),
-                "merchantRef" => $merchant_ref,
-                "merchantUniqueOrderID" => $merchant_ref,
+                "merchantRef" => $merchant_ref."",
+                "merchantUniqueOrderID" => $merchant_ref."",
                 "orderType" => "retail",
                 "orderItems" => $line_items,
                 "promoCode" => $order_promo_code,
@@ -1663,14 +1663,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     "amount" => 0,
                     "currency" => $order_currency,
                 ),
-                "merchantRef" => $merchant_ref,
-                "merchantUniqueOrderID" => $merchant_ref,
+                "merchantRef" => $merchant_ref."",
+                "merchantUniqueOrderID" => $merchant_ref."",
                 "orderType" => "retail",
                 "orderItems" => $line_items,
                 "promoCode" => $order_promo_code,
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
                 "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                "source" => "woocommerce"
             );
 
             $create_order_resp = $this->create_express_order($create_order_data, $this->api_key);
@@ -2189,7 +2190,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function create_order($create_order, $api_key)
         {
-            $url = $this->get_env()['api_url'] . '/paynow/orders/fast';
+            $url = $this->get_env()['api_url'] . '/paynow/orders';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             return DIVIT_UTILS::http_request($url, 'POST', $create_order, $header);
         }
