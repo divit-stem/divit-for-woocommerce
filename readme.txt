@@ -89,7 +89,7 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 
 == Changelog ==
 
-= 1.6.9 =
+= 1.6.10 =
 * Updated - new create order payload
 
 = 1.6.9 =
