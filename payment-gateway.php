@@ -26,7 +26,9 @@ if (!class_exists('Divit_Plugin')) {
             require_once dirname(__FILE__) . '/divit-plugin-cron.php';
             if (class_exists('WC_Payment_Gateway')) {
 				require_once dirname(__FILE__) . '/wc-divit-payment-gateway.php';
-			}
+			} else {
+                self::log('failed to find WC_Payment_Gateway class');
+            }
 
 			if (is_null(self::$instance)) {
 				self::$instance = new self;
@@ -35,7 +37,10 @@ if (!class_exists('Divit_Plugin')) {
 		}
 
         public static function activate_plugin() {
-            if (!current_user_can( 'activate_plugins' )) {
+            if (!current_user_can( 'activate_plugins' ) || !class_exists('WC_Payment_Gateway')) {
+                if (!class_exists('WC_Payment_Gateway')) {
+                    self::log('failed to find WC_Payment_Gateway class');
+                }
 				return;
 			}
 
