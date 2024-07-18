@@ -116,8 +116,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         // redirect url to divit order in order details, use with set_transaction_id
         public function get_transaction_url($order): string
         {
+            $locale = get_locale();
+            $locale_suff = strtolower(substr($locale, -2, 2));
+            $locale_prefix = strtolower(substr($locale, 0, 2)); // zh-hans
+            $current_lang = $locale_prefix == "zh" ? (($locale_suff == "cn" || $locale_suff == "ns")  ? "zh-CN" : "zh-HK") : "en";
+
             $base_url = $this->get_env()['partner_portal_url'];
-            $url = $base_url . '/orders/pay-now/' . $order->get_transaction_id() . '/view';
+            $url = $base_url . '/'.$current_lang.'/orders/pay-now/order-information/' . $order->get_transaction_id();
             $this->view_transaction_url = $url;
             return parent::get_transaction_url($order);
         }
