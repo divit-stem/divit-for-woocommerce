@@ -37,6 +37,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->id           = 'divit';
             $this->method_title = 'divit payment gateway';
             $this->method_description = 'earn miles faster spend miles easier';
+            $this->supports = array( 'products', 'refunds' );
 
             // env
             $this->environments = $this->get_environments(true);
@@ -239,7 +240,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 self::log("get merchant fail when setup, " . json_encode($merchant_resp));
                 return $this->reset_settings();
             }
-            $merchant_id = $merchant_resp['body']['data'][0]['merchantID'];
+            $merchants = $merchant_resp['body']['data'];
+            if (count($merchants) === 0) {
+                self::log("get merchant fail when setup, " . json_encode($merchant_resp));
+                return $this->reset_settings();
+            }
+            $merchant = $merchants[0];
+            $merchant_id = $merchant['merchantID'];
             $this->settings['merchant_id'] = $merchant_id;
 
             // set campaigns and earn miles rate
@@ -1737,6 +1744,21 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             die();
         }
 
+        public function process_refund( $order_id, $amount = null, $reason = '' ) {
+            $order = wc_get_order($order_id);
+            $divit_order_id = $order->get_meta('divit_order_id', true);
+            $refund_order_resp = $this->refund_order($divit_order_id, floatval($amount), $reason, $this->api_key);
+            if ($refund_order_resp['status_code'] != 200) {
+                self::log('refund order failed. order id: ' . $divit_order_id . ' ' . json_encode($refund_order_resp['body']));
+                $err = $refund_order_resp['body'];
+                return new WP_Error( 'error', 'unavailable to refund. please contact divit customer service.' );
+            }
+            self::log('refund order success. order id: ' . $divit_order_id . ' amount: ' . $amount);
+            $note = sprintf(__('Refunded via divit payment: %s%.2f', 'wc-divit-payment-gateway'), get_woocommerce_currency_symbol(), floatval($amount));
+            $order->add_order_note($note);
+            return true;
+        }
+
         public function get_divit_config_json()
         {
             DIVIT_UTILS::create_wc_session_if_empty();
@@ -2191,7 +2213,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_merchant($api_key)
         {
-            $url = $this->get_env()['api_url'] . '/partners';
+            $url = $this->get_env()['api_url'] . '/merchants/v2';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
@@ -2244,6 +2266,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             $body = array('promoCode' => $promotion_code);
             return DIVIT_UTILS::http_request($url, 'PATCH', $body, $header);
+        }
+
+        public function refund_order($order_id, $amount, $reason, $api_key)
+        {
+            $url = $this->get_env()['api_url'] . '/paynow/orders/refund/request';
+            $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
+            $body = array('orderID' => $order_id, 'refundType' => 'partial', 'refundAmount' => $amount, 'remarks' => $reason);
+            return DIVIT_UTILS::http_request($url, 'POST', $body, $header);
         }
 
         public function get_user_profile($access_token, $scope, $api_key)
