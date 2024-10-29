@@ -2331,7 +2331,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $is_divit_payment_method = $order->get_payment_method() == $this->id;
                 if ($is_same_order && $is_divit_payment_method) {
                     $refundedAmountData = $json['eventData']['refundAmount'];
-                    $refundedAmount = $refundedAmountData['amount'];
+                    $refundedAmount = $refundedAmountData['amount'] / 100;
                     $refundedAmountCurrency = $refundedAmountData['currency'];
                     $note = sprintf(__('Refund is approved (divit payment): %s %.2f', 'wc-divit-payment-gateway'), $refundedAmountCurrency, $refundedAmount);
                     $order->add_order_note($note);
