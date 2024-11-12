@@ -19,6 +19,7 @@ define('DIVIT_PLUGIN_VERSION', '1.6.11');
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
 
+        public static $log = false;
         protected static $instance;
 
         public static function init()
@@ -45,6 +46,10 @@ if (!class_exists('Divit_Plugin')) {
 			}
 
             self::init();
+
+            $gateway = WC_Divit_Payment_Gateway::getInstance();
+            $gateway->setup_merchant();
+
             // Divit_Plugin_Cron::create_jobs();
         }
 
@@ -65,8 +70,8 @@ if (!class_exists('Divit_Plugin')) {
 			}
 		}
 
-        public function __construct() {
-
+        public function __construct() 
+        {
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
             if ($this->custom_payment_is_woocommerce_active()) {
@@ -80,7 +85,8 @@ if (!class_exists('Divit_Plugin')) {
                 add_filter('woocommerce_payment_gateways', array($this, 'add_payment_gateway'));
                 
                 // add scripts
-                add_action('wp_enqueue_scripts', array( $this, 'divit_enqueue_script'));
+                add_action( 'wp_enqueue_scripts', array( $this, 'divit_enqueue_script'));
+                add_action( 'admin_enqueue_scripts', array( $this, 'divit_admin_enqueue_script'));
                 add_filter( 'woocommerce_gateway_icon', array( $this, 'filter_woocommerce_gateway_icon' ), 10, 2 );
 
                 // page
@@ -129,7 +135,8 @@ if (!class_exists('Divit_Plugin')) {
             return $gateways;
         }
 
-        public function divit_enqueue_script() {
+        public function divit_enqueue_script() 
+        {
             global $wp;
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
@@ -144,6 +151,20 @@ if (!class_exists('Divit_Plugin')) {
                 'ajaxUrl' => admin_url("admin-ajax.php"),
                 'autoFillAddressEnabled' => $gateway->settings['sso-auto-fill-address'] ?? false,
                 'isCheckoutPage' => is_checkout() && empty( $wp->query_vars['order-pay'] ) && ! isset( $wp->query_vars['order-received'] )
+            ));
+        }
+
+        public function divit_admin_enqueue_script() 
+        {
+            global $wp;
+            $gateway = WC_Divit_Payment_Gateway::getInstance();
+
+            wp_enqueue_script('divit-gateway-admin', plugins_url('assets/js/divit-gateway-admin.js', __FILE__) , array( 'jquery' ) , DIVIT_PLUGIN_VERSION, true);
+
+            // custom js for frontend usage
+            wp_localize_script('divit-gateway-admin', 'wcdivit', array(
+                'ajaxUrl' => admin_url("admin-ajax.php"),
+                'installationStatus' => $gateway->settings['installationStatus'] ?? 'no',
             ));
         }
 
@@ -184,6 +205,35 @@ if (!class_exists('Divit_Plugin')) {
             );
 
             return array_merge( $new, $links );
+        }
+
+        // logging for "WooCommerce > System Status > Logs" in the WordPress admin
+        // Select / Search for date of log
+        public static function log($message)
+        {
+            if (empty(self::$log)) {
+                self::$log = new WC_Logger;
+            }
+            if (is_array($message)) {
+                $message = print_r($message, true);
+            } elseif (is_object($message)) {
+                $ob_get_length = ob_get_length();
+                if (!$ob_get_length) {
+                    if ($ob_get_length === false) {
+                        ob_start();
+                    }
+                    var_dump($message);
+                    $message = ob_get_contents();
+                    if ($ob_get_length === false) {
+                        ob_end_clean();
+                    } else {
+                        ob_clean();
+                    }
+                } else {
+                    $message = '(' . get_class($message) . ' Object)';
+                }
+            }
+            self::$log->add('divit', $message);
         }
     }
 

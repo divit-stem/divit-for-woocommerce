@@ -12,14 +12,14 @@ Divit Payment Gateway for WooCommerce
 
 == Description ==
 
-This plugin will add the Divit Rewards and Payment Gateway for your WooCommerce.
+This plugin will add the divit Real-time pay by bank account payment gateway for your WooCommerce.
 
-Divit is a Hong Kong based fintech company partnered with the worlds leading airlines. We integrate loyalty with real-time payments. 
+Divit is a Hong Kong based fintech company building the best integrations with local RTP (real time payment) systems globally. 
 
 Customers can:
 - Make secure real-time bank transfers by QR Code or Manual Payment using their own banking app.
-- Earn Miles for their purchase: at a fixed or variable rate or for selected products
-- Spend Miles for a deduction in their cash spend at the checkout
+- Mobile Payments: Web-to-App payments, meaning customers don't need to scan a QR code, they just choose their preferred bank app
+- App based payments: coming soon! 
 
 You can find more details in our websites:
 
@@ -28,7 +28,7 @@ You can find more details in our websites:
 - [developer portal](https://developer.divit.com.hk/docs/platforms/woocommerce/overview).
 
 Countries Supported:
-- Hong Kong SAR, China
+- Hong Kong SAR, China (FPS, Faster Payments System)
 
 == Installation ==
 
@@ -57,24 +57,19 @@ Follow the steps below to connect the plugin to your Divit merchant account:
 4. Select **Sandbox (for testing) / Production** in **environment** field.
 5. Input your <API-Key> which we will send you by email, and enter it in **Api key** field.
 6. Click **Save changes**, you will see merchant account details in the top of current page.
-7. Then select **Order campaign** for your reward miles campaign, eg: hk$2 to 1 mile.
-8. Click **Save changes**.
+7. Done
 
 == Frequently Asked Questions ==
 
 = Who is divit? =
 
-We are a Hong Kong based fintech company partnered with Cathay. We integrate loyalty into real-time payments, enabling consumers to earn and spend miles when they pay with FPS.
+We are a Hong Kong based fintech company. We integrate loyalty into real-time payment platforms around the world. 
 
 = What is FPS? =
 
 The Hong Kong Monetary Authority (HKMA) launched the Faster Payment System (FPS) on 17 September 2018. FPS enables customers to make safe instant payments from their bank account or e-wallet on a 24/7 basis.
 
-There are over 10 million FPS registrations in Hong Kong at the end of August 2022. All of the major banks in Hong Kong support FPS for the transfer of funds, both for Individual and SME accounts.
-
-= What is a divit mile? = 
-
-A divit mile is our loyalty award which you earn with every purchase at a divit merchant. It is converatble into other loyalty programs, which we are adding to all the time. 
+There are over 13 million FPS registrations in Hong Kong at the end of Dec 2023. All of the major banks in Hong Kong support FPS for the transfer of funds, both for Individual and SME accounts.
 
 = Contact divit =
 

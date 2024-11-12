@@ -8,6 +8,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public static $log = false;
         protected static $instance = null;
 
+        const ENABLE_REWARD_MILES = false;
+
         const DIVIT_CONFIG_JSON = 'divit_config_json';
         const DIVIT_CONFIG_JSON_LOADED = 'divit_config_json_loaded';
         const DIVIT_PROMOTION_CODE_INPUT = 'divit_promo_code_input';
@@ -36,7 +38,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // payment info
             $this->id           = 'divit';
             $this->method_title = 'divit payment gateway';
-            $this->method_description = 'earn miles faster spend miles easier';
+            $this->method_description = 'secure & fast FPS payments';
             $this->supports = array( 'products', 'refunds' );
 
             // env
@@ -74,6 +76,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             add_action("wp_ajax_nopriv_divit_get_user_profile", array($this, "divit_get_user_profile"));
             add_action("wp_ajax_divit_express_checkout", array($this, "divit_express_checkout"));
             add_action("wp_ajax_nopriv_divit_express_checkout", array($this, "divit_express_checkout"));
+            add_action("wp_ajax_divit_get_installation_status", array($this, "divit_get_installation_status"));
+            add_action("wp_ajax_nopriv_divit_get_installation_status", array($this, "divit_get_installation_status"));
 
             // register callback for `webhook_events`
             add_action('woocommerce_api_callback_divit_payment', array($this, 'callback_divit_payment_handler'));
@@ -98,6 +102,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return $this->environments[$this->settings['mode']];
         }
 
+        public function is_debug() {
+            $qs_debug = isset($_GET['debug']) && sanitize_text_field($_GET['debug']) == 'true';
+            $param_debug = $this->settings['debug'] == 'yes';
+            return $qs_debug || $param_debug;
+        }
 
         public function get_environments($all)
         {
@@ -105,12 +114,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($all) {
                 return $environments;
             }
-            // turns on dev, demo if query string has debug=true
-            if (isset($_GET['debug']) && sanitize_text_field($_GET['debug']) == 'true') {
+            // turns on dev if is debug
+            if ($this->is_debug()) {
                 return $environments;
             }
             unset($environments['dev']);
-            unset($environments['demo']);
             return $environments;
         }
 
@@ -132,6 +140,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             if ($this->settings['mode'] == 'production') {
                 return $this->settings['api_key_production'];
+            }
+            if ($this->settings['mode'] == 'dev') {
+                return $this->settings['api_key_dev'];
             }
             return $this->settings['api_key_sandbox'];
         }
@@ -167,10 +178,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function set_default_settings()
         {
             $this->set_default_setting('enabled', 'yes');
+            $this->set_default_setting('debug', 'no');
             $this->set_default_setting('title', 'divit payment gateway');
-            $this->set_default_setting('description', 'earn miles faster spend miles easier');
+            $this->set_default_setting('description', 'secure & fast FPS payments');
+            $this->set_default_setting('installationStatus', 'no');
+
             // account
             $this->set_default_setting('mode', 'sandbox');
+            $this->set_default_setting('api_key_dev', '');
             $this->set_default_setting('api_key_sandbox', '');
             $this->set_default_setting('api_key_production', '');
             $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
@@ -182,6 +197,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // osm
             $this->set_default_setting('osm-enabled', 'yes');
+            // osm miles
             $this->set_default_setting('osm-single-product-page', 'yes');
             $this->set_default_setting('osm-loop-product-page', 'no');
             $this->set_default_setting('osm-mini-cart-page', 'yes');
@@ -189,6 +205,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('osm-checkout-page', 'yes');
             $this->set_default_setting('osm-order-receive-page', 'yes');
             $this->set_default_setting('osm-order-email', 'yes');
+            // osm tickets
             $this->set_default_setting('osm-single-product-page-tickets', 'no');
             // $this->set_default_setting('osm-loop-product-page-tickets', 'no');
             $this->set_default_setting('osm-mini-cart-page-tickets', 'no');
@@ -203,8 +220,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // express checkout
             $this->set_default_setting('express-enabled', 'no');
 
-            // others
+            // promotion
             $this->set_default_setting('promotion-code-enabled', 'no');
+
+            // advanced
             $this->set_default_setting('checkout-button-replacement', 'yes');
         }
 
@@ -225,6 +244,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->settings['campaigns'] = array();
             $this->settings['selected_campaign_id'] = '';
             $this->settings['campaign_mode'] = '';
+            $this->settings['installationStatus'] = 'no';
             return update_option($this->get_option_key(), $this->settings, 'yes');
         }
 
@@ -233,6 +253,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $api_key = $this->get_api_key();
 
             $this->log("start setup merchant");
+
+            if (empty($api_key)) {
+                self::log("get merchant fail when setup, missing api key");
+                return $this->reset_settings();
+            }
 
             // get merchant id
             $merchant_resp = $this->get_merchant($api_key);
@@ -270,6 +295,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // when this account is updated, may updated by cron job
             $this->settings['updated_date'] = DIVIT_UTILS::get_utc();
 
+            // test callback if not success
+            if ($this->settings['installationStatus'] != 'yes') {
+                $webhook_resp = $this->webhook_test($this->api_key);
+                self::log("webhook test " . json_encode($webhook_resp));
+            }
+
             $this->log("finished setup merchant");
 
             return update_option($this->get_option_key(), $this->settings, 'yes');
@@ -278,6 +309,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function is_earn_miles_enabled()
         {
+            if (!self::ENABLE_REWARD_MILES) {
+                return false;
+            }
             if ($this->enabled == 'no') {
                 return false;
             }
@@ -830,6 +864,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function render_checkout_earn_miles()
         {
             if (!$this->is_earn_miles_enabled()) return;
+            
             $cart = WC()->cart;
             $miles = $this->get_cart_miles($cart);
             // apply promo code only in order campaign mode
@@ -1118,6 +1153,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'label' => __('Enable divit payment', 'wc-divit-payment-gateway'),
                         'default' => 'yes',
                     ),
+                    'debug' => array(
+                        'title' => __('Debug', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'label' => __('Enable debug mode', 'wc-divit-payment-gateway'),
+                        'default' => 'no',
+                    ),
                     'mode' => array(
                         'title' => __('Environment', 'wc-divit-payment-gateway'),
                         'type' => 'select',
@@ -1133,8 +1174,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     'description' => array(
                         'title' => 'Description',
                         'type' => 'text',
-                        'default' => 'pay now, pay later, earn miles',
+                        'default' => 'secure & fast FPS payments',
                         'description' => '',
+                    ),
+                    'api_key_dev' => array(
+                        'title' => 'Dev Api key',
+                        'type' => 'password',
+                        'default' => '',
+                        'description' => 'dev api key for divit merchant',
                     ),
                     'api_key_sandbox' => array(
                         'title' => 'Sandbox Api key',
@@ -1148,66 +1195,29 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'default' => '',
                         'description' => 'production api key for divit merchant',
                     ),
-                    'campaign_mode' => array(
-                        'title' => 'Campaign mode',
-                        'type' => 'select',
-                        'options' => array(
-                            self::CAMPAIGN_MODE_ORDER => 'order (base on order total)',
-                            // self::CAMPAIGN_MODE_PRODUCT => 'product (base on product campaign)',
-                        ),
-                        'default' => self::CAMPAIGN_MODE_ORDER,
-                    ),
-                    'selected_campaign_id' => array(
-                        'title' => 'Order campaign',
-                        'type' => 'select',
-                        'options' => $this->campaigns_to_options(isset($this->settings['campaigns']) ? $this->settings['campaigns'] : array()),
-                        'default' => '',
-                        // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
-                        // 'description' => 'only available in order campaign mode',
-                    ),
+                    // 'campaign_mode' => array(
+                    //     'title' => 'Campaign mode',
+                    //     'type' => 'select',
+                    //     'options' => array(
+                    //         self::CAMPAIGN_MODE_ORDER => 'order (base on order total)',
+                    //         // self::CAMPAIGN_MODE_PRODUCT => 'product (base on product campaign)',
+                    //     ),
+                    //     'default' => self::CAMPAIGN_MODE_ORDER,
+                    // ),
                 ));
+
+                if (!$this->is_debug()) {
+                    unset($form_fields['debug']);
+                    unset($form_fields['api_key_dev']);
+                    unset($form_fields['campaign_mode']);
+                }
             }
 
             if ($panel == 'on-site-messaging') {
                 $form_fields = array_merge($form_fields, array(
                     'osm-enabled' => array(
                         'title' => __('Enable on-site messging', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-single-product-page' => array(
-                        'title' => __('Display miles tag in pages', 'wc-divit-payment-gateway'),
-                        'label' => __('Display miles in single product page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-loop-product-page' => array(
-                        'type' => 'checkbox',
-                        'label' => __('Display miles in loop product page', 'wc-divit-payment-gateway'),
-                        'default' => 'yes',
-                    ),
-                    'osm-mini-cart-page' => array(
-                        'label' => __('Display miles in mini cart page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-cart-page' => array(
-                        'label' => __('Display miles in cart page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-checkout-page' => array(
-                        'label' => __('Display miles in checkout page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-order-receive-page' => array(
-                        'label' => __('Display miles in order receive page', 'wc-divit-payment-gateway'),
-                        'type' => 'checkbox',
-                        'default' => 'yes',
-                    ),
-                    'osm-order-email' => array(
-                        'label' => __('Display miles in order email', 'wc-divit-payment-gateway'),
+                        'description' => __('Enable all tickets / reward messaging'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
@@ -1291,8 +1301,59 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 ));
             }
 
-            if ($panel == 'others') {
+
+            if ($panel == 'reward') {
                 $form_fields = array_merge($form_fields, array(
+                    'selected_campaign_id' => array(
+                        'title' => 'Miles campaign',
+                        'type' => 'select',
+                        'options' => $this->campaigns_to_options(isset($this->settings['campaigns']) ? $this->settings['campaigns'] : array()),
+                        'default' => '',
+                        // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
+                        // 'description' => 'only available in order campaign mode',
+                    ), 
+                    'osm-enabled' => array(
+                        'title' => __('Enable on-site messging', 'wc-divit-payment-gateway'),
+                        'description' => __('Enable all tickets / reward messaging'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-single-product-page' => array(
+                        'title' => __('Display miles tag in pages', 'wc-divit-payment-gateway'),
+                        'label' => __('Display miles in single product page', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-loop-product-page' => array(
+                        'type' => 'checkbox',
+                        'label' => __('Display miles in loop product page', 'wc-divit-payment-gateway'),
+                        'default' => 'yes',
+                    ),
+                    'osm-mini-cart-page' => array(
+                        'label' => __('Display miles in mini cart page', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-cart-page' => array(
+                        'label' => __('Display miles in cart page', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-checkout-page' => array(
+                        'label' => __('Display miles in checkout page', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-order-receive-page' => array(
+                        'label' => __('Display miles in order receive page', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
+                    'osm-order-email' => array(
+                        'label' => __('Display miles in order email', 'wc-divit-payment-gateway'),
+                        'type' => 'checkbox',
+                        'default' => 'yes',
+                    ),
                     'promotion-code-enabled' => array(
                         'title' => __('Promotion code', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
@@ -1300,6 +1361,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'default' => 'no',
                         'description' => __('controls divit promotion code input in checkout', 'wc-divit-payment-gateway'),
                     ),
+                ));
+            }
+
+            if ($panel == 'advanced') {
+                $form_fields = array_merge($form_fields, array(
                     'checkout-button-replacement' => array(
                         'title' => __('Divit checkout button', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
@@ -1317,6 +1383,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function admin_options()
         {
             $panel = isset($_GET['panel']) ? sanitize_text_field($_GET['panel']) : 'payment';
+            $is_debug = $this->is_debug();
             $environment = $this->mode;
             $merchant_id = $this->merchant_id;
             $campaign_mode = $this->campaign_mode;
@@ -1329,6 +1396,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             <?php if ($loggedin) { ?>
                 <h3 class="wc-settings-sub-title">Divit Merchant Account</h3>
                 <table class="widefat striped" cellspacing="0">
+                    <?php if ($is_debug) { ?>
+                    <tr>
+                        <th>Debug</th>
+                        <td>on</td>
+                    </tr>
+                    <?php } ?>
                     <tr>
                         <th>Enviroment</th>
                         <td><?php echo esc_html($environment); ?></td>
@@ -1338,12 +1411,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         <td><?php echo esc_html($merchant_id); ?></td>
                     </tr>
                     <tr>
-                        <th>Campaign mode</th>
-                        <td><?php echo esc_html($campaign_mode); ?></td>
+                        <th>Installation status</th>
+                        <td id="installationStatusText"><?php echo $this->settings['installationStatus'] == 'yes' ? 'ok' : 'webhook test not done' ?></td>
                     </tr>
-                    <?php if ($campaign_mode == self::CAMPAIGN_MODE_ORDER) { ?>
+                    <?php if (false) { // only order mode ?>
                         <tr>
-                            <th>Order campaign</th>
+                            <th>Campaign mode</th>
+                            <td><?php echo esc_html($campaign_mode); ?></td>
+                        </tr>
+                    <?php } ?>
+                    <?php if ($campaign_mode == self::CAMPAIGN_MODE_ORDER && $this->is_debug()) { ?>
+                        <tr>
+                            <th>Miles campaign</th>
                             <td><?php echo esc_html(!empty($selected_campaign) ? $selected_campaign['title'] : 'none'); ?></td>
                         </tr>
                     <?php } ?>
@@ -1363,14 +1442,23 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <a href="?page=wc-settings&tab=checkout&section=divit&panel=on-site-messaging" class="nav-tab <?php echo esc_html($panel == 'on-site-messaging' ? 'nav-tab-active' : ''); ?>">
                     On-site messaging
                 </a>
+                <?php if ($this->is_debug()) { ?>
                 <a href="?page=wc-settings&tab=checkout&section=divit&panel=single-sign-on" class="nav-tab <?php echo esc_html($panel == 'single-sign-on' ? 'nav-tab-active' : ''); ?>">
                     Single sign on
                 </a>
+                <?php } ?>
+                <?php if ($this->is_debug()) { ?>
                 <a href="?page=wc-settings&tab=checkout&section=divit&panel=express-checkout" class="nav-tab <?php echo esc_html($panel == 'express-checkout' ? 'nav-tab-active' : ''); ?>">
                     Express checkout
                 </a>
-                <a href="?page=wc-settings&tab=checkout&section=divit&panel=others" class="nav-tab <?php echo esc_html($panel == 'others' ? 'nav-tab-active' : ''); ?>">
-                    <?php echo __('Others', 'wc-divit-payment-gateway') ?>
+                <?php } ?>
+                <?php if ($this->is_debug() && self::ENABLE_REWARD_MILES) { ?>
+                <a href="?page=wc-settings&tab=checkout&section=divit&panel=reward" class="nav-tab <?php echo esc_html($panel == 'reward' ? 'nav-tab-active' : ''); ?>">
+                    Reward
+                </a>
+                <?php } ?>
+                <a href="?page=wc-settings&tab=checkout&section=divit&panel=advanced" class="nav-tab <?php echo esc_html($panel == 'advanced' ? 'nav-tab-active' : ''); ?>">
+                    Advanced
                 </a>
             </h2>
 
@@ -1444,6 +1532,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $promotion_code = WC()->session->get(self::DIVIT_PROMOTION_CODE_INPUT, '');
             if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER && !empty($promotion_code)) {
                 $order_promo_code = $promotion_code;
+            }
+
+            // when miles reward is not enabled, clear parameters
+            if (!$this->is_earn_miles_enabled()) {
+                $order_miles = 0;
+                $order_total_for_reward = 0;
+                $order_promo_code = '';
             }
 
             // save promotion code for reference
@@ -1655,6 +1750,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // promotion code that campaign used
             $order_promo_code = $this->selected_campaign['promoCode'];
+
+            // when miles reward is not enabled, clear parameters
+            if (!$this->is_earn_miles_enabled()) {
+                $order_miles = 0;
+                $order_total_for_reward = 0;
+                $order_promo_code = '';
+            }
 
             // save number of miles reward to customer
             $order->update_meta_data('divit_miles_for_reward', $order_miles);
@@ -2175,6 +2277,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             die();
         }
 
+        public function divit_get_installation_status()
+        {
+            wp_send_json_success(array(
+                'installationStatus' => $this->settings['installationStatus'],
+            ));
+            die();
+        }
+
         // logging for "WooCommerce > System Status > Logs" in the WordPress admin
         // Select / Search for date of log
         public static function log($message)
@@ -2217,6 +2327,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $url = $this->get_env()['api_url'] . '/merchants/v2';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
+        }
+
+        public function webhook_test($api_key)
+        {
+            $url = $this->get_env()['api_url'] . '/paynow/orders/webhook/test';
+            $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
+            $body = array(
+                'ref' => $this->merchant_id,
+                'event' => 'test',
+                'webhookEvent' => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+            );
+            return DIVIT_UTILS::http_request($url, 'POST', $body, $header);
         }
 
         public function create_order($create_order, $api_key)
@@ -2317,6 +2439,16 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $valid = DIVIT_UTILS::validate_webhook($signature, $this->api_key, $resp);
             if (!$valid) {
                 $message = "callback: signature valid error, merchant reference {$merchant_ref}";
+                self::log($message);
+                wp_send_json($message);
+                exit;
+            }
+
+            // installation status test
+            if ($json['event']['eventId'] == 9000) {
+                $this->settings['installationStatus'] = 'yes';
+                update_option($this->get_option_key(), $this->settings, 'yes');
+                $message = "callback: installation status yes {$merchant_ref}";
                 self::log($message);
                 wp_send_json($message);
                 exit;

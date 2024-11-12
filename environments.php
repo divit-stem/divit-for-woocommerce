@@ -8,13 +8,6 @@ return array(
     "static_url" => "https://static.divit.dev",
     "partner_portal_url" => "https://dev-admin.divit.dev"
   ),
-  "demo" => array(
-    "name" => "demo",
-		"api_url" =>  "https://demo-api.divit.dev",
-    "web_url" => "https://demo-consumer.divit.dev",
-    "static_url" => "https://static.divit.dev",
-    "partner_portal_url" => "https://demo-admin.divit.dev"
-  ),
   "sandbox" => array(
     "name" => "sandbox",
 		"api_url" =>  "https://sandbox-api.divit.dev",
