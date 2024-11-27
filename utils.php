@@ -90,17 +90,31 @@ if (!class_exists('DIVIT_UTILS'))
                 "headers" => $headers,
                 "body" => $method == 'GET' ? array() : json_encode($body),
                 'blocking' => true,
-                "timeout" => 70,
+                "timeout" => 15,
             );
             $response = wp_remote_request( $url, $args );
             $response_code = wp_remote_retrieve_response_code( $response );
             $response_body = wp_remote_retrieve_body( $response );
+
+            if (is_wp_error($response)) {
+                return array(
+                    "status_code" => 400,
+                    "body" => 'timeout',
+                );
+            }
+
             try {
                 $j = json_decode( $response_body, true );
                 if ($j) {
                     $response_body = $j;
                 }
-            } catch ( Exception $ex ) { }
+            } catch ( Exception $ex ) { 
+                return array(
+                    "status_code" => 400,
+                    "body" => 'response body decode error',
+                );
+            }
+
             return array(
                 "status_code" => $response_code,
                 "body" => $response_body,

@@ -181,7 +181,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('debug', 'no');
             $this->set_default_setting('title', 'divit payment gateway');
             $this->set_default_setting('description', 'secure & fast FPS payments');
-            $this->set_default_setting('installationStatus', 'no');
+            $this->set_default_setting('installationStatus', '');
 
             // account
             $this->set_default_setting('mode', 'sandbox');
@@ -244,7 +244,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->settings['campaigns'] = array();
             $this->settings['selected_campaign_id'] = '';
             $this->settings['campaign_mode'] = '';
-            $this->settings['installationStatus'] = 'no';
+            $this->settings['installationStatus'] = '';
             return update_option($this->get_option_key(), $this->settings, 'yes');
         }
 
@@ -294,12 +294,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // when this account is updated, may updated by cron job
             $this->settings['updated_date'] = DIVIT_UTILS::get_utc();
-
-            // test callback if not success
-            if ($this->settings['installationStatus'] != 'yes') {
-                $webhook_resp = $this->webhook_test($this->api_key);
-                self::log("webhook test " . json_encode($webhook_resp));
-            }
 
             $this->log("finished setup merchant");
 
@@ -1390,6 +1384,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $selected_campaign = $this->selected_campaign;
             $updated_date = $this->settings['updated_date'];
             $loggedin = !empty($this->merchant_id);
+            $installationStatus = $this->settings['installationStatus'];
         ?>
             <?php if (!$loggedin) echo '<div class="notice notice-error notice-alt"><h4>Require setup account</h4></div>' ?>
 
@@ -1412,7 +1407,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     </tr>
                     <tr>
                         <th>Installation status</th>
-                        <td id="installationStatusText"><?php echo $this->settings['installationStatus'] == 'yes' ? 'ok' : 'webhook test not done' ?></td>
+                        <td id="installationStatusField">
+                            <span id="installationStatusText">
+                                <?php echo $installationStatus == 'success' ? 'success' : 'webhook test not done'; ?>
+                            </span>
+                            <?php if ($installationStatus !== 'success') { ?>
+                                
+                            <?php } ?>
+                        </td>
                     </tr>
                     <?php if (false) { // only order mode ?>
                         <tr>
@@ -2279,9 +2281,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_get_installation_status()
         {
+            $this->webhook_test($this->get_api_key());
+
             wp_send_json_success(array(
                 'installationStatus' => $this->settings['installationStatus'],
             ));
+
             die();
         }
 
@@ -2446,9 +2451,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // installation status test
             if ($json['event']['eventId'] == 9000) {
-                $this->settings['installationStatus'] = 'yes';
+                $this->settings['installationStatus'] = 'success';
                 update_option($this->get_option_key(), $this->settings, 'yes');
-                $message = "callback: installation status yes {$merchant_ref}";
+                $message = "callback: installation status success {$merchant_ref}";
                 self::log($message);
                 wp_send_json($message);
                 exit;
