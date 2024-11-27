@@ -84,6 +84,10 @@ contact us with [hello@divit.com.hk](mailto:hello@divit.com.hk) or [+85262708800
 
 == Changelog ==
 
+= 1.7.2 =
+* Feat - add FPS guide link
+* Feat - updated checkout ui
+
 = 1.7.0 =
 * Breaking - disable miles rewards
 * Feat - simpify admin UI
