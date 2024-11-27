@@ -140,6 +140,8 @@ if (!class_exists('Divit_Plugin')) {
             global $wp;
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
+            $config_data = $gateway->get_divit_config_json();
+
             wp_enqueue_style('rangeslider-style', plugins_url('assets/css/divit-gateway.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
             wp_enqueue_style('divit-gateway-style', plugins_url('assets/css/rangeslider.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
 
@@ -150,7 +152,8 @@ if (!class_exists('Divit_Plugin')) {
             wp_localize_script('divit-gateway', 'wcdivit', array(
                 'ajaxUrl' => admin_url("admin-ajax.php"),
                 'autoFillAddressEnabled' => $gateway->settings['sso-auto-fill-address'] ?? false,
-                'isCheckoutPage' => is_checkout() && empty( $wp->query_vars['order-pay'] ) && ! isset( $wp->query_vars['order-received'] )
+                'isCheckoutPage' => is_checkout() && empty( $wp->query_vars['order-pay'] ) && ! isset( $wp->query_vars['order-received'] ),
+                'fpsGuideURL' => $config_data->fpsGuideURL ?? '',
             ));
         }
 

@@ -514,3 +514,9 @@ input#divit_promotion_code:focus {
 	height: 1px;
 	background-color: #F0F0F0;
 }
+
+.divit_checkout_fps_guide_button {
+	display: inline-block;
+	margin-left: 8px;
+	cursor: pointer;
+}
