@@ -40,7 +40,7 @@
 1. update version in `payment-gateway.php` > `Version` and `DIVIT_PLUGIN_VERSION`
 1. update version in `readme.txt` > `Stable tag`
 1. write changelog in `readme.txt` > `== Changelog ==`
-1. zip all files as name: `divit-for-woocommerce.zip`
+1. zip all files as name: `divit-rewards-and-payment-gateway.zip`
 1. NOTE: by using same zip filename, admin can replace the existing installed one.
 
 ### deploy to wordpress.org 
