@@ -83,6 +83,7 @@ if (!class_exists('Divit_Plugin')) {
                 
                 // register payment gateway
                 add_filter('woocommerce_payment_gateways', array($this, 'add_payment_gateway'));
+                add_action( 'woocommerce_blocks_loaded', array($this, 'divit_gateway_block_support') );
                 
                 // add scripts
                 add_action( 'wp_enqueue_scripts', array( $this, 'divit_enqueue_script'));
@@ -133,6 +134,18 @@ if (!class_exists('Divit_Plugin')) {
         {
             $gateways[] = 'WC_Divit_Payment_Gateway';
             return $gateways;
+        }
+        
+        public function divit_gateway_block_support()
+        {
+            require_once dirname(__FILE__) . '/wc-divit-payment-gateway-blocks-support.php';
+
+            add_action(
+                'woocommerce_blocks_payment_method_type_registration',
+                function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+                    $payment_method_registry->register( new WC_Divit_Gateway_Blocks_Support );
+                }
+            );
         }
 
         public function divit_enqueue_script() 
@@ -192,7 +205,7 @@ if (!class_exists('Divit_Plugin')) {
             
             ob_start();
 
-            ?><img src="<?php echo esc_attr(WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url']); ?>/brand/fps-by-divit.png" width="97.2px" height="25px" alt="Divit" /><?php
+            ?><img id="divit_checkout_icon" src="<?php echo esc_attr(WC_Divit_Payment_Gateway::getInstance()->get_env()['static_url']); ?>/brand/fps-by-divit.png" width="97.2px" height="25px" alt="Divit" /><?php
 
             return ob_get_clean();
         }
