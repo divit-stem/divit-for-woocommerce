@@ -1,11 +1,8 @@
 jQuery(function ($) {
-  // console.log("admin", wcdivit);
-
   /**
    * check installation status in admin page
    * if already success then do not need call anything.
-   * if not, shows test connection button,
-   * click the button then call api, after n seconds check again.
+   * click test button then call api, after n seconds check again.
    */
 
   var installationStatus = wcdivit.installationStatus;
@@ -20,12 +17,7 @@ jQuery(function ($) {
   }
 
   function setInstallationStatus(status) {
-    if (status === "success") {
-      $testConnectionButton.remove();
-    } else {
-      $testConnectionButton.attr("disabled", false);
-    }
-
+    $testConnectionButton.attr("disabled", false);
     var text = status === "success" ? "success" : "webhook test not done";
     $("#installationStatusText").text(text);
   }
