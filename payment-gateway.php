@@ -153,13 +153,13 @@ if (!class_exists('Divit_Plugin')) {
             global $wp;
             $gateway = WC_Divit_Payment_Gateway::getInstance();
 
-            $config_data = $gateway->get_divit_config_json();
-
             wp_enqueue_style('rangeslider-style', plugins_url('assets/css/divit-gateway.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
             wp_enqueue_style('divit-gateway-style', plugins_url('assets/css/rangeslider.css', __FILE__), array(), DIVIT_PLUGIN_VERSION);
 
             wp_enqueue_script('rangeslider', plugins_url('assets/js/rangeslider.min.js', __FILE__) , array( 'jquery') , DIVIT_PLUGIN_VERSION, true);
             wp_enqueue_script('divit-gateway', plugins_url('assets/js/divit-gateway.js', __FILE__) , array( 'jquery', 'rangeslider') , DIVIT_PLUGIN_VERSION, true);
+
+            $config_data = $gateway->get_divit_config_json();
 
             // custom js for frontend usage
             wp_localize_script('divit-gateway', 'wcdivit', array(

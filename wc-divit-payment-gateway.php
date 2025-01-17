@@ -125,13 +125,18 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         // redirect url to divit order in order details, use with set_transaction_id
         public function get_transaction_url($order): string
         {
+            $transaction_id = $order->get_transaction_id();
+            if (str_starts_with($transaction_id, '00000000')) {
+                return parent::get_transaction_url($order);
+            }
+
             $locale = get_locale();
             $locale_suff = strtolower(substr($locale, -2, 2));
             $locale_prefix = strtolower(substr($locale, 0, 2)); // zh-hans
             $current_lang = $locale_prefix == "zh" ? (($locale_suff == "cn" || $locale_suff == "ns")  ? "zh-CN" : "zh-HK") : "en";
 
             $base_url = $this->get_env()['partner_portal_url'];
-            $url = $base_url . '/'.$current_lang.'/orders/pay-now/order-information/' . $order->get_transaction_id();
+            $url = $base_url . '/'.$current_lang.'/orders/pay-now/order-information/' . $transaction_id;
             $this->view_transaction_url = $url;
             return parent::get_transaction_url($order);
         }
@@ -182,6 +187,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('title', 'divit payment gateway');
             $this->set_default_setting('description', 'secure & fast FPS payments');
             $this->set_default_setting('installationStatus', '');
+            $this->set_default_setting('campaign_config', array());
 
             // account
             $this->set_default_setting('mode', 'sandbox');
@@ -245,6 +251,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->settings['selected_campaign_id'] = '';
             $this->settings['campaign_mode'] = '';
             $this->settings['installationStatus'] = '';
+            $this->settings['campaign_config'] = array();
             return update_option($this->get_option_key(), $this->settings, 'yes');
         }
 
@@ -291,6 +298,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (empty($campaign)) {
                 $this->settings['selected_campaign_id'] = '';
             }
+
+            $this->get_divit_config_json();
 
             // when this account is updated, may updated by cron job
             $this->settings['updated_date'] = DIVIT_UTILS::get_utc();
@@ -1473,6 +1482,24 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->setup_merchant();
         }
 
+        public function add_locale_to_url($redirect_uri)
+        {
+            // append current language in the redirect_uri
+            $current_lang = get_locale();
+            if ($current_lang != NULL) {
+                if (str_contains($redirect_uri, 'lang=')) {
+                    $redirect_uri = preg_replace('/lang=[a-zA-Z_\-]*[^&]/', 'lang=' . $current_lang, $redirect_uri);
+                } else {
+                    if (str_contains($redirect_uri, '?')) {
+                        $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
+                    } else {
+                        $redirect_uri = $redirect_uri . "?lang=$current_lang";
+                    }
+                }
+            }
+            return $redirect_uri;
+        }
+
         public function process_payment($order_id)
         {
             $order = new WC_Order($order_id);
@@ -1549,8 +1576,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order->update_meta_data('divit_promotion_code', json_encode($log_promotion_code));
 
             // save number of miles reward to customer
-            $order->update_meta_data('divit_miles_for_reward', $order_miles);
-            $order->save();
+            if ($this->is_earn_miles_enabled()) {
+                $order->update_meta_data('divit_miles_for_reward', $order_miles);
+                $order->save();
+            }
 
             $create_order_data = array(
                 "milesForReward" => $order_miles,
@@ -1608,6 +1637,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $create_order_resp_data = $create_order_resp['body']['data'];
             $create_order_id = $create_order_resp_data['orderID'];
             $redirect_uri = $create_order_resp_data['redirectURI'];
+
+            // exit if order is null, eg: maintenance mode
+            // clean up all meta data
+            if (str_starts_with($create_order_id, '00000000')) {
+                $order->delete_meta_data('divit_promotion_code');
+                $order->delete_meta_data('divit_miles_for_reward');
+                $order->save();
+                return array(
+                    'result' => 'success',
+                    'redirect' => $this->add_locale_to_url($redirect_uri),
+                );
+            }
+
             $create_order_token = $create_order_resp_data['token'];
             self::log('created order ' . json_encode($create_order) . ', ' . json_encode($create_order_resp['body']));
 
@@ -1624,23 +1666,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'checkoutMiles' => $checkout_meta['miles'] ?? 0,
             ));
 
-            // append current language in the redirect_uri
-            $current_lang = get_locale();
-            if ($current_lang != NULL) {
-                if (str_contains($redirect_uri, 'lang=')) {
-                    $redirect_uri = preg_replace('/lang=[a-zA-Z_\-]*[^&]/', 'lang=' . $current_lang, $redirect_uri);
-                } else {
-                    if (str_contains($redirect_uri, '?')) {
-                        $redirect_uri = str_replace('?', "?lang=$current_lang&", $redirect_uri);
-                    } else {
-                        $redirect_uri = $redirect_uri . "?lang=$current_lang";
-                    }
-                }
-            }
+            $redirect = $this->add_locale_to_url($redirect_uri) . '&token=' . $create_order_token . '&' . $checkout_params;
 
             return array(
                 'result' => 'success',
-                'redirect' => $redirect_uri . '&token=' . $create_order_token . '&' . $checkout_params,
+                'redirect' => $redirect,
             );
         }
 
@@ -1761,8 +1791,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             }
 
             // save number of miles reward to customer
-            $order->update_meta_data('divit_miles_for_reward', $order_miles);
-            $order->save();
+            if (!$this->is_earn_miles_enabled()) {
+                $order->update_meta_data('divit_miles_for_reward', $order_miles);
+                $order->save();
+            }
 
             $create_order_data = array(
                 "milesForReward" => $order_miles,
@@ -1810,6 +1842,19 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $create_order_resp_data = $create_order_resp['body']['data'];
             $create_order_id = $create_order_resp_data['orderID'];
             $redirect_uri = $create_order_resp_data['redirectURI'];
+
+            // exit if order is null, eg: maintenance mode
+            // clean up all meta data
+            if (str_starts_with($create_order_id, '00000000')) {
+                $order->delete_meta_data('divit_promotion_code');
+                $order->delete_meta_data('divit_miles_for_reward');
+                $order->save();
+                wp_send_json_success(array(
+                    'redirectURL' => $redirect_uri,
+                ));
+                die();
+            }
+
             self::log('created order ' . json_encode($create_order_data) . ', ' . json_encode($create_order_resp['body']));
 
             // save divit order id for cancel, reference
@@ -1866,28 +1911,26 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_divit_config_json()
         {
-            DIVIT_UTILS::create_wc_session_if_empty();
-            
             // default config object
             $config_data = (object)array('marketCampaignEndDate' => '2000-01-01');
-            $divit_config_loaded = WC()->session->get(self::DIVIT_CONFIG_JSON_LOADED, false);
-            if (!$divit_config_loaded) {
+            $divit_config = $this->settings['campaign_config'];
+            if (empty($divit_config)) {
                 // load config json
                 $config_env = $this->get_env();
                 $config_url = $config_env['static_url'] . '/configs/woocommerce/' . $config_env['name'] . '-checkout-message-config.json?t=' . (floor(time() / 100));
                 $config_content = file_get_contents($config_url);
                 $config_data = json_decode($config_content);
 
-                // set config json loaded, save json in session
-                WC()->session->set(self::DIVIT_CONFIG_JSON, $config_data);
-                WC()->session->set(self::DIVIT_CONFIG_JSON_LOADED, true);
+                // set config json loaded, save json in setting
+                $this->settings['campaign_config'] = $config_data;
+                update_option($this->get_option_key(), $this->settings, 'yes');
                 if (isset($config_data->campaignEndDate)) {
                     if (strtotime($config_data->campaignEndDate) > strtotime(date('Y-m-d'))) {
                         return $config_data;
                     }
                 }
             }
-            return WC()->session->get(self::DIVIT_CONFIG_JSON, $config_data);
+            return $divit_config;
         }
 
         public function is_promotion_message_available($config_data)
