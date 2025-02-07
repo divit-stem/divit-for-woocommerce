@@ -8,7 +8,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public static $log = false;
         protected static $instance = null;
 
-        const ENABLE_REWARD_MILES = false;
+        const ENABLE_MILES = false;
 
         const DIVIT_CONFIG_JSON = 'divit_config_json';
         const DIVIT_CONFIG_JSON_LOADED = 'divit_config_json_loaded';
@@ -312,7 +312,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function is_earn_miles_enabled()
         {
-            if (!self::ENABLE_REWARD_MILES) {
+            if (!self::ENABLE_MILES) {
                 return false;
             }
             if ($this->enabled == 'no') {
@@ -340,6 +340,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function is_reward_miles_enabled()
         {
+            if (!$this->is_earn_miles_enabled()) {
+                return false;
+            }
             if ($this->enabled == 'no') {
                 return false;
             }
@@ -351,7 +354,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function is_promotion_code_enabled()
         {
-            if (!$this->is_earn_miles_enabled()) return false;
+            if (!$this->is_earn_miles_enabled()) {
+                return false;
+            }
             if ($this->settings['promotion-code-enabled'] == 'no') {
                 return false;
             }
@@ -1463,7 +1468,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     Express checkout
                 </a>
                 <?php } ?>
-                <?php if ($this->is_debug() && self::ENABLE_REWARD_MILES) { ?>
+                <?php if ($this->is_debug() && self::ENABLE_MILES) { ?>
                 <a href="?page=wc-settings&tab=checkout&section=divit&panel=reward" class="nav-tab <?php echo esc_html($panel == 'reward' ? 'nav-tab-active' : ''); ?>">
                     Reward
                 </a>
@@ -1991,6 +1996,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $is_logged_in = !empty($this->get_divit_user());
             $is_show_checkout_block = false;
+            $is_show_spend_miles_block = $this->is_earn_miles_enabled() && $this->settings['sso-enabled'] === 'yes';
             $is_show_earn_miles_label = $this->is_earn_miles_enabled() && $this->settings['osm-checkout-page'] == 'yes';
             $is_promotion_code_enabled = $this->is_promotion_code_enabled();
 
@@ -2128,75 +2134,75 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     </script>
                 <?php endif; ?>
                 <?php if ($is_show_checkout_block) : ?>
-                <div class="divit_checkout_block divit_checkout_paynow checked">
-                    <div class="divit_checkout_block_overlay" data-method-id="paynow"></div>
-                    <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>
-                    <div style="width:22px;"></div>
-                    <div class="divit_checkout_block_content">
-                        <div class="divit_checkout_block_title">
-                            <?php echo esc_html(__('pay now', 'wc-divit-payment-gateway')); ?>
-                        </div>
-                        <?php if ($is_show_earn_miles_label) : ?>
-                            <div class="divit_checkout_block_subtitle">
-                                <?php echo esc_html(__('earn miles with FPS payments', 'wc-divit-payment-gateway')); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="divit_checkout_block_right">
-                        <div class="divit_checkout_paynow_total">
-                            <?php echo esc_html($formatted_order_total); ?>
-                        </div>
-                    </div>
-                </div>
-                <?php if ($this->settings['sso-enabled'] === 'yes') : ?>
-                    <div style="height:24px"></div>
-                    <div class="divit_checkout_block divit_checkout_spend">
-                        <div class="divit_checkout_block_overlay" data-method-id="spend"></div>
-                        <div class="divit_radio divit_radio_spend"></div>
+                    <div class="divit_checkout_block divit_checkout_paynow checked">
+                        <div class="divit_checkout_block_overlay" data-method-id="paynow"></div>
+                        <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>
                         <div style="width:22px;"></div>
                         <div class="divit_checkout_block_content">
                             <div class="divit_checkout_block_title">
-                                <?php echo esc_html(__('spend miles', 'wc-divit-payment-gateway')); ?>
+                                <?php echo esc_html(__('pay now', 'wc-divit-payment-gateway')); ?>
                             </div>
-                            <div class="divit_checkout_block_subtitle">
-                                <?php if ($is_logged_in) : ?>
-                                    <?php echo esc_html(__('spend your divit miles to save!', 'wc-divit-payment-gateway')); ?>
-                                <?php else : ?>
-                                    <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a class="divit_redirect_url" href="<?php echo esc_html($this->get_divit_login_url()); ?>"><?php _e('log in', 'wc-divit-payment-gateway'); ?></a>
-                                <?php endif; ?>
+                            <?php if ($is_show_earn_miles_label) : ?>
+                                <div class="divit_checkout_block_subtitle">
+                                    <?php echo esc_html(__('earn miles with FPS payments', 'wc-divit-payment-gateway')); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="divit_checkout_block_right">
+                            <div class="divit_checkout_paynow_total">
+                                <?php echo esc_html($formatted_order_total); ?>
                             </div>
                         </div>
-                        <?php if ($is_logged_in) : ?>
-                            <div class="divit_checkout_spend_loading divit-items-center">
-                                <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/icons/spinner.svg" width="40px" height="40px" />
-                            </div>
-                            <div class="divit_checkout_block_right divit_checkout_spend_container">
-                                <form id="divit_checkout_miles_form">
-                                    <div class="divit_checkout_miles_input_container divit-items-center">
-                                        <div class="divit_checkout_miles_input_box divit-flex-1">
-                                            <div class="divit_checkout_cash_input_symbol">$</div>
-                                            <input id="divit_checkout_cash_input" type="number" />
-                                        </div>
-                                        <div class="divit_checkout_miles_input_plus">+</div>
-                                        <div class="divit_checkout_miles_input_box divit-flex-1">
-                                            <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/miles/miles-icon.png" width="16px" height="16px" />
-                                            <input id="divit_checkout_miles_input" type="number" />
-                                        </div>
-                                    </div>
-                                    <div style="height:16px"></div>
-                                    <div class="divit_checkout_miles_slider_container">
-                                        <input id="divit_checkout_miles_slider" type="range" />
-                                    </div>
-                                    <div style="height:16px"></div>
-                                    <div class="divit_checkout_miles_desc">
-                                        <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/miles/miles-icon.png" width="16px" height="16px" style="margin-right:5px;filter: grayscale(1);" />
-                                        <span id="divit_checkout_miles_base"></span>
-                                    </div>
-                                </form>
-                            </div>
-                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
+                    <?php if ($is_show_spend_miles_block) : ?>
+                        <div style="height:24px"></div>
+                        <div class="divit_checkout_block divit_checkout_spend">
+                            <div class="divit_checkout_block_overlay" data-method-id="spend"></div>
+                            <div class="divit_radio divit_radio_spend"></div>
+                            <div style="width:22px;"></div>
+                            <div class="divit_checkout_block_content">
+                                <div class="divit_checkout_block_title">
+                                    <?php echo esc_html(__('spend miles', 'wc-divit-payment-gateway')); ?>
+                                </div>
+                                <div class="divit_checkout_block_subtitle">
+                                    <?php if ($is_logged_in) : ?>
+                                        <?php echo esc_html(__('spend your divit miles to save!', 'wc-divit-payment-gateway')); ?>
+                                    <?php else : ?>
+                                        <?php echo esc_html(__('want to spend miles to save?', 'wc-divit-payment-gateway')); ?> <a class="divit_redirect_url" href="<?php echo esc_html($this->get_divit_login_url()); ?>"><?php _e('log in', 'wc-divit-payment-gateway'); ?></a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php if ($is_logged_in) : ?>
+                                <div class="divit_checkout_spend_loading divit-items-center">
+                                    <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/icons/spinner.svg" width="40px" height="40px" />
+                                </div>
+                                <div class="divit_checkout_block_right divit_checkout_spend_container">
+                                    <form id="divit_checkout_miles_form">
+                                        <div class="divit_checkout_miles_input_container divit-items-center">
+                                            <div class="divit_checkout_miles_input_box divit-flex-1">
+                                                <div class="divit_checkout_cash_input_symbol">$</div>
+                                                <input id="divit_checkout_cash_input" type="number" />
+                                            </div>
+                                            <div class="divit_checkout_miles_input_plus">+</div>
+                                            <div class="divit_checkout_miles_input_box divit-flex-1">
+                                                <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/miles/miles-icon.png" width="16px" height="16px" />
+                                                <input id="divit_checkout_miles_input" type="number" />
+                                            </div>
+                                        </div>
+                                        <div style="height:16px"></div>
+                                        <div class="divit_checkout_miles_slider_container">
+                                            <input id="divit_checkout_miles_slider" type="range" />
+                                        </div>
+                                        <div style="height:16px"></div>
+                                        <div class="divit_checkout_miles_desc">
+                                            <img src="<?php echo esc_attr($this->get_env()['static_url']); ?>/miles/miles-icon.png" width="16px" height="16px" style="margin-right:5px;filter: grayscale(1);" />
+                                            <span id="divit_checkout_miles_base"></span>
+                                        </div>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
             <?php
