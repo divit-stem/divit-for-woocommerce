@@ -1,6 +1,7 @@
 <?php
 
 require_once('utils.php');
+require_once('constants.php');
 
 if (!class_exists('WC_Divit_Payment_Gateway')) {
     class WC_Divit_Payment_Gateway extends WC_Payment_Gateway
@@ -194,7 +195,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('api_key_dev', '');
             $this->set_default_setting('api_key_sandbox', '');
             $this->set_default_setting('api_key_production', '');
-            $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
             $this->set_default_setting('merchant_id', '');
             $this->set_default_setting('campaigns', array());
             $this->set_default_setting('selected_campaign_id', '');
@@ -202,35 +202,35 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
 
             // osm
-            $this->set_default_setting('osm-enabled', 'yes');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ENABLED, 'no');
             // osm miles
-            $this->set_default_setting('osm-single-product-page', 'yes');
-            $this->set_default_setting('osm-loop-product-page', 'no');
-            $this->set_default_setting('osm-mini-cart-page', 'yes');
-            $this->set_default_setting('osm-cart-page', 'yes');
-            $this->set_default_setting('osm-checkout-page', 'yes');
-            $this->set_default_setting('osm-order-receive-page', 'yes');
-            $this->set_default_setting('osm-order-email', 'yes');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_CART_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_CHECKOUT_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ORDER_EMAIL, 'no');
             // osm tickets
-            $this->set_default_setting('osm-single-product-page-tickets', 'no');
-            // $this->set_default_setting('osm-loop-product-page-tickets', 'no');
-            $this->set_default_setting('osm-mini-cart-page-tickets', 'no');
-            $this->set_default_setting('osm-cart-page-tickets', 'yes');
-            $this->set_default_setting('osm-order-receive-page-tickets', 'yes');
-            $this->set_default_setting('osm-order-email-tickets', 'yes');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE_TICKETS, 'no');
+            // $this->set_default_setting(DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE_TICKETS, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE_TICKETS, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_CART_PAGE_TICKETS, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE_TICKETS, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ORDER_EMAIL_TICKETS, 'no');
 
             // sso
-            $this->set_default_setting('sso-enabled', 'no');
-            $this->set_default_setting('sso-login-button-menu', 'none');
+            $this->set_default_setting(DIVIT_CONST::SETTING_SSO_ENABLED, 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_SSO_LOGIN_BUTTON_MENU, 'none');
 
             // express checkout
-            $this->set_default_setting('express-enabled', 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_EXPRESS_ENABLED, 'no');
 
             // promotion
-            $this->set_default_setting('promotion-code-enabled', 'no');
+            $this->set_default_setting(DIVIT_CONST::SETTING_PROMOTION_CODE_ENABLED, 'no');
 
             // advanced
-            $this->set_default_setting('checkout-button-replacement', 'yes');
+            $this->set_default_setting(DIVIT_CONST::SETTING_CHECKOUT_BUTTON_REPLACEMENT, 'yes');
         }
 
         // trigger after click save changes in admin page
@@ -318,7 +318,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($this->enabled == 'no') {
                 return false;
             }
-            if ($this->settings['osm-enabled'] == 'no') {
+            if ($this->settings[DIVIT_CONST::SETTING_OSM_ENABLED] == 'no') {
                 return false;
             }
             if (empty($this->selected_campaign)) {
@@ -332,7 +332,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($this->enabled == 'no') {
                 return false;
             }
-            if ($this->settings['osm-enabled'] == 'no') {
+            if ($this->settings[DIVIT_CONST::SETTING_OSM_ENABLED] == 'no') {
                 return false;
             }
             return true;
@@ -357,7 +357,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!$this->is_earn_miles_enabled()) {
                 return false;
             }
-            if ($this->settings['promotion-code-enabled'] == 'no') {
+            if ($this->settings[DIVIT_CONST::SETTING_PROMOTION_CODE_ENABLED] == 'no') {
                 return false;
             }
             return true;
@@ -685,7 +685,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             // disable this feature
             return;
-            // if ($this->is_earn_miles_enabled() && $this->settings['osm-mini-cart-page'] == 'yes') {
+            // if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE] == 'yes') {
             //     $product_id = $attrs['product_id'];
             //     if (!empty($product_id)) {
             //         $subtotal = 0;
@@ -706,11 +706,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $cart = WC()->cart;
 
-            if ($this->is_earn_miles_enabled() && $this->settings['osm-mini-cart-page'] == 'yes') {
+            if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE] == 'yes') {
                 $miles = $this->get_cart_miles($cart);
                 $this->render_miles_message($miles);
             }
-            if ($this->is_earn_tickets_enabled() && $this->settings['osm-mini-cart-page-tickets'] == 'yes') {
+            if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE_TICKETS] == 'yes') {
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
                     $tickets = $this->get_cart_tickets($cart);
@@ -727,14 +727,14 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $product = DIVIT_UTILS::get_product_from_the_post();
 
-            if ($this->is_earn_miles_enabled() && $this->settings['osm-loop-product-page'] == 'yes') {
+            if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE] == 'yes') {
                 $miles = $this->get_product_miles($product);
                 ?>
                     <div style="margin-top:5px;"></div>
                 <?php
                 $this->render_miles_flag($miles);
             }
-            // if ($this->is_earn_tickets_enabled() && $this->settings['osm-loop-product-page-tickets'] == 'yes') {
+            // if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE_TICKETS] == 'yes') {
             //     $config_data = $this->get_divit_config_json();
             //     if ($this->is_promotion_message_available($config_data)) {
             //         $tickets = $this->get_product_tickets($product);
@@ -745,8 +745,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_single_product_earn_miles_message()
         {
-            if ((!$this->is_earn_miles_enabled() || $this->settings['osm-single-product-page'] != 'yes') && 
-                (!$this->is_earn_tickets_enabled() || $this->settings['osm-single-product-page-tickets'] != 'yes')) return;
+            if ((!$this->is_earn_miles_enabled() || $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE] != 'yes') && 
+                (!$this->is_earn_tickets_enabled() || $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE_TICKETS] != 'yes')) return;
 
             $product = DIVIT_UTILS::get_product_from_the_post();
             if (!empty($product)) {
@@ -765,7 +765,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <script>
                     jQuery(function($) {
                         <?php
-                        if ($this->is_earn_miles_enabled() && $this->settings['osm-single-product-page'] == 'yes') {
+                        if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE] == 'yes') {
                             $rate = $this->get_miles_rate(true);
                         ?>
                             var minMiles = '<?php echo esc_js($min_price / $rate); ?>';
@@ -788,7 +788,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                             })
                         <?php
                         }
-                        if ($this->is_earn_tickets_enabled() && $this->settings['osm-single-product-page-tickets'] == 'yes') {
+                        if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE_TICKETS] == 'yes') {
                             ?>
                             function setTickets(tickets) {
                                 $('.single_variation_wrap .divit_tickets .ticket_count').text(parseInt(tickets, 10).toLocaleString('en-US'));
@@ -816,7 +816,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 </script>
                 <?php
                 }
-                if ($this->is_earn_miles_enabled() && $this->settings['osm-single-product-page'] == 'yes') {
+                if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE] == 'yes') {
                 ?>
                 <div class="divit_earn_miles_message">
                     <?php _e('purchase this product to earn ', 'wc-divit-payment-gateway'); ?>
@@ -825,7 +825,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <?php
                 }
 
-                if ($this->is_earn_tickets_enabled() && $this->settings['osm-single-product-page-tickets'] == 'yes') {
+                if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE_TICKETS] == 'yes') {
                     $config_data = $this->get_divit_config_json();
                     if ($this->is_promotion_message_available($config_data)) {
                         $this->render_divit_promotion_message($config_data, false, $tickets);
@@ -838,11 +838,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $cart = WC()->cart;
 
-            if ($this->is_earn_miles_enabled() && $this->settings['osm-mini-cart-page'] == 'yes') {
+            if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE] == 'yes') {
                 $miles = $this->get_cart_miles($cart);
                 $this->render_miles_message($miles);
             }
-            if ($this->is_earn_tickets_enabled() && $this->settings['osm-mini-cart-page-tickets'] == 'yes') {
+            if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE_TICKETS] == 'yes') {
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
                     $tickets = $this->get_cart_tickets($cart);
@@ -855,11 +855,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $cart = WC()->cart;
 
-            if ($this->is_earn_miles_enabled() && $this->settings['osm-cart-page'] == 'yes') {
+            if ($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_CART_PAGE] == 'yes') {
                 $miles = $this->get_cart_miles($cart);
                 $this->render_miles_message($miles, true);
             }
-            if ($this->is_earn_tickets_enabled() && $this->settings['osm-cart-page-tickets'] == 'yes') {
+            if ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_CART_PAGE_TICKETS] == 'yes') {
                 $config_data = $this->get_divit_config_json();
                 if ($this->is_promotion_message_available($config_data)) {
                     $tickets = $this->get_cart_tickets($cart);
@@ -888,7 +888,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function render_single_product_express_checkout_form()
         {
-            if ($this->settings['express-enabled'] !== 'yes') return '';
+            if ($this->settings[DIVIT_CONST::SETTING_EXPRESS_ENABLED] !== 'yes') return '';
             $product = DIVIT_UTILS::get_product_from_the_post();
             if (empty($product)) return;
 
@@ -941,7 +941,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         // replace "place order" button when divit payment is checked
         public function render_place_order_button_text($button_html)
         {
-            if ($this->settings['checkout-button-replacement'] != 'yes') return $button_html;
+            if ($this->settings[DIVIT_CONST::SETTING_CHECKOUT_BUTTON_REPLACEMENT] != 'yes') return $button_html;
 
             $divit_logo_img = '<img class="divit_place_order_button_image" src="' . $this->get_env()['static_url'] . '/brand/divit-logo-colored.png" />';
             $button = '';
@@ -987,8 +987,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $tickets = 0;
             if (!$order) return;
 
-            if (($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes') ||
-                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
+            if (($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE] == 'yes') ||
+                ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE_TICKETS] == 'yes')) {
                 // get miles from server
                 // $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
                 $divit_order_id = $order->get_meta('divit_order_id', true);
@@ -999,10 +999,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $miles = $this->get_miles_in_divit_order($divit_order);
                 $tickets = $this->get_tickets_in_divit_order($divit_order);
             }
-            if (!($this->is_earn_miles_enabled() && $this->settings['osm-order-receive-page'] == 'yes')) {
+            if (!($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE] == 'yes')) {
                 $miles = 0;
             }
-            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-receive-page-tickets'] == 'yes')) {
+            if (!($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE_TICKETS] == 'yes')) {
                 $tickets = 0;
             }
             echo wp_kses_post($thank_you_title);
@@ -1034,8 +1034,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $tickets = 0;
             if (!$order) return;
             
-            if (($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes') ||
-                ($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets'] == 'yes')) {
+            if (($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_EMAIL] == 'yes') ||
+                ($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_EMAIL_TICKETS] == 'yes')) {
                 // get miles from server
                 // $divit_order_id = get_post_meta($order->get_id(), 'divit_order_id', true);
                 $divit_order_id = $order->get_meta('divit_order_id', true);
@@ -1046,10 +1046,10 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $miles = $this->get_miles_in_divit_order($divit_order);
                 $tickets = $this->get_tickets_in_divit_order($divit_order);
             }
-            if (!($this->is_earn_miles_enabled() && $this->settings['osm-order-email'] == 'yes')) {
+            if (!($this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_EMAIL] == 'yes')) {
                 $miles = 0;
             }
-            if (!($this->is_earn_tickets_enabled() && $this->settings['osm-order-email-tickets'] == 'yes')) {
+            if (!($this->is_earn_tickets_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ORDER_EMAIL_TICKETS] == 'yes')) {
                 $tickets = 0;
             }
             if  ($miles > 0 || $tickets > 0) {
@@ -1223,39 +1223,39 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             if ($panel == 'on-site-messaging') {
                 $form_fields = array_merge($form_fields, array(
-                    'osm-enabled' => array(
+                    DIVIT_CONST::SETTING_OSM_ENABLED => array(
                         'title' => __('Enable on-site messging', 'wc-divit-payment-gateway'),
                         'description' => __('Enable all tickets / reward messaging'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-single-product-page-tickets' => array(
+                    DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE_TICKETS => array(
                         'title' => __('Display tickets tag in pages', 'wc-divit-payment-gateway'),
                         'label' => __('Display tickets in single product page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    // 'osm-loop-product-page-tickets' => array(
+                    // DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE_TICKETS => array(
                     //     'type' => 'checkbox',
                     //     'label' => __('Display tickets in loop product page', 'wc-divit-payment-gateway'),
                     //     'default' => 'no',
                     // ),
-                    'osm-mini-cart-page-tickets' => array(
+                    DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE_TICKETS => array(
                         'label' => __('Display tickets in mini cart page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-cart-page-tickets' => array(
+                    DIVIT_CONST::SETTING_OSM_CART_PAGE_TICKETS => array(
                         'label' => __('Display tickets in cart page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-order-receive-page-tickets' => array(
+                    DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE_TICKETS => array(
                         'label' => __('Display tickets in order receive page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-order-email-tickets' => array(
+                    DIVIT_CONST::SETTING_OSM_ORDER_EMAIL_TICKETS => array(
                         'label' => __('Display tickets in order email', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
@@ -1274,13 +1274,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 );
 
                 $form_fields = array_merge($form_fields, array(
-                    'sso-enabled' => array(
+                    DIVIT_CONST::SETTING_SSO_ENABLED => array(
                         'title' => __('Enable', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'label' => __('Enable divit single sign on', 'wc-divit-payment-gateway'),
                         'default' => 'no',
                     ),
-                    'sso-login-button-menu' => array(
+                    DIVIT_CONST::SETTING_SSO_LOGIN_BUTTON_MENU => array(
                         'title' => __('Login Button in menu location', 'wc-divit-payment-gateway'),
                         'type' => 'select',
                         'options' => $menu_location_options,
@@ -1300,7 +1300,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 );
 
                 $form_fields = array_merge($form_fields, array(
-                    'express-enabled' => array(
+                    DIVIT_CONST::SETTING_EXPRESS_ENABLED => array(
                         'title' => __('Enable', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'label' => __('Enable divit express checkout', 'wc-divit-payment-gateway'),
@@ -1320,49 +1320,49 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         // 'custom_attributes'	=> $this->settings['campaign_mode'] == self::CAMPAIGN_MODE_ORDER ? [] : array('disabled' => 'false'),
                         // 'description' => 'only available in order campaign mode',
                     ), 
-                    'osm-enabled' => array(
+                    DIVIT_CONST::SETTING_OSM_ENABLED => array(
                         'title' => __('Enable on-site messging', 'wc-divit-payment-gateway'),
                         'description' => __('Enable all tickets / reward messaging'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-single-product-page' => array(
+                    DIVIT_CONST::SETTING_OSM_SINGLE_PRODUCT_PAGE => array(
                         'title' => __('Display miles tag in pages', 'wc-divit-payment-gateway'),
                         'label' => __('Display miles in single product page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-loop-product-page' => array(
+                    DIVIT_CONST::SETTING_OSM_LOOP_PRODUCT_PAGE => array(
                         'type' => 'checkbox',
                         'label' => __('Display miles in loop product page', 'wc-divit-payment-gateway'),
                         'default' => 'yes',
                     ),
-                    'osm-mini-cart-page' => array(
+                    DIVIT_CONST::SETTING_OSM_MINI_CART_PAGE => array(
                         'label' => __('Display miles in mini cart page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-cart-page' => array(
+                    DIVIT_CONST::SETTING_OSM_CART_PAGE => array(
                         'label' => __('Display miles in cart page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-checkout-page' => array(
+                    DIVIT_CONST::SETTING_OSM_CHECKOUT_PAGE => array(
                         'label' => __('Display miles in checkout page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-order-receive-page' => array(
+                    DIVIT_CONST::SETTING_OSM_ORDER_RECEIVE_PAGE => array(
                         'label' => __('Display miles in order receive page', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'osm-order-email' => array(
+                    DIVIT_CONST::SETTING_OSM_ORDER_EMAIL => array(
                         'label' => __('Display miles in order email', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'default' => 'yes',
                     ),
-                    'promotion-code-enabled' => array(
+                    DIVIT_CONST::SETTING_PROMOTION_CODE_ENABLED => array(
                         'title' => __('Promotion code', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'label' => __('Enable promotion code', 'wc-divit-payment-gateway'),
@@ -1374,7 +1374,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             if ($panel == 'advanced') {
                 $form_fields = array_merge($form_fields, array(
-                    'checkout-button-replacement' => array(
+                    DIVIT_CONST::SETTING_CHECKOUT_BUTTON_REPLACEMENT => array(
                         'title' => __('Divit checkout button', 'wc-divit-payment-gateway'),
                         'type' => 'checkbox',
                         'label' => __('Replace divit checkout button', 'wc-divit-payment-gateway'),
@@ -1996,8 +1996,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         {
             $is_logged_in = !empty($this->get_divit_user());
             $is_show_checkout_block = false;
-            $is_show_spend_miles_block = $this->is_earn_miles_enabled() && $this->settings['sso-enabled'] === 'yes';
-            $is_show_earn_miles_label = $this->is_earn_miles_enabled() && $this->settings['osm-checkout-page'] == 'yes';
+            $is_show_spend_miles_block = $this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ENABLED] === 'yes';
+            $is_show_earn_miles_label = $this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_CHECKOUT_PAGE] == 'yes';
             $is_promotion_code_enabled = $this->is_promotion_code_enabled();
 
             // validate promo code
@@ -2855,7 +2855,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function shortcode_divit_login_button()
         {
-            if ($this->settings['sso-enabled'] !== 'yes') return '';
+            if ($this->settings[DIVIT_CONST::SETTING_SSO_ENABLED] !== 'yes') return '';
             $login_button_html = $this->get_login_button_html();
             $user = $this->get_divit_user();
             if (empty($user)) {
@@ -2872,8 +2872,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function divit_render_nav_login_item($items, $args)
         {
-            if ($this->settings['sso-enabled'] !== 'yes') return $items;
-            if ($this->settings['sso-login-button-menu'] === $args->theme_location) {
+            if ($this->settings[DIVIT_CONST::SETTING_SSO_ENABLED] !== 'yes') return $items;
+            if ($this->settings[DIVIT_CONST::SETTING_SSO_LOGIN_BUTTON_MENU] === $args->theme_location) {
                 $login_button_html = $this->get_login_button_in_nav_html();
                 $user = $this->get_divit_user();
                 if (empty($user)) {
