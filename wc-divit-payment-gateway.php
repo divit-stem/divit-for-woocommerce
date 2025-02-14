@@ -256,15 +256,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting(DIVIT_CONST::SETTING_CHECKOUT_BUTTON_REPLACEMENT, 'yes');
         }
 
-        // if data changes, clear the installation status
-        public function update_option_clear_installation_status($old_value, $new_value)
-        {
-            if ($old_value != $new_value) {
-                $this->settings['installationStatus'] = '';
-            }
-            // must call update_option afterward
-        }
-
         // trigger after click save changes in admin page
         public function process_admin_options()
         {
