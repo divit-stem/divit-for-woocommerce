@@ -147,29 +147,27 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($this->settings['mode'] == 'production') {
                 return $this->settings['api_key_production'];
             }
+            if ($this->settings['mode'] == 'sandbox') {
+                return $this->settings['api_key_sandbox'];
+            }
             if ($this->settings['mode'] == 'dev') {
                 return $this->settings['api_key_dev'];
             }
-            return $this->settings['api_key_sandbox'];
+            return '';
         }
 
         public function get_signature_key()
         {
-            // default to api key if signature key is empty
-            $api_key = $this->get_api_key();
-            $signature_key = '';
-
             if ($this->settings['mode'] == 'production') {
-                $signature_key = $this->settings['signature_key_production'];
+                return $this->settings['signature_key_production'];
             }
             if ($this->settings['mode'] == 'sandbox') {
-                $signature_key = $this->settings['signature_key_sandbox'];
+                return $this->settings['signature_key_sandbox'];
             }
             if ($this->settings['mode'] == 'dev') {
-                $signature_key = $this->settings['signature_key_dev'];
+                return $this->settings['signature_key_dev'];
             }
-
-            return empty($signature_key) ? $api_key : $signature_key;
+            return '';
         }
 
         public function get_currency()
@@ -223,6 +221,17 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('selected_campaign_id', '');
             $this->set_default_setting('campaign_mode', '');
             $this->set_default_setting('updated_date', DIVIT_UTILS::get_utc());
+
+            // copy api key to signature key by default
+            if ($this->settings['signature_key_dev'] == '') {
+                $this->settings['signature_key_dev'] = $this->settings['api_key_dev'];
+            }
+            if ($this->settings['signature_key_sandbox'] == '') {
+                $this->settings['signature_key_sandbox'] = $this->settings['api_key_sandbox'];
+            }
+            if ($this->settings['signature_key_production'] == '') {
+                $this->settings['signature_key_production'] = $this->settings['api_key_production'];
+            }
 
             // osm
             $this->set_default_setting(DIVIT_CONST::SETTING_OSM_ENABLED, 'no');
