@@ -182,5 +182,8 @@ if (!class_exists('DIVIT_UTILS'))
             return str_replace(' ', '', $str);
         }
 
+        static function deepclone($obj) {
+            return unserialize(serialize($obj));
+        }
     }
 }

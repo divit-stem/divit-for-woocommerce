@@ -153,6 +153,25 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return $this->settings['api_key_sandbox'];
         }
 
+        public function get_signature_key()
+        {
+            // default to api key if signature key is empty
+            $api_key = $this->get_api_key();
+            $signature_key = '';
+
+            if ($this->settings['mode'] == 'production') {
+                $signature_key = $this->settings['signature_key_production'];
+            }
+            if ($this->settings['mode'] == 'sandbox') {
+                $signature_key = $this->settings['signature_key_sandbox'];
+            }
+            if ($this->settings['mode'] == 'dev') {
+                $signature_key = $this->settings['signature_key_dev'];
+            }
+
+            return empty($signature_key) ? $api_key : $signature_key;
+        }
+
         public function get_currency()
         {
             return get_woocommerce_currency();
@@ -195,7 +214,11 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting('api_key_dev', '');
             $this->set_default_setting('api_key_sandbox', '');
             $this->set_default_setting('api_key_production', '');
+            $this->set_default_setting('signature_key_dev', '');
+            $this->set_default_setting('signature_key_sandbox', '');
+            $this->set_default_setting('signature_key_production', '');
             $this->set_default_setting('merchant_id', '');
+            $this->set_default_setting('branch_id', '');
             $this->set_default_setting('campaigns', array());
             $this->set_default_setting('selected_campaign_id', '');
             $this->set_default_setting('campaign_mode', '');
@@ -233,10 +256,36 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $this->set_default_setting(DIVIT_CONST::SETTING_CHECKOUT_BUTTON_REPLACEMENT, 'yes');
         }
 
+        // if data changes, clear the installation status
+        public function update_option_clear_installation_status($old_value, $new_value)
+        {
+            if ($old_value != $new_value) {
+                $this->settings['installationStatus'] = '';
+            }
+            // must call update_option afterward
+        }
+
         // trigger after click save changes in admin page
         public function process_admin_options()
         {
+
+            $old_settings = DIVIT_UTILS::deepclone($this->settings);
+
             parent::process_admin_options();
+
+            $new_settings = $this->settings;
+
+            if (
+                $old_settings['api_key_dev'] != $new_settings['api_key_dev'] || 
+                $old_settings['api_key_sandbox'] != $new_settings['api_key_sandbox'] || 
+                $old_settings['api_key_production'] != $new_settings['api_key_production'] ||
+                $old_settings['signature_key_dev'] != $new_settings['signature_key_dev'] || 
+                $old_settings['signature_key_sandbox'] != $new_settings['signature_key_sandbox'] || 
+                $old_settings['signature_key_production'] != $new_settings['signature_key_production']
+            ) {
+                self::log('changed');
+                $this->settings['installationStatus'] = '';
+            }
 
             $this->set_default_settings();
             return update_option($this->get_option_key(), $this->settings, 'yes');
@@ -244,9 +293,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function reset_settings()
         {
-            // $this->settings['api_key_sandbox'] = '';
-            // $this->settings['api_key_production'] = '';
             $this->settings['merchant_id'] = '';
+            $this->settings['branch_id'] = '';
             $this->settings['campaigns'] = array();
             $this->settings['selected_campaign_id'] = '';
             $this->settings['campaign_mode'] = '';
@@ -268,18 +316,20 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // get merchant id
             $merchant_resp = $this->get_merchant($api_key);
+
             if ($merchant_resp['status_code'] != 200) {
                 self::log("get merchant fail when setup, " . json_encode($merchant_resp));
                 return $this->reset_settings();
             }
-            $merchants = $merchant_resp['body']['data'];
-            if (count($merchants) === 0) {
+            if (!isset($merchant_resp['body']['data'])) {
                 self::log("get merchant fail when setup, " . json_encode($merchant_resp));
                 return $this->reset_settings();
             }
-            $merchant = $merchants[0];
+            $merchant = $merchant_resp['body']['data'];
             $merchant_id = $merchant['merchantID'];
             $this->settings['merchant_id'] = $merchant_id;
+            $branch_id = $merchant['branchID'];
+            $this->settings['branch_id'] = $branch_id;
 
             // set campaigns and earn miles rate
             $campaigns_resp = $this->get_campaigns($merchant_id, $api_key);
@@ -1203,6 +1253,24 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         'default' => '',
                         'description' => 'production api key for divit merchant',
                     ),
+                    'signature_key_dev' => array(
+                        'title' => 'Dev Signature key',
+                        'type' => 'password',
+                        'default' => '',
+                        'description' => 'dev signature key for validating payments',
+                    ),
+                    'signature_key_sandbox' => array(
+                        'title' => 'Sandbox Signature key',
+                        'type' => 'password',
+                        'default' => '',
+                        'description' => 'sandbox signature key for validating payments',
+                    ),
+                    'signature_key_production' => array(
+                        'title' => 'Production Signature key',
+                        'type' => 'password',
+                        'default' => '',
+                        'description' => 'production signature key for validating payments',
+                    ),
                     // 'campaign_mode' => array(
                     //     'title' => 'Campaign mode',
                     //     'type' => 'select',
@@ -1217,6 +1285,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 if (!$this->is_debug()) {
                     unset($form_fields['debug']);
                     unset($form_fields['api_key_dev']);
+                    unset($form_fields['signature_key_dev']);
                     unset($form_fields['campaign_mode']);
                 }
             }
@@ -1394,6 +1463,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $is_debug = $this->is_debug();
             $environment = $this->mode;
             $merchant_id = $this->merchant_id;
+            $branch_id = $this->settings['branch_id'];
             $campaign_mode = $this->campaign_mode;
             $selected_campaign = $this->selected_campaign;
             $updated_date = $this->settings['updated_date'];
@@ -1420,14 +1490,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                         <td><?php echo esc_html($merchant_id); ?></td>
                     </tr>
                     <tr>
+                        <th>Branch id</th>
+                        <td><?php echo esc_html($branch_id); ?></td>
+                    </tr>
+                    <tr>
                         <th>Installation status</th>
                         <td id="installationStatusField">
                             <span id="installationStatusText">
                                 <?php echo $installationStatus == 'success' ? 'success' : 'webhook test not done'; ?>
                             </span>
-                            <?php if ($installationStatus !== 'success') { ?>
-                                
-                            <?php } ?>
                         </td>
                     </tr>
                     <?php if (false) { // only order mode ?>
@@ -2381,7 +2452,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
         public function get_merchant($api_key)
         {
-            $url = $this->get_env()['api_url'] . '/merchants/v2';
+            $url = $this->get_env()['api_url'] . '/users/v2/profile';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             return DIVIT_UTILS::http_request($url, 'GET', array(), $header);
         }
@@ -2493,7 +2564,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // validate signature
             $signature = array_key_exists('X-Divit-Signature', $headers) ? $headers['X-Divit-Signature'] : '';
             $signature = array_key_exists('x-divit-signature', $headers) ? $headers['x-divit-signature'] : $signature;
-            $valid = DIVIT_UTILS::validate_webhook($signature, $this->api_key, $resp);
+            $signature_key = $this->get_signature_key();
+            $valid = DIVIT_UTILS::validate_webhook($signature, $signature_key, $resp);
             if (!$valid) {
                 $message = "callback: signature valid error, merchant reference {$merchant_ref}";
                 self::log($message);
