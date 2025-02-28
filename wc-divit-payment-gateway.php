@@ -341,7 +341,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $active_campaigns = array_values(array_filter($campaigns, function ($campaign) {
                 return $campaign['status'] == 'active';
             }));
-            $this->settings['campaigns'] = $active_campaigns;
+            $this->settings['campaigns'] = $active_campaigns ?? array();
 
             // set selected campaign, find in campaign list
             $campaign = $this->find_campaign($this->settings['selected_campaign_id']);
@@ -416,7 +416,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function find_campaign($campaign_id)
         {
             $campaign = null;
-            foreach ($this->settings['campaigns'] as $c) {
+            $campaigns = $this->settings['campaigns'] ?? array();
+            foreach ($campaigns as $c) {
                 if ($c['campaignID'] == $campaign_id) {
                     $campaign = $c;
                 }
