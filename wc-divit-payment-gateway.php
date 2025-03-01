@@ -1629,7 +1629,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             );
 
             // promotion code that campaign used
-            $order_promo_code = $this->selected_campaign['promoCode'] ?? '';
+            $order_promo_code = !empty($this->selected_campaign) ? $this->selected_campaign['promoCode'] ?? '' : '';
             // if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
             //     $order_promo_code = '';
             // }
@@ -1858,7 +1858,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $order_currency = $order->get_currency();
 
             // promotion code that campaign used
-            $order_promo_code = $this->selected_campaign['promoCode'] ?? '';
+            $order_promo_code = !empty($this->selected_campaign) ? $this->selected_campaign['promoCode'] ?? '' : '';
 
             // when miles reward is not enabled, clear parameters
             if (!$this->is_earn_miles_enabled()) {
