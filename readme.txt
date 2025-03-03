@@ -2,7 +2,7 @@
 Contributors: janderson852, kyktommy
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Miles,Earn,Spend
 Requires at least: 5.0
-Tested up to: 6.4
+Tested up to: 6.7
 Stable tag: 1.7.9
 Requires PHP: 5.4
 License: GPLv2 or later
