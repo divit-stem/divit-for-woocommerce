@@ -1,8 +1,8 @@
-=== Divit Rewards and Payment Gateway ===
+=== Divit Payment Gateway ===
 Contributors: janderson852, kyktommy
-Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway,Rewards,Miles,Earn,Spend
+Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway
 Requires at least: 5.0
-Tested up to: 6.7
+Tested up to: 9.7.1
 Stable tag: 1.7.9
 Requires PHP: 5.4
 License: GPLv2 or later
@@ -14,17 +14,17 @@ Divit Payment Gateway for WooCommerce
 
 This plugin will add the divit Real-time pay by bank account payment gateway for your WooCommerce.
 
-Divit is a Hong Kong based fintech company building the best integrations with local RTP (real time payment) systems globally. 
+Divit is a Hong Kong based fintech company building the best integrations with local RTP (real time payment) systems globally. We are live in Hong Kong with FPS, and are adding further countries rapidly. 
 
 Customers can:
 - Make secure real-time bank transfers by QR Code or Manual Payment using their own banking app.
 - Mobile Payments: Web-to-App payments, meaning customers don't need to scan a QR code, they just choose their preferred bank app
-- App based payments: coming soon! 
+- App based payments: Seamless in-app payments via FPS App-to-App, allowing customers to pay directly from their bank app within your iOS and Android applications
 
 You can find more details in our websites:
 
+- [sign-up](https://admin.divit.com.hk/en/signup)
 - [website](https://divit.com.hk)
-- [shop](https://shop.divit.com.hk)
 - [developer portal](https://developer.divit.com.hk/docs/platforms/woocommerce/overview).
 
 Countries Supported:
@@ -37,7 +37,7 @@ To install Divit Payment Gateway, you need:
 * WordPress Version 5.3 or newer (installed)
 * WooCommerce Version 3.9 or newer (installed and activated)
 * PHP Version 7.1 or newer
-* Divit merchant account
+* Divit merchant account - Signup at (https://admin.divit.com.hk/en/signup)
 
 = Instructions =
 
