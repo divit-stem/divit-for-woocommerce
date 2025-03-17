@@ -45,16 +45,16 @@ final class WC_Divit_Gateway_Blocks_Support extends AbstractPaymentMethodType {
 	}
 }
 
-function divit_checkout_blocks_compatibility() 
-{
-    if( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
-        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
-                'cart_checkout_blocks',
-                __FILE__,
-                true,
-                // false // true (compatible, default) or false (not compatible)
-            );
-    }
-}
+// function divit_checkout_blocks_compatibility() 
+// {
+//     if( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+//         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+//                 'cart_checkout_blocks',
+//                 __FILE__,
+//                 true,
+//                 // false // true (compatible, default) or false (not compatible)
+//             );
+//     }
+// }
 
-add_action( 'before_woocommerce_init', 'divit_checkout_blocks_compatibility' );
+// add_action( 'before_woocommerce_init', 'divit_checkout_blocks_compatibility' );
