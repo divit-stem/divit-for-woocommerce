@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: Divit Rewards and Payment Gateway 1.4.10\n"
+"Project-Id-Version: Divit Payment Gateway 1.7.11\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/divit-for-"
 "woocommerce\n"
 "POT-Creation-Date: 2023-01-08T07:34:15-06:00\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #. Description of the plugin
-msgid "Divit Rewards and Payment Gateway"
+msgid "Divit Payment Gateway"
 msgstr "Divit 獎勵和支付網關"
 
 #. Plugin URI of the plugin
