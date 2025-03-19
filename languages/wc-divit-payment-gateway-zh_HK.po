@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: Divit Payment Gateway 1.7.11\n"
+"Project-Id-Version: Divit Payment Gateway 1.7.12\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/divit-for-"
 "woocommerce\n"
 "POT-Creation-Date: 2023-01-08T07:34:15-06:00\n"
