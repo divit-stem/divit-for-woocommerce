@@ -2067,7 +2067,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function payment_fields()
         {
             $is_logged_in = !empty($this->get_divit_user());
-            $is_show_checkout_block = false;
+            $is_show_checkout_block = true;
             $is_show_spend_miles_block = $this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_ENABLED] === 'yes';
             $is_show_earn_miles_label = $this->is_earn_miles_enabled() && $this->settings[DIVIT_CONST::SETTING_OSM_CHECKOUT_PAGE] == 'yes';
             $is_promotion_code_enabled = $this->is_promotion_code_enabled();
@@ -2208,8 +2208,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 <?php if ($is_show_checkout_block) : ?>
                     <div class="divit_checkout_block divit_checkout_paynow checked">
                         <div class="divit_checkout_block_overlay" data-method-id="paynow"></div>
-                        <div class="divit_radio divit_radio_paynow checked" data-radio-id="paynow"></div>
-                        <div style="width:22px;"></div>
                         <div class="divit_checkout_block_content">
                             <div class="divit_checkout_block_title">
                                 <?php echo esc_html(__('pay now', 'wc-divit-payment-gateway')); ?>
