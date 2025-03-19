@@ -5,7 +5,7 @@
  * Description:       Divit Payment Gateway for WooCommerce
  * Version:           1.7.12
  * WC requires at least: 5.0
- * WC tested up to:   8.3
+ * WC tested up to:   9.7.0
  * Author:            Divit team
  * Author URI:        https://divit.com.hk
  * Text Domain:       wc-divit-payment-gateway
