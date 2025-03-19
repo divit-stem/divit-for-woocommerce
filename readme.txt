@@ -2,7 +2,7 @@
 Contributors: janderson852, kyktommy
 Tags: Divit,FPS,Hong Kong,Payment,Payment Gateway
 Requires at least: 5.0
-Tested up to: 6.4.3
+Tested up to: 6.7.2
 Stable tag: 1.7.12
 Requires PHP: 5.4
 License: GPLv2 or later
