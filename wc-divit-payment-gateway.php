@@ -1974,14 +1974,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // mark it as request refund, then approve refund from callback
             $order = wc_get_order($order_id);
             $divit_order_id = $order->get_meta('divit_order_id', true);
-            $refund_order_resp = $this->refund_order($divit_order_id, floatval($amount), $reason, $this->api_key);
+            $refundRef = DIVIT_UTILS::rand_id();
+            $refund_order_resp = $this->refund_order($divit_order_id, floatval($amount), $reason, $refundRef, $this->api_key);
             if ($refund_order_resp['status_code'] != 200) {
                 self::log('refund requested failed. order id: ' . $divit_order_id . ' ' . json_encode($refund_order_resp['body']));
                 $err = $refund_order_resp['body'];
                 return new WP_Error( 'error', 'unavailable to refund. please contact divit customer service.' );
             }
             self::log('refund requested success. order id: ' . $divit_order_id . ' amount: ' . $amount);
-            $note = sprintf(__('Refund is requested (divit payment): %s%.2f. Please wait for approval.', 'wc-divit-payment-gateway'), get_woocommerce_currency_symbol(), floatval($amount));
+            $note = sprintf(__('Refund is requested (divit payment): %s%.2f. ref: %s. Please wait for approval.', 'wc-divit-payment-gateway'), get_woocommerce_currency_symbol(), floatval($amount), $refundRef);
             $order->add_order_note($note);
             return true;
         }
@@ -2518,12 +2519,13 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return DIVIT_UTILS::http_request($url, 'PATCH', $body, $header);
         }
 
-        public function refund_order($order_id, $amount, $reason, $api_key)
+        public function refund_order($order_id, $amount, $reason, $refundRef, $api_key)
         {
             $url = $this->get_env()['api_url'] . '/paynow/orders/refund/request';
             $header = array('Content-Type' => 'application/json', 'API-Key' => $api_key);
             $body = array(
                 'orderID' => $order_id, 
+                'refundRef' => $refundRef,
                 'refundType' => 'partial', 
                 'refundAmount' => $amount, 
                 'remarks' => $reason,
@@ -2582,7 +2584,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 exit;
             }
 
-            // refund approved order
+            // refund approved 
             if ($json['event']['eventId'] == 2100) {
                 $order_id = $merchant_ref;
                 $order = wc_get_order($merchant_ref);
@@ -2593,9 +2595,31 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     $refundedAmountData = $json['eventData']['refundAmount'];
                     $refundedAmount = $refundedAmountData['amount'] / 100;
                     $refundedAmountCurrency = $refundedAmountData['currency'];
-                    $note = sprintf(__('Refund is approved (divit payment): %s %.2f', 'wc-divit-payment-gateway'), $refundedAmountCurrency, $refundedAmount);
+                    $refundRef = $json['eventData']['refundRef'] ?? '';
+                    $note = sprintf(__('Refund is approved (divit payment): %s %.2f. ref: %s.', 'wc-divit-payment-gateway'), $refundedAmountCurrency, $refundedAmount, $refundRef);
                     $order->add_order_note($note);
                     $message = "callback: refund is approved, merchant reference {$merchant_ref}";
+                    self::log($message);
+                    wp_send_json($message);
+                    exit;
+                }
+            }
+
+            // refund cancelled 
+            if ($json['event']['eventId'] == 4100) {
+                $order_id = $merchant_ref;
+                $order = wc_get_order($merchant_ref);
+                // $is_same_order = get_post_meta($order_id, 'divit_order_id', true) == $json['eventData']['orderID'];
+                $is_same_order = $order->get_meta('divit_order_id', true) == $json['eventData']['orderID'];
+                $is_divit_payment_method = $order->get_payment_method() == $this->id;
+                if ($is_same_order && $is_divit_payment_method) {
+                    $refundedAmountData = $json['eventData']['refundAmount'];
+                    $refundedAmount = $refundedAmountData['amount'] / 100;
+                    $refundedAmountCurrency = $refundedAmountData['currency'];
+                    $refundRef = $json['eventData']['refundRef'] ?? '';
+                    $note = sprintf(__('Refund is cancelled (divit payment): %s %.2f ref: %s.', 'wc-divit-payment-gateway'), $refundedAmountCurrency, $refundedAmount, $refundRef);
+                    $order->add_order_note($note);
+                    $message = "callback: refund is cancelled, merchant reference {$merchant_ref}";
                     self::log($message);
                     wp_send_json($message);
                     exit;

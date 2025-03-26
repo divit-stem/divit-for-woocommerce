@@ -185,5 +185,10 @@ if (!class_exists('DIVIT_UTILS'))
         static function deepclone($obj) {
             return unserialize(serialize($obj));
         }
+
+        static function rand_id() {
+            $chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+            return substr(str_shuffle($chars), 0, 8);
+        }
     }
 }
