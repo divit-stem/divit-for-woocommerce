@@ -505,33 +505,6 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             return "(amount * 0)";
         }
 
-        // calculate subtotal only, exclude shipping, discount, tax
-        public function get_cart_total($cart)
-        {
-            $total = 0;
-            $qty = 0;
-            foreach ($cart->get_cart() as $cart_item) {
-                $total += $cart_item['line_subtotal'];
-                $qty += $cart_item['quantity'];
-            }
-            $original_total = $total;
-            foreach ($cart->applied_coupons as $coupon) {
-                $c = new WC_Coupon($coupon);
-                switch ($c->get_discount_type()) {
-                    case 'percent':
-                        $total -= $original_total * ($c->get_amount() / 100);
-                        break;
-                    case 'fixed_cart':
-                        $total -= $c->get_amount();
-                        break;
-                    case 'fixed_product':
-                        $total -= $qty * $c->get_amount();
-                        break;
-                }
-            }
-            return max($total, 0);
-        }
-
         public function get_cart_miles_by_product($cart)
         {
             $total = 0;
@@ -549,7 +522,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
         public function get_cart_miles($cart)
         {
             // if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
-                $total = $this->get_cart_total($cart);
+                $total = $cart->total;
                 return $this->calc_earn_miles($total);
             // } else if ($this->campaign_mode == self::CAMPAIGN_MODE_PRODUCT) {
                 // ignore discount, only calculate total miles,
@@ -564,7 +537,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $config_data = $this->get_divit_config_json();
             $tickets = 0;
             if ($this->is_promotion_message_available($config_data)) {
-                $total = $this->get_cart_total($cart);
+                $total = $cart->total;
                 $tickets = $this->calc_earn_tickets($total, $config_data);
             }
             return $tickets;
@@ -930,7 +903,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if ($this->campaign_mode == self::CAMPAIGN_MODE_ORDER) {
                 $promo = WC()->session->get(self::DIVIT_PROMOTION_CAMPAIGN, array());
                 if (!empty($promo)) {
-                    $price = $this->get_cart_total($cart);
+                    $price = $cart->total;
                     $miles = intval(DIVIT_UTILS::get_miles_by_reward_statement($promo['rewardStatement'], $price));
                 }
             }
@@ -2090,9 +2063,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
 
             // get cart data or order-pay order
             $currency_symbol = get_woocommerce_currency_symbol();
-            $cart_total = $this->get_cart_total(WC()->cart);
-            $shipping_total = WC()->cart->get_shipping_total();
-            $total = $cart_total + $shipping_total;
+            $total = WC()->cart->total;
             $order = wc_get_order(get_query_var('order-pay'));
             if (!empty($order)) {
                 $total = $order->get_total();
@@ -2364,9 +2335,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 die();
             }
             $miles_rate = $miles_rate_resp['body']['data'];
-            $cart_total = $this->get_cart_total(WC()->cart);
-            $shipping_total = WC()->cart->get_shipping_total();
-            $order_total = $cart_total + $shipping_total;
+            $order_total = WC()->cart->total;
             $user = $this->get_divit_user();
             $profile = null;
             if (!empty($user)) {
