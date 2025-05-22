@@ -2525,6 +2525,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $json = json_decode($resp, true);
             $headers = getallheaders();
 
+            // get signature key from header
+            $signature = '';
+            foreach($headers as $key => $value) {
+                if (strtoupper('X-Divit-Signature') == strtoupper($key)) {
+                    $signature = $value;
+                    break;
+                }
+            }
+
             $message_str = json_encode($json);
             $header_str = json_encode($headers);
             self::log("callback: received {$message_str} {$header_str}");
@@ -2532,14 +2541,12 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $merchant_ref = $json['eventData']['partnerRef'];
 
             // validate signature
-            $signature = array_key_exists('X-Divit-Signature', $headers) ? $headers['X-Divit-Signature'] : '';
-            $signature = array_key_exists('x-divit-signature', $headers) ? $headers['x-divit-signature'] : $signature;
             $signature_key = $this->get_signature_key();
             $valid = DIVIT_UTILS::validate_webhook($signature, $signature_key, $resp);
             if (!$valid) {
-                $message = "callback: signature valid error, merchant reference {$merchant_ref}";
+                $message = "callback: signature valid error, got: {$resp}";
                 self::log($message);
-                wp_send_json($message);
+                wp_send_json($message, 400);
                 exit;
             }
 
