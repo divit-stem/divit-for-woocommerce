@@ -2533,9 +2533,15 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                     break;
                 }
             }
+            $header_str = json_encode($headers);
+            if ($signature == '') {
+                $message = "callback: no signature from header, got: {$header_str}";
+                self::log($message);
+                wp_send_json($message, 400);
+                exit;
+            }
 
             $message_str = json_encode($json);
-            $header_str = json_encode($headers);
             self::log("callback: received {$message_str} {$header_str}");
 
             $merchant_ref = $json['eventData']['partnerRef'];
