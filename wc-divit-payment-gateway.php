@@ -1656,7 +1656,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "promoCode" => $order_promo_code,
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
-                "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                "webhookEvents" => get_site_url() . '/?wc-api=CALLBACK_DIVIT_PAYMENT',
                 "source" => "woocommerce"
                 // "expiredAt" => 1664442745,
             );
@@ -1871,7 +1871,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 "promoCode" => $order_promo_code,
                 "webhookSuccess" => $this->get_return_url($order),
                 "webhookFailure" => $order->get_checkout_payment_url(),
-                "webhookEvents" => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                "webhookEvents" => get_site_url() . '/?wc-api=CALLBACK_DIVIT_PAYMENT',
                 "source" => "woocommerce"
             );
 
@@ -2433,7 +2433,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $body = array(
                 'ref' => $this->merchant_id,
                 'event' => 'test',
-                'webhookEvent' => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                'webhookEvent' => get_site_url() . '/?wc-api=CALLBACK_DIVIT_PAYMENT',
             );
             return DIVIT_UTILS::http_request($url, 'POST', $body, $header);
         }
@@ -2498,7 +2498,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 'refundType' => 'partial', 
                 'refundAmount' => $amount, 
                 'remarks' => $reason,
-                'callbackURI' => get_site_url() . '?wc-api=CALLBACK_DIVIT_PAYMENT',
+                'callbackURI' => get_site_url() . '/?wc-api=CALLBACK_DIVIT_PAYMENT',
             );
             return DIVIT_UTILS::http_request($url, 'POST', $body, $header);
         }
