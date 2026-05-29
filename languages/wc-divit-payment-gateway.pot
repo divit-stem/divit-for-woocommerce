@@ -1,0 +1,82 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-28 16:21+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: divit-plugin-cron.php:10
+msgid "Every 15 minutes"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:294
+msgid "Enable"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:296
+msgid "Enable divit payment"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:300
+msgid "Debug"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:302
+msgid "Enable debug mode"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:304
+msgid ""
+"Developer option. Enables additional developer settings (e.g., exposing the "
+"local Developer environment and its corresponding developer credentials "
+"fields)."
+msgstr ""
+
+#: wc-divit-payment-gateway.php:307
+msgid "Environment"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:395
+msgid "Require setup account"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:585
+#, php-format
+msgid ""
+"Refund is requested (divit payment): %s%.2f. ref: %s. Please wait for "
+"approval."
+msgstr ""
+
+#: wc-divit-payment-gateway.php:614
+msgid "pay now"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:632
+msgid "Forbidden"
+msgstr ""
+
+#: wc-divit-payment-gateway.php:835
+#, php-format
+msgid "Refund is approved (divit payment): %s %.2f. ref: %s."
+msgstr ""
+
+#: wc-divit-payment-gateway.php:853
+#, php-format
+msgid "Refund is cancelled (divit payment): %s %.2f ref: %s."
+msgstr ""
+
+#: wc-divit-payment-gateway.php:868
+msgid "divit payment is cancelled"
+msgstr ""

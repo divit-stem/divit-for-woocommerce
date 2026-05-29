@@ -1,0 +1,143 @@
+/* common */
+
+.divit-flex-1 {
+	flex: 1;
+}
+
+.divit-flex {
+	display: flex;
+	align-items: center;
+}
+
+.divit-items-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.divit-space-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.divit-tag-yellow {
+	color: #1c1c1c;
+	background-color: #FFCC33;
+	padding: 3px 15px;
+	border-radius: 35px;
+}
+
+.divit_loading_overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	min-width: 100%;
+	min-height: 100%;
+	max-width: 100%;
+	max-height: 100%;
+	z-index: 39394802914;
+	background-color: rgba(0,0,0,0.75);
+}
+
+.divit_loading_overlay_content {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+
+/* checkout */
+
+.divit_radio {
+	width: 20px;
+	height: 20px;
+	outline: 1px solid #1C1C1C;
+	border-radius: 50%;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.divit_radio.checked {
+	border: 3px solid white;
+	background-color: #1C1C1C;
+}
+
+.divit_checkout_block {
+	position: relative;
+	display:flex;
+	align-items:center;
+	outline: 1px solid #DEDEDE;
+	background: white;
+	padding: 24px;
+	box-sizing: border-box;
+	border-radius: 8px;
+	color:#1c1c1c;
+	opacity: 0.6;
+}
+
+.divit_checkout_block_overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.divit_checkout_block.checked {
+	outline: 2px solid #1C1C1C;
+	pointer-events: auto;
+	opacity: 1;
+}
+
+/* Chrome, Safari, Edge, Opera */
+.divit_checkout_block input::-webkit-outer-spin-button,
+.divit_checkout_block input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.divit_checkout_block input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.divit_checkout_block_content {
+	flex: 1;
+}
+
+.divit_checkout_block_title {
+	font-size: 20px !important;
+	font-weight: bold;
+	line-height: 1.1em;
+}
+
+.divit_checkout_block_subtitle {
+	font-size: 16px !important;
+	line-height: 1.1em;
+	margin-top: 13px;
+}
+
+.divit_checkout_paynow_total {
+	font-size: 24px;
+	margin-left: 10px;
+	text-align: right;
+}
+
+.divit_checkout_paynow .divit_message {
+	font-size: 14px !important;
+}
+
+
+.divit_checkout_fps_guide_button {
+	display: inline-block;
+	margin-left: 16px;
+	cursor: pointer;
+}

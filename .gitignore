@@ -1,0 +1,21 @@
+# WordPress & WooCommerce development ignore patterns
+.DS_Store
+Thumbs.db
+*~
+*.log
+.idea/
+.vscode/
+
+# Node modules and build files
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# PHP/Composer packages
+vendor/
+composer.lock
+
+# WordPress local backups and configurations
+wp-config.php
+sftp-config.json
+.gitmodules
