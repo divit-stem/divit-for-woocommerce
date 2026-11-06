@@ -42,7 +42,7 @@ final class WC_Divit_Gateway_Blocks_Support extends AbstractPaymentMethodType {
       'description' => $this->gateway->description,
       'icon' => plugins_url('assets/images/fps_by_divit.png', __FILE__),
 			'supports'  => array_filter( $this->gateway->supports, [ $this->gateway, 'supports' ] ),
-			'total' => get_woocommerce_currency_symbol() . number_format(WC()->cart->total),
+			'total' => get_woocommerce_currency_symbol() . number_format((float) WC()->cart->total, wc_get_price_decimals()),
 			'pay_now_text' => __( 'pay now', 'wc-divit-payment-gateway' ),
 		);
 	}

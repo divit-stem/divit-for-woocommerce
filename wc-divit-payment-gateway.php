@@ -481,7 +481,8 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
                 $line_items[] = $line_item;
             }
 
-            $order_total = $order->get_total() * 100;
+            // Integer cents.
+            $order_total = (int) round((float) $order->get_total() * 100);
             $order_currency = $order->get_currency();
 
             // tel
@@ -570,7 +571,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             // mark it as request refund, then approve refund from callback
             $order = wc_get_order($order_id);
             $divit_order_id = $order->get_meta('divit_order_id', true);
-            $refundRef = DIVIT_UTILS::rand_id();
+            // Use the latest WooCommerce refund id as the refund reference.
+            $wc_refunds = $order->get_refunds();
+            $refundRef = ! empty($wc_refunds) ? (string) $wc_refunds[0]->get_id() : DIVIT_UTILS::rand_id();
             $refund_order_resp = $this->refund_order($divit_order_id, floatval($amount), $reason, $refundRef, $this->api_key);
             if ($refund_order_resp['status_code'] != 200) {
                 self::log('refund requested failed. order id: ' . $divit_order_id . ' ' . json_encode($refund_order_resp['body']));
@@ -600,7 +603,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             if (!empty($order)) {
                 $total = $order->get_total();
             }
-            $formatted_order_total = $currency_symbol . number_format($total);
+            $formatted_order_total = $currency_symbol . number_format((float) $total, wc_get_price_decimals());
             ?>
             <div class="payment_method_<?php echo esc_attr( $this->id ); ?>_desc">
                 <div class="divit_checkout_block divit_checkout_paynow checked">
@@ -769,7 +772,9 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $signature_key = $this->get_signature_key();
             $valid = DIVIT_UTILS::validate_webhook($signature, $signature_key, $resp);
             if (!$valid) {
-                $message = "callback: signature valid error, got: {$resp}";
+                $key_length = strlen($signature_key);
+                $mode = isset($this->settings['mode']) ? $this->settings['mode'] : 'unknown';
+                $message = "callback: signature valid error. Mode: {$mode}, Key length: {$key_length}, Sig: {$signature}, Body: {$resp}";
                 self::log($message);
                 wp_send_json($message, 400);
                 exit;
