@@ -11,7 +11,24 @@ const label = window.wp.element.createElement(
   }),
 );
 
-const Content = () => {
+// Live cart total from Checkout Block props; falls back to the static total.
+const formatTotal = (billing) => {
+  const cartTotal = billing && billing.cartTotal;
+  const currency = billing && billing.currency;
+  if (!cartTotal || !currency || cartTotal.value === undefined) {
+    return window.wp.htmlEntities.decodeEntities(settings.total);
+  }
+  const minorUnit = Number(currency.minorUnit) || 0;
+  const fixed = (Number(cartTotal.value) / Math.pow(10, minorUnit)).toFixed(minorUnit);
+  const parts = fixed.split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currency.thousandSeparator || ",");
+  const amount = parts.join(currency.decimalSeparator || ".");
+  return window.wp.htmlEntities.decodeEntities(
+    (currency.prefix || "") + amount + (currency.suffix || ""),
+  );
+};
+
+const Content = (props) => {
   window.wcdivit && window.wcdivit.appendFpsGuide();
   return window.wp.element.createElement(
     "div",
@@ -40,7 +57,7 @@ const Content = () => {
         window.wp.element.createElement(
           "div",
           { className: "divit_checkout_paynow_total" },
-          window.wp.htmlEntities.decodeEntities(settings.total),
+          formatTotal(props && props.billing),
         ),
       ),
     ),

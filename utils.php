@@ -11,8 +11,16 @@ if (!class_exists('DIVIT_UTILS'))
         // t={ts}.s1={base64_hex_binary(ts.body)}
         static function validate_webhook($signature, $secret, $body) {
             $strs = explode(',', $signature);
-            $timestamp = preg_replace('/^t=/', '', $strs[0]);
-            $hmac = preg_replace('/^s1=/', '', $strs[1]);
+            $timestamp = '';
+            $hmac = '';
+            foreach ($strs as $str) {
+                $str = trim($str);
+                if (strpos($str, 't=') === 0) {
+                    $timestamp = substr($str, 2);
+                } elseif (strpos($str, 's1=') === 0) {
+                    $hmac = substr($str, 3);
+                }
+            }
             if (!$timestamp || !$hmac) {
                 return false;
             }

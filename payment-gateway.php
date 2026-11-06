@@ -3,9 +3,9 @@
  * Plugin Name:       Divit Payment Gateway
  * Plugin URI:        https://developer.divit.com.hk/docs/platforms/woocommerce/overview/
  * Description:       Divit Payment Gateway for WooCommerce
- * Version:           1.8.0
+ * Version:           1.8.1
  * WC requires at least: 5.0
- * WC tested up to:   9.7.1
+ * WC tested up to:   10.8.1
  * Author:            Divit team
  * Author URI:        https://divit.com.hk
  * Text Domain:       wc-divit-payment-gateway
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 require_once('utils.php');
 
-define('DIVIT_PLUGIN_VERSION', '1.8.0');
+define('DIVIT_PLUGIN_VERSION', '1.8.1');
 
 if (!class_exists('Divit_Plugin')) {
 	class Divit_Plugin {
