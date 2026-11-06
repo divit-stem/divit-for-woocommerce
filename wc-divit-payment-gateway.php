@@ -772,9 +772,7 @@ if (!class_exists('WC_Divit_Payment_Gateway')) {
             $signature_key = $this->get_signature_key();
             $valid = DIVIT_UTILS::validate_webhook($signature, $signature_key, $resp);
             if (!$valid) {
-                $key_length = strlen($signature_key);
-                $mode = isset($this->settings['mode']) ? $this->settings['mode'] : 'unknown';
-                $message = "callback: signature valid error. Mode: {$mode}, Key length: {$key_length}, Sig: {$signature}, Body: {$resp}";
+                $message = 'callback: signature invalid';
                 self::log($message);
                 wp_send_json($message, 400);
                 exit;
